@@ -16,6 +16,7 @@ type Education = {
 type Project = {
   name: string;
   stack?: string;
+  href?: string;
   bullets: string[];
 };
 
@@ -50,7 +51,17 @@ const education: Education[] = [
 
 const projects: Project[] = [
   {
-    name: "Personal Blog",
+    name: "MeetTilavat.com (Blog Platform)",
+    stack: "Next.js, Tailwind CSS, Supabase, Tiptap, Docker, Jenkins",
+    href: "https://github.com/meettilavat/blog_project",
+    bullets: [
+      "Split public read-only site and a private admin editor for publishing posts.",
+      "Rich-text editor with images, tables, and Supabase Storage uploads.",
+      "Containerized builds with CI/CD automation for repeatable deploys."
+    ]
+  },
+  {
+    name: "Personal Blog (PHP/MySQL)",
     stack: "HTML, CSS, PHP, SQL, JavaScript, AWS",
     bullets: [
       "Full-stack blog with admin panel, CKEditor formatting, and MySQL persistence.",
@@ -204,6 +215,16 @@ export default function ResumePage() {
                     <p className="text-xs uppercase tracking-[0.18em] text-foreground/60">{project.stack}</p>
                   )}
                 </div>
+                {project.href && (
+                  <a
+                    href={project.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center rounded-full border border-border/70 bg-card px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70 hover:border-foreground/50"
+                  >
+                    GitHub
+                  </a>
+                )}
               </div>
               <ul className="mt-3 space-y-1 text-sm leading-relaxed text-foreground/80">
                 {project.bullets.map((item) => (

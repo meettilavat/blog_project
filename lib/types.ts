@@ -4,6 +4,7 @@ export type PostRecord = {
   id: string;
   title: string;
   slug: string;
+  excerpt?: string | null;
   content: unknown;
   cover_image_url: string | null;
   status: PostStatus;

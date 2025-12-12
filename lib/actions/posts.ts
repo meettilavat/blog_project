@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isMissingColumnError } from "@/lib/supabase/errors";
 import { slugify } from "@/lib/utils";
 import { type PostStatus } from "@/lib/types";
 import type { JSONContent } from "@tiptap/core";
@@ -10,6 +11,7 @@ import type { JSONContent } from "@tiptap/core";
 type SavePayload = {
   id?: string;
   title: string;
+  excerpt?: string;
   status: PostStatus;
   coverImageUrl?: string | null;
   content: JSONContent | null;
@@ -32,6 +34,7 @@ export async function savePostAction(payload: SavePayload) {
   const body = {
     title: payload.title,
     slug,
+    excerpt: payload.excerpt?.trim() || null,
     status: payload.status,
     content: payload.content,
     cover_image_url: payload.coverImageUrl || null,
@@ -40,11 +43,17 @@ export async function savePostAction(payload: SavePayload) {
   };
 
   const isEditing = Boolean(payload.id);
-  const query = isEditing
-    ? supabase.from("posts").update(body).eq("id", payload.id).select().single()
-    : supabase.from("posts").insert(body).select().single();
+  const { excerpt: _excerpt, ...bodyWithoutExcerpt } = body;
+  const runQuery = (values: typeof body | typeof bodyWithoutExcerpt) =>
+    isEditing
+      ? supabase.from("posts").update(values).eq("id", payload.id).select().single()
+      : supabase.from("posts").insert(values).select().single();
 
-  const { data, error } = await query;
+  let { data, error } = await runQuery(body);
+
+  if (error && isMissingColumnError(error, "posts", "excerpt")) {
+    ({ data, error } = await runQuery(bodyWithoutExcerpt));
+  }
 
   if (error) {
     return { error: error.message };

@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isMissingColumnError } from "@/lib/supabase/errors";
 import { type PostRecord } from "@/lib/types";
 import { unstable_cache } from "next/cache";
 
@@ -6,11 +7,25 @@ const getPublishedPostsCached = unstable_cache(
   async () => {
     try {
       const supabase = await createSupabaseServerClient();
-      const { data, error } = await supabase
+      const selectWithExcerpt = "id,title,slug,excerpt,cover_image_url,status,created_at,updated_at";
+      const selectBase = "id,title,slug,cover_image_url,status,created_at,updated_at";
+
+      let data: unknown[] | null = null;
+      let error: any = null;
+
+      ({ data, error } = await supabase
         .from("posts")
-        .select("id,title,slug,cover_image_url,status,created_at,updated_at")
+        .select(selectWithExcerpt)
         .eq("status", "published")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }));
+
+      if (error && isMissingColumnError(error, "posts", "excerpt")) {
+        ({ data, error } = await supabase
+          .from("posts")
+          .select(selectBase)
+          .eq("status", "published")
+          .order("created_at", { ascending: false }));
+      }
 
       if (error) {
         console.error("Failed to load published posts", error.message);

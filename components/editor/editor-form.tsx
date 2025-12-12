@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import CoverImageField from "@/components/editor/cover-image-field";
 import RichEditor from "@/components/editor/rich-editor";
 import { savePostAction } from "@/lib/actions/posts";
@@ -27,6 +28,7 @@ const blankDoc: JSONContent = {
 export function EditorForm({ initialPost, drafts = [] }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(initialPost?.title ?? "");
+  const [excerpt, setExcerpt] = useState(initialPost?.excerpt ?? "");
   const [cover, setCover] = useState(initialPost?.cover_image_url ?? "");
   const [content, setContent] = useState<JSONContent | null>(
     (initialPost?.content as JSONContent) ?? blankDoc
@@ -50,6 +52,7 @@ export function EditorForm({ initialPost, drafts = [] }: Props) {
       const result = await savePostAction({
         id: initialPost?.id,
         title: title.trim(),
+        excerpt: excerpt.trim(),
         status: nextStatus,
         coverImageUrl: cover,
         content: normalizedContent
@@ -122,6 +125,24 @@ export function EditorForm({ initialPost, drafts = [] }: Props) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="text-xl font-medium tracking-tight"
+          />
+        </div>
+
+        <div className="space-y-3 rounded-3xl border border-border/70 bg-card p-6 shadow-soft">
+          <div className="space-y-1">
+            <Label htmlFor="excerpt" className="uppercase tracking-[0.2em]">
+              Description
+            </Label>
+            <p className="text-xs text-foreground/60">
+              Appears on the homepage and in social previews.
+            </p>
+          </div>
+          <Textarea
+            id="excerpt"
+            placeholder="A short summary for the listing page..."
+            value={excerpt}
+            onChange={(event) => setExcerpt(event.target.value)}
+            className="min-h-[120px]"
           />
         </div>
 

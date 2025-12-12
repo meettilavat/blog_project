@@ -27,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post || post.status !== "published") return {};
 
   const text = plainTextFromContent(post.content);
-  const description = text ? text.slice(0, 160) : "Read the latest post from Meet Tilavat.";
+  const description =
+    post.excerpt?.trim() || (text ? text.slice(0, 160) : "Read the latest post from Meet Tilavat.");
   const url = `https://meettilavat.com/posts/${slug}`;
 
   return {

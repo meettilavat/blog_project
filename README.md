@@ -1,41 +1,59 @@
-# MeetTilavat.com — Split Public/Admin Blog & Portfolio
+# MeetTilavat.com — Blog, Portfolio, Resume
 
-Read‑only public site (blog, projects, resume) plus a private admin/editor, both running on Next.js and sharing a single Supabase backend.
+Live site: https://meettilavat.com/
+
+This repo powers my personal website. It’s split into a read-only public app and a private admin app for writing/publishing posts, both backed by a single Supabase project.
 
 ## Apps
-- `apps/public` — read-only portfolio/blog/resume (no auth, fetches published posts).
-- `apps/admin` — private admin/editor/dashboard with Supabase auth and uploads.
+- `apps/public` — public site (no auth UI/routes; reads `published` posts only).
+- `apps/admin` — admin/editor/dashboard (Supabase auth, publishing, image uploads).
 
-## Commands
+## Tech stack
+- Next.js (App Router) + React + TypeScript
+- Tailwind CSS
+- Supabase (Postgres, Auth, Storage)
+- Tiptap editor
+
+## Features
+- Per-post cover images + inline images (Supabase Storage).
+- Rich-text posts with tables and links.
+- Optional post description (“excerpt”) shown on the homepage + used for previews.
+- Resume page styled to match the site.
+
+## Local development
+1) Install:
 ```bash
 npm install
-
-# Public (read-only) app
-npm run dev:public      # dev server for apps/public
-npm run build:public
-npm run start:public
-
-# Admin app
-npm run dev             # starts apps/admin
-npm run build
-npm run start
 ```
 
-## Env (shared Supabase)
-Create `.env.local` in the repo root with:
-```
+2) Create `.env.local` in the repo root:
+```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
-Both apps share the same anon key; only the admin app exposes auth routes.
 
-## Supabase schema (posts)
-Run in SQL editor:
+3) Run:
+```bash
+# Public app
+npm run dev:public
+
+# Admin app
+npm run dev
+```
+
+Notes:
+- The post listing is cached and revalidates periodically, so newly published posts may appear after a short delay.
+
+## Supabase setup
+
+### Posts table + RLS
+Run in the Supabase SQL editor:
 ```sql
 create table public.posts (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   slug text not null unique,
+  excerpt text,
   content jsonb,
   cover_image_url text,
   status text not null default 'draft' check (status in ('draft','published')),
@@ -73,10 +91,18 @@ create policy "authors manage own posts"
   for delete using (auth.uid() = author_id);
 ```
 
-### Storage
-Create a bucket named `blog-images` with public read, and grant authenticated users insert/update/delete:
+### Migrating existing tables
+If you created `public.posts` before `excerpt` existed:
 ```sql
-insert into storage.buckets (id, name, public) values ('blog-images', 'blog-images', true) on conflict do nothing;
+alter table public.posts add column if not exists excerpt text;
+```
+
+### Storage (images)
+Create a bucket named `blog-images` with public read, and allow authenticated uploads:
+```sql
+insert into storage.buckets (id, name, public)
+values ('blog-images', 'blog-images', true)
+on conflict do nothing;
 
 create policy "authenticated users can upload images"
   on storage.objects for insert to authenticated
@@ -91,14 +117,8 @@ create policy "owners can delete their uploads"
   using (bucket_id = 'blog-images' and auth.uid() = owner);
 ```
 
-## Notes
-- Public app is read-only (no auth UI/routes). Admin app remains gated via Supabase auth.
-- Both apps pull from the same `blog-images` bucket; public images load via anon access.
+## Security notes
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` is a publishable key, but your **Supabase service role key must never be committed or used in the client**.
+- Keep RLS enabled; the public app relies on it to read only `published` posts.
+- Treat the admin app as private (deploy behind access controls).
 
-## Local dev (both apps)
-- Public: `npm run dev:public`
-- Admin: `npm run dev`
-Run them in separate terminals; each serves on its own port.
-
-## CI/CD & Deployment
-This repo includes a root `Dockerfile` and `Jenkinsfile` to build and deploy the public/admin apps as separate containers. Detailed AWS/CloudFront deployment notes are kept privately and are intentionally not part of the public GitHub repository.
