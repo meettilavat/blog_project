@@ -71,7 +71,7 @@ export function RichTextViewer({ content }: Props) {
   return (
     <EditorContent
       editor={editor}
-      className="tiptap max-w-[72ch] mx-auto text-lg leading-8"
+      className="tiptap text-lg leading-8"
     />
   );
 }

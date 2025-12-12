@@ -92,27 +92,23 @@ export default async function PostPage({ params }: Props) {
           )}
         </div>
 
-        <div className="flex flex-col gap-10 lg:flex-row">
-          <div className="space-y-10 lg:max-w-[72ch] lg:flex-1">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-foreground/60">
-                <span>Published {formatDate(post.created_at)}</span>
-                {isSignificantlyUpdated(post.created_at, post.updated_at) && (
-                  <Badge variant="outline">Last updated {formatDate(post.updated_at)}</Badge>
-                )}
-                <Badge variant="muted">{reading.minutes} min read · {reading.words} words</Badge>
-              </div>
-              <h1 className="font-serif text-4xl leading-tight tracking-tight text-foreground sm:text-5xl">
-                {post.title}
-              </h1>
+        <div className="space-y-10">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-foreground/60">
+              <span>Published {formatDate(post.created_at)}</span>
+              {isSignificantlyUpdated(post.created_at, post.updated_at) && (
+                <Badge variant="outline">Last updated {formatDate(post.updated_at)}</Badge>
+              )}
+              <Badge variant="muted">{reading.minutes} min read · {reading.words} words</Badge>
             </div>
-
-            <div className="max-w-[72ch] mx-auto">
-              <RichTextViewer content={post.content as any} />
-            </div>
+            <h1 className="font-serif text-4xl leading-tight tracking-tight text-foreground sm:text-5xl">
+              {post.title}
+            </h1>
           </div>
 
           <TableOfContents headings={headings} />
+
+          <RichTextViewer content={post.content as any} />
         </div>
       </article>
     </>
