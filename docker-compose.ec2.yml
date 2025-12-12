@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  public:
+    image: "${DOCKER_REGISTRY}/meettilavat-public:${IMAGE_TAG}"
+    container_name: meettilavat-public
+    restart: unless-stopped
+    ports:
+      - "${PUBLIC_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL}"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+
+  admin:
+    image: "${DOCKER_REGISTRY}/meettilavat-admin:${IMAGE_TAG}"
+    container_name: meettilavat-admin
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-3001}:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL}"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+

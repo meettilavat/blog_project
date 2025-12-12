@@ -1,0 +1,82 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { slugify } from "@/lib/utils";
+import { type PostStatus } from "@/lib/types";
+import type { JSONContent } from "@tiptap/core";
+
+type SavePayload = {
+  id?: string;
+  title: string;
+  status: PostStatus;
+  coverImageUrl?: string | null;
+  content: JSONContent | null;
+};
+
+export async function savePostAction(payload: SavePayload) {
+  let supabase;
+  try {
+    supabase = await createSupabaseServerClient(true);
+  } catch (error: any) {
+    return { error: error.message || "Supabase is not configured." };
+  }
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData?.user) {
+    return { error: "You must be signed in to save posts." };
+  }
+
+  const slug = slugify(payload.title || "untitled");
+  const body = {
+    title: payload.title,
+    slug,
+    status: payload.status,
+    content: payload.content,
+    cover_image_url: payload.coverImageUrl || null,
+    author_id: userData.user.id,
+    updated_at: new Date().toISOString()
+  };
+
+  const isEditing = Boolean(payload.id);
+  const query = isEditing
+    ? supabase.from("posts").update(body).eq("id", payload.id).select().single()
+    : supabase.from("posts").insert(body).select().single();
+
+  const { data, error } = await query;
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath(`/posts/${slug}`);
+  revalidatePath(`/editor/${slug}`);
+
+  return { data, slug };
+}
+
+export async function deletePostAction(id: string, slug: string): Promise<void> {
+  let supabase;
+  try {
+    supabase = await createSupabaseServerClient(true);
+  } catch (error: any) {
+    throw new Error(error.message || "Supabase is not configured.");
+  }
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData?.user) {
+    throw new Error("You must be signed in to delete posts.");
+  }
+
+  const { error } = await supabase.from("posts").delete().eq("id", id);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath(`/posts/${slug}`);
+  redirect("/dashboard");
+}

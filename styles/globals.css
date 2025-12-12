@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fdfdfd;
+  --foreground: #0f172a;
+  --border: #e5e7eb;
+  --muted: #f8fafc;
+  --accent: #0b0b0f;
+  --card: #ffffff;
+  color-scheme: light;
+}
+
+:root.dark {
+  --background: #0c0c12;
+  --foreground: #e5e7eb;
+  --border: #1f2533;
+  --muted: #111725;
+  --accent: #e5e7eb;
+  --card: #0f1522;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
+body[data-typestyle="serif"] {
+  font-family: var(--font-serif);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.grid-ruled {
+  background-image: linear-gradient(
+      rgba(15, 23, 42, 0.04) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
+}
+
+.dark .grid-ruled {
+  background-image: linear-gradient(
+      rgba(229, 231, 235, 0.04) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(229, 231, 235, 0.04) 1px, transparent 1px);
+}
+
+.tiptap {
+  min-height: 360px;
+  outline: none;
+}
+
+.tiptap:focus-visible {
+  outline: none;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4 {
+  letter-spacing: -0.02em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.tiptap p {
+  margin: 0.75rem 0;
+  line-height: 1.75;
+}
+
+.tiptap ul {
+  list-style: disc;
+  margin-left: 1.25rem;
+  padding-left: 0.5rem;
+}
+
+.tiptap ol {
+  list-style: decimal;
+  margin-left: 1.25rem;
+  padding-left: 0.5rem;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid var(--foreground);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: var(--foreground);
+  font-style: italic;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.06),
+    rgba(15, 23, 42, 0.02)
+  );
+}
+
+.tiptap code {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.95em;
+}
+
+.tiptap pre {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  overflow: auto;
+}
+
+.tiptap figure,
+.tiptap-figure {
+  margin: 1.5rem auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(92vw, 1060px);
+  max-width: min(92vw, 1060px);
+  padding: clamp(0.6rem, 1vw, 1rem);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.02));
+}
+
+.tiptap figure img,
+.tiptap-figure img {
+  display: block;
+  margin: 0 auto;
+  border-radius: 1rem;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  max-width: 100%;
+  width: 100%;
+}
+
+.tiptap figcaption {
+  margin-top: 0.6rem;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.tiptap table {
+  width: min(92vw, 1060px);
+  border-collapse: collapse;
+  margin: 1.5rem auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.tiptap thead {
+  background: var(--muted);
+}
+
+.tiptap td,
+.tiptap th {
+  border: 1px solid var(--border);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.tiptap tbody tr:hover td {
+  background: var(--muted);
+}
+
+.floating-toolbar {
+  backdrop-filter: blur(8px);
+}
+
+.tiptap figure img:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.15);
+}
+
+.tiptap blockquote {
+  max-width: min(70ch, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+}
+

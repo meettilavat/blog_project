@@ -1,0 +1,71 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { type PostRecord } from "@/lib/types";
+import { unstable_cache } from "next/cache";
+
+const getPublishedPostsCached = unstable_cache(
+  async () => {
+    try {
+      const supabase = await createSupabaseServerClient();
+      const { data, error } = await supabase
+        .from("posts")
+        .select("id,title,slug,cover_image_url,status,created_at,updated_at")
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Failed to load published posts", error.message);
+      }
+
+      return (data as PostRecord[]) ?? [];
+    } catch (error) {
+      console.warn("Supabase not configured, returning empty posts list.");
+      return [];
+    }
+  },
+  ["published-posts"],
+  { revalidate: 60 }
+);
+
+export async function getPublishedPosts() {
+  return getPublishedPostsCached();
+}
+
+export async function getAllPosts() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load posts", error.message);
+    }
+
+    return (data as PostRecord[]) ?? [];
+  } catch (error) {
+    console.warn("Supabase not configured, returning empty posts list.");
+    return [];
+  }
+}
+
+export async function getPostBySlug(slug: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`Failed to load post for slug ${slug}`, error.message);
+      return null;
+    }
+
+    return (data as PostRecord | null) ?? null;
+  } catch (error) {
+    console.warn("Supabase not configured, returning null for post.");
+    return null;
+  }
+}
