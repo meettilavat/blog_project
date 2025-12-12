@@ -66,6 +66,7 @@ export function RichEditor({ initialContent, onChange }: Props) {
   const [uploadLabel, setUploadLabel] = useState("Image");
   const [isInTable, setIsInTable] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadsEnabled = Boolean(supabase);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -282,7 +283,7 @@ export function RichEditor({ initialContent, onChange }: Props) {
           icon={<ImageIcon className="h-4 w-4" />}
           label={uploadLabel}
           onClick={triggerImageUpload}
-          disabled={uploading}
+          disabled={uploading || !uploadsEnabled}
         />
         <input
           ref={fileInputRef}

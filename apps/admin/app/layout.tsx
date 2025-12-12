@@ -36,12 +36,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const runtimeSupabase = {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  };
+  const runtimeSupabaseJson = JSON.stringify(runtimeSupabase).replace(/</g, "\\u003c");
+
   return (
     <html lang="en" className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}>
       <body
         className="min-h-screen bg-background text-foreground antialiased transition-colors"
         data-typestyle="sans"
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__MEETTILAVAT_SUPABASE__ = ${runtimeSupabaseJson};`
+          }}
+        />
         <a
           href="#content"
           className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:outline-none"
