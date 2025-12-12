@@ -126,10 +126,11 @@ export default function ResumePage() {
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Meet Tilavat</p>
             <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
-              Software engineer & builder focused on clean, dependable interfaces.
+              Software engineer building dependable web products and systems.
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-foreground/70">
-              Computer Engineering graduate crafting full-stack web apps and experimenting with applied ML.
+              I enjoy working end-to-end—from feature development to shipping and operations—with a focus on clarity,
+              reliability, and automation.
             </p>
             <div className="flex flex-wrap gap-2 text-sm text-foreground/70">
               <Badge>Based in Gujarat, India</Badge>
