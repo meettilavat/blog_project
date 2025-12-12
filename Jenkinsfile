@@ -103,6 +103,7 @@ pipeline {
           expression { env.EC2_SSH_KEY_ID?.trim() }
           expression { env.DOCKER_USERNAME?.trim() }
           expression { env.DOCKER_PASSWORD?.trim() }
+          expression { env.CLOUDFLARE_TUNNEL_TOKEN?.trim() }
           expression { env.NEXT_PUBLIC_SUPABASE_URL?.trim() }
           expression { env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() }
         }
@@ -126,25 +127,33 @@ pipeline {
         sshagent(credentials: [env.EC2_SSH_KEY_ID]) {
           sh '''
             set +x
+            cat > meettilavat.env <<EOF
+DOCKER_IMAGE_PREFIX=$DOCKER_IMAGE_PREFIX
+IMAGE_TAG=$IMAGE_TAG
+NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+CLOUDFLARE_TUNNEL_TOKEN=$CLOUDFLARE_TUNNEL_TOKEN
+PUBLIC_PORT=$PUBLIC_PORT
+ADMIN_PORT=$ADMIN_PORT
+EOF
+
             scp -o StrictHostKeyChecking=no docker-compose.ec2.yml $EC2_USER@$EC2_HOST:~/docker-compose.ec2.yml
+            scp -o StrictHostKeyChecking=no meettilavat.env $EC2_USER@$EC2_HOST:~/meettilavat.env
+
+            ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "chmod 600 ~/meettilavat.env"
+
+            if [ -n "$DOCKER_LOGIN_TARGET" ]; then
+              printf '%s' "$DOCKER_PASSWORD" | ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST \
+                "docker login \"$DOCKER_LOGIN_TARGET\" -u \"$DOCKER_USERNAME\" --password-stdin"
+            else
+              printf '%s' "$DOCKER_PASSWORD" | ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST \
+                "docker login -u \"$DOCKER_USERNAME\" --password-stdin"
+            fi
+
             ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
               set -euo pipefail
-              export DOCKER_IMAGE_PREFIX=\\\"$DOCKER_IMAGE_PREFIX\\\"
-              export DOCKER_LOGIN_TARGET=\\\"$DOCKER_LOGIN_TARGET\\\"
-              export IMAGE_TAG=\\\"$IMAGE_TAG\\\"
-              export NEXT_PUBLIC_SUPABASE_URL=\\\"$NEXT_PUBLIC_SUPABASE_URL\\\"
-              export NEXT_PUBLIC_SUPABASE_ANON_KEY=\\\"$NEXT_PUBLIC_SUPABASE_ANON_KEY\\\"
-              export PUBLIC_PORT=\\\"$PUBLIC_PORT\\\"
-              export ADMIN_PORT=\\\"$ADMIN_PORT\\\"
-
-              if [ -n \\\"$DOCKER_LOGIN_TARGET\\\" ]; then
-                echo \\\"$DOCKER_PASSWORD\\\" | docker login \\\"$DOCKER_LOGIN_TARGET\\\" -u \\\"$DOCKER_USERNAME\\\" --password-stdin
-              else
-                echo \\\"$DOCKER_PASSWORD\\\" | docker login -u \\\"$DOCKER_USERNAME\\\" --password-stdin
-              fi
-
-              docker compose -f ~/docker-compose.ec2.yml pull
-              docker compose -f ~/docker-compose.ec2.yml up -d --remove-orphans
+              docker compose --env-file ~/meettilavat.env -f ~/docker-compose.ec2.yml pull
+              docker compose --env-file ~/meettilavat.env -f ~/docker-compose.ec2.yml up -d --remove-orphans
             "
           '''
         }
