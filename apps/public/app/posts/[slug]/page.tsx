@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPostBySlug } from "@/lib/data/posts";
+import { getPublishedPostBySlug, getPublishedPosts } from "@/lib/data/posts";
 import { Badge } from "@/components/ui/badge";
 import {
   formatDate,
@@ -15,16 +15,21 @@ import RichTextViewer from "@/components/rich-text-viewer";
 import TableOfContents from "@/components/table-of-contents";
 import ReadingProgress from "@/components/reading-progress";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
+export async function generateStaticParams() {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ slug: post.slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
-  if (!post || post.status !== "published") return {};
+  const post = await getPublishedPostBySlug(slug);
+  if (!post) return {};
 
   const text = plainTextFromContent(post.content);
   const description =
@@ -53,9 +58,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
 
-  if (!post || post.status !== "published") {
+  if (!post) {
     notFound();
   }
 
@@ -65,16 +70,17 @@ export default async function PostPage({ params }: Props) {
   return (
     <>
       <ReadingProgress offset={68} />
-      <article className="space-y-10">
+        <article className="space-y-10">
         <div className="relative aspect-[16/7] w-full overflow-hidden rounded-[32px] border border-border/80 bg-muted">
           {post.cover_image_url ? (
             isAllowedImageHost(post.cover_image_url) ? (
               <Image
                 src={post.cover_image_url}
                 alt={post.title}
-                fill
+                width={1600}
+                height={700}
                 sizes="(max-width: 1024px) 100vw, 1100px"
-                className="object-cover"
+                className="h-full w-full object-cover"
                 priority
               />
             ) : (
@@ -83,6 +89,8 @@ export default async function PostPage({ params }: Props) {
                 src={post.cover_image_url}
                 alt={post.title}
                 className="h-full w-full object-cover"
+                width={1600}
+                height={700}
               />
             )
           ) : (

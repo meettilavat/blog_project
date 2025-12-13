@@ -139,6 +139,18 @@ export function RichEditor({ initialContent, onChange }: Props) {
         alert("Supabase is not configured. Provide env vars to enable uploads.");
         return;
       }
+
+      let width: number | null = null;
+      let height: number | null = null;
+      try {
+        const bitmap = await createImageBitmap(file);
+        width = bitmap.width;
+        height = bitmap.height;
+        bitmap.close?.();
+      } catch {
+        // ignore
+      }
+
       setUploading(true);
       setUploadLabel("Uploading...");
       setUploadProgress(10);
@@ -147,7 +159,7 @@ export function RichEditor({ initialContent, onChange }: Props) {
       }, 300);
       const path = `inline/${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
       const { data, error } = await supabase.storage.from("blog-images").upload(path, file, {
-        cacheControl: "3600",
+        cacheControl: "31536000",
         upsert: false
       });
       if (error) {
@@ -163,7 +175,7 @@ export function RichEditor({ initialContent, onChange }: Props) {
       editor
         ?.chain()
         .focus()
-        .setImage({ src: publicUrl.publicUrl, alt: file.name, caption } as any)
+        .setImage({ src: publicUrl.publicUrl, alt: file.name, caption, width, height } as any)
         .run();
       setUploading(false);
       setUploadLabel("Image");

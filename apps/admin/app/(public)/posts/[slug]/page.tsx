@@ -40,9 +40,10 @@ export default async function PostPage({ params }: Props) {
               <Image
                 src={post.cover_image_url}
                 alt={post.title}
-                fill
+                width={1600}
+                height={700}
                 sizes="(max-width: 1024px) 100vw, 960px"
-                className="object-cover"
+                className="h-full w-full object-cover"
                 priority
               />
             ) : (
@@ -51,6 +52,8 @@ export default async function PostPage({ params }: Props) {
                 src={post.cover_image_url}
                 alt={post.title}
                 className="h-full w-full object-cover"
+                width={1600}
+                height={700}
               />
             )
           ) : (

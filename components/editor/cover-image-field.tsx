@@ -36,7 +36,7 @@ export function CoverImageField({ value, onChange }: Props) {
     const path = `covers/${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
     const { data, error } = await supabase.storage
       .from("blog-images")
-      .upload(path, file, { cacheControl: "3600", upsert: false });
+      .upload(path, file, { cacheControl: "31536000", upsert: false });
 
     if (error) {
       console.error("Cover upload failed", error.message);

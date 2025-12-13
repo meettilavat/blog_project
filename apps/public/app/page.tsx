@@ -4,7 +4,7 @@ import { getPublishedPosts } from "@/lib/data/posts";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, isSignificantlyUpdated, isAllowedImageHost } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const posts = await getPublishedPosts();
@@ -28,7 +28,8 @@ export default async function HomePage() {
                 <Image
                   src={post.cover_image_url}
                   alt={post.title}
-                  fill
+                  width={1200}
+                  height={900}
                   sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                 />
@@ -38,6 +39,8 @@ export default async function HomePage() {
                   src={post.cover_image_url}
                   alt={post.title}
                   className="h-full w-full object-cover"
+                  width={1200}
+                  height={900}
                 />
               )
             ) : (

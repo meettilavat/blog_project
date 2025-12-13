@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicServerClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import { isMissingColumnError } from "@/lib/supabase/errors";
 import { type PostRecord } from "@/lib/types";
 import { unstable_cache } from "next/cache";
@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 const getPublishedPostsCached = unstable_cache(
   async () => {
     try {
-      const supabase = await createSupabaseServerClient();
+      const supabase = createSupabasePublicServerClient();
       const selectWithExcerpt = "id,title,slug,excerpt,cover_image_url,status,created_at,updated_at";
       const selectBase = "id,title,slug,cover_image_url,status,created_at,updated_at";
 
@@ -38,11 +38,41 @@ const getPublishedPostsCached = unstable_cache(
     }
   },
   ["published-posts"],
-  { revalidate: 60 }
+  { revalidate: 3600, tags: ["posts"] }
 );
 
 export async function getPublishedPosts() {
   return getPublishedPostsCached();
+}
+
+const getPublishedPostBySlugCached = unstable_cache(
+  async (slug: string) => {
+    try {
+      const supabase = createSupabasePublicServerClient();
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("slug", slug)
+        .eq("status", "published")
+        .maybeSingle();
+
+      if (error) {
+        console.error(`Failed to load published post for slug ${slug}`, error.message);
+        return null;
+      }
+
+      return (data as PostRecord | null) ?? null;
+    } catch {
+      console.warn("Supabase not configured, returning null for post.");
+      return null;
+    }
+  },
+  ["published-post-by-slug"],
+  { revalidate: 3600, tags: ["posts"] }
+);
+
+export async function getPublishedPostBySlug(slug: string) {
+  return getPublishedPostBySlugCached(slug);
 }
 
 export async function getAllPosts() {
