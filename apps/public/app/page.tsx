@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { getPublishedPosts } from "@/lib/data/posts";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, isSignificantlyUpdated, isAllowedImageHost } from "@/lib/utils";
@@ -17,7 +16,7 @@ export default async function HomePage() {
         </div>
       )}
       {posts.map((post) => (
-        <Link
+        <a
           key={post.id}
           href={`/posts/${post.slug}`}
           className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm transition hover:-translate-y-[2px] hover:shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
@@ -74,7 +73,7 @@ export default async function HomePage() {
               </span>
             </div>
           </div>
-        </Link>
+        </a>
       ))}
     </section>
   );

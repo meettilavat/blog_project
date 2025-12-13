@@ -1,57 +1,56 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-
 type Props = {
   offset?: number;
 };
 
-export function ReadingProgress({ offset = 0 }: Props) {
-  const [progress, setProgress] = useState(0);
-  const target = useRef(0);
-  const raf = useRef<number | null>(null);
+const script = `
+(() => {
+  try {
+    const root = document.documentElement;
+    const container = document.querySelector('[data-reading-progress]');
+    const bar = container?.querySelector('[data-reading-progress-bar]');
+    if (!container || !bar) return;
 
-  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const scrollTop = window.scrollY || 0;
+      const docHeight = root.scrollHeight - window.innerHeight;
+      const ratio = docHeight > 0 ? Math.min(1, Math.max(0, scrollTop / docHeight)) : 0;
+      bar.style.transform = 'scaleX(' + ratio + ')';
+    };
+
     const onScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const percent = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
-      target.current = percent;
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
-  useEffect(() => {
-    const animate = () => {
-      setProgress((prev) => {
-        const next = target.current;
-        const delta = next - prev;
-        const step = delta * 0.15;
-        if (Math.abs(delta) < 0.2) return next;
-        return prev + step;
-      });
-      raf.current = requestAnimationFrame(animate);
-    };
-    raf.current = requestAnimationFrame(animate);
-    return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
-  }, []);
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  } catch {
+    // ignore
+  }
+})();
+`;
 
+export function ReadingProgress({ offset = 0 }: Props) {
   return (
-    <div
-      className="fixed left-0 right-0 z-30 h-1"
-      style={{ top: offset }}
-      aria-hidden
-    >
+    <>
       <div
-        className="h-full origin-left rounded-r-full bg-border/80 will-change-transform dark:bg-border/70"
-        style={{ transform: `scaleX(${Math.min(1, Math.max(0, progress / 100))})` }}
-      />
-    </div>
+        className="fixed left-0 right-0 z-30 h-1"
+        style={{ top: offset }}
+        aria-hidden
+        data-reading-progress
+      >
+        <div
+          className="h-full origin-left rounded-r-full bg-border/80 will-change-transform dark:bg-border/70"
+          style={{ transform: "scaleX(0)" }}
+          data-reading-progress-bar
+        />
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: script }} />
+    </>
   );
 }
 
 export default ReadingProgress;
+

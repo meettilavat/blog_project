@@ -5,6 +5,37 @@ import Header from "@/components/header";
 import { cn } from "@/lib/utils";
 import TypographyToggle from "@/components/typography-toggle";
 
+const themeScript = `
+(() => {
+  try {
+    const root = document.documentElement;
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    root.classList.toggle('dark', theme === 'dark');
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      const button = target instanceof Element ? target.closest('[data-theme-toggle]') : null;
+      if (!button) return;
+      const next = root.classList.contains('dark') ? 'light' : 'dark';
+      root.classList.toggle('dark', next === 'dark');
+      root.dataset.theme = next;
+      root.style.colorScheme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        // ignore
+      }
+    });
+  } catch {
+    // ignore
+  }
+})();
+`;
+
 const grotesk = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
@@ -43,7 +74,15 @@ export default function RootLayout({
   const runtimeSupabaseJson = JSON.stringify(runtimeSupabase).replace(/</g, "\\u003c");
 
   return (
-    <html lang="en" className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}>
+    <html
+      lang="en"
+      className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}
+      suppressHydrationWarning
+    >
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body
         className="min-h-screen bg-background text-foreground antialiased transition-colors"
         data-typestyle="sans"
