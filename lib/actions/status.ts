@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { type PostStatus } from "@/lib/types";
 
@@ -16,5 +16,5 @@ export async function updateStatusAction(id: string, status: PostStatus) {
 
   revalidatePath("/dashboard");
   revalidatePath(`/posts`);
-  revalidateTag("posts");
+  updateTag("posts");
 }

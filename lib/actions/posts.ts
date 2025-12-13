@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isMissingColumnError } from "@/lib/supabase/errors";
@@ -63,7 +63,7 @@ export async function savePostAction(payload: SavePayload) {
   revalidatePath("/dashboard");
   revalidatePath(`/posts/${slug}`);
   revalidatePath(`/editor/${slug}`);
-  revalidateTag("posts");
+  updateTag("posts");
 
   return { data, slug };
 }
@@ -88,6 +88,6 @@ export async function deletePostAction(id: string, slug: string): Promise<void> 
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath(`/posts/${slug}`);
-  revalidateTag("posts");
+  updateTag("posts");
   redirect("/dashboard");
 }
