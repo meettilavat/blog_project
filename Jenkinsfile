@@ -50,8 +50,18 @@ pipeline {
           env.IMAGE_TAG = "${env.BUILD_NUMBER}-${sha}"
         }
         sh '''
-          docker build --build-arg APP=admin -t meettilavat-admin:${IMAGE_TAG} .
-          docker build --build-arg APP=public -t meettilavat-public:${IMAGE_TAG} .
+          set +x
+          docker build \
+            --build-arg APP=admin \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            -t meettilavat-admin:${IMAGE_TAG} .
+
+          docker build \
+            --build-arg APP=public \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            -t meettilavat-public:${IMAGE_TAG} .
         '''
       }
     }

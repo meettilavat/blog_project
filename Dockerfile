@@ -8,10 +8,14 @@ RUN npm ci
 FROM node:20-alpine AS builder
 WORKDIR /app
 ARG APP=admin
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN if [ "$APP" = "public" ]; then npm run build:public; else npm run build; fi
+RUN NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  if [ "$APP" = "public" ]; then npm run build:public; else npm run build; fi
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -32,4 +36,3 @@ RUN npm prune --omit=dev
 
 EXPOSE 3000
 CMD ["sh", "-c", "node_modules/.bin/next start apps/$APP -p 3000"]
-

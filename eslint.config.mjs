@@ -4,6 +4,13 @@ const config = [
   {
     ignores: ["node_modules", ".next", "apps/*/.next", "dist"]
   },
+  {
+    settings: {
+      next: {
+        rootDir: ["apps/admin", "apps/public"]
+      }
+    }
+  },
   ...next
 ];
 
