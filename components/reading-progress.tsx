@@ -47,8 +47,8 @@ export function ReadingProgress({ offset = 0 }: Props) {
       aria-hidden
     >
       <div
-        className="h-full rounded-r-full bg-border/80 transition-[width] duration-300 dark:bg-border/70"
-        style={{ width: `${progress}%` }}
+        className="h-full origin-left rounded-r-full bg-border/80 will-change-transform dark:bg-border/70"
+        style={{ transform: `scaleX(${Math.min(1, Math.max(0, progress / 100))})` }}
       />
     </div>
   );

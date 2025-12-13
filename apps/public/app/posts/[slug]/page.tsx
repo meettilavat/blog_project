@@ -82,6 +82,7 @@ export default async function PostPage({ params }: Props) {
                 sizes="(max-width: 1024px) 100vw, 1100px"
                 className="h-full w-full object-cover"
                 priority
+                fetchPriority="high"
               />
             ) : (
               /* eslint-disable-next-line @next/next/no-img-element */

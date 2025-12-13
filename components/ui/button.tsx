@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium tracking-tight transition-all duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60 active:translate-y-[1px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium tracking-tight transition-[transform,box-shadow] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60 active:translate-y-[1px]",
   {
     variants: {
       variant: {
@@ -43,7 +43,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        <span className="pointer-events-none absolute inset-0 scale-95 rounded-full bg-white/10 opacity-0 blur transition duration-300 group-hover:opacity-100 group-active:opacity-70" />
+        <span className="pointer-events-none absolute inset-0 scale-95 rounded-full bg-white/10 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100 group-active:opacity-70" />
         {isLoading ? <span className="animate-pulse">···</span> : children}
       </button>
     );
