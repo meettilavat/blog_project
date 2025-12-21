@@ -1,12 +1,19 @@
-import { Button } from "@/components/ui/button";
+"use client";
 
-export function ThemeToggle() {
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type ThemeToggleProps = {
+  className?: string;
+};
+
+export function ThemeToggle({ className }: ThemeToggleProps) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="sm"
-      className="rounded-full border border-border/70 px-3"
+      className={cn("rounded-full border border-border/70 px-3", className)}
       data-theme-toggle
       aria-label="Toggle theme"
     >
@@ -53,4 +60,3 @@ export function ThemeToggle() {
 }
 
 export default ThemeToggle;
-

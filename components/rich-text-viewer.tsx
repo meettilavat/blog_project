@@ -8,6 +8,9 @@ type Props = {
   content: JSONContent | null;
 };
 
+const FALLBACK_IMAGE_WIDTH = 1200;
+const FALLBACK_IMAGE_HEIGHT = 800;
+
 function parsePositiveInt(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) return Math.floor(value);
   if (typeof value === "string") {
@@ -22,6 +25,16 @@ function textFromNode(node: any): string {
   if (node.type === "text" && typeof node.text === "string") return node.text;
   if (Array.isArray(node.content)) return node.content.map(textFromNode).join("");
   return "";
+}
+
+function isRemoteHttpUrl(src: string) {
+  return src.startsWith("http://") || src.startsWith("https://");
+}
+
+function isOptimizableImage(src: string) {
+  if (src.startsWith("/")) return true;
+  if (!isRemoteHttpUrl(src)) return false;
+  return isAllowedImageHost(src);
 }
 
 async function getRemoteImageDimensions(url: string): Promise<ImageDimensions | null> {
@@ -218,12 +231,6 @@ function isRenderableNode(value: any): value is { type: string } {
   return Boolean(value) && typeof value === "object" && typeof value.type === "string";
 }
 
-function shouldUseNextImage(src: string) {
-  if (!isAllowedImageHost(src)) return false;
-  if (src.startsWith("data:image/")) return false;
-  return true;
-}
-
 export async function RichTextViewer({ content }: Props) {
   const safeContent = sanitizeTiptapContent(
     content ?? {
@@ -237,7 +244,7 @@ export async function RichTextViewer({ content }: Props) {
     if (!node || typeof node !== "object") return;
     if (node.type === "image") {
       const src = typeof node.attrs?.src === "string" ? node.attrs.src : null;
-      if (src && shouldUseNextImage(src)) {
+      if (src && isAllowedImageHost(src)) {
         const width = parsePositiveInt(node.attrs?.width);
         const height = parsePositiveInt(node.attrs?.height);
         if (!width || !height) uniqueImageSrcs.add(src);
@@ -382,32 +389,27 @@ export async function RichTextViewer({ content }: Props) {
         const caption =
           typeof node.attrs?.caption === "string" ? node.attrs.caption.trim() : "";
 
-        const width = parsePositiveInt(node.attrs?.width) ?? imageDimensionsBySrc.get(src)?.width ?? null;
+        const width =
+          parsePositiveInt(node.attrs?.width) ??
+          imageDimensionsBySrc.get(src)?.width ??
+          FALLBACK_IMAGE_WIDTH;
         const height =
-          parsePositiveInt(node.attrs?.height) ?? imageDimensionsBySrc.get(src)?.height ?? null;
-        const hasDimensions = Boolean(width && height);
+          parsePositiveInt(node.attrs?.height) ??
+          imageDimensionsBySrc.get(src)?.height ??
+          FALLBACK_IMAGE_HEIGHT;
+        const unoptimized = !isOptimizableImage(src);
 
         return (
           <figure key={key} className="tiptap-figure">
-            {shouldUseNextImage(src) && hasDimensions ? (
-              <Image
-                src={src}
-                alt={alt || caption || "Embedded image"}
-                width={width as number}
-                height={height as number}
-                sizes="(max-width: 768px) 92vw, 1060px"
-                className="h-auto w-full"
-              />
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={src}
-                alt={alt || caption || "Embedded image"}
-                loading="lazy"
-                decoding="async"
-                className="h-auto w-full"
-              />
-            )}
+            <Image
+              src={src}
+              alt={alt || caption || "Embedded image"}
+              width={width}
+              height={height}
+              sizes="(max-width: 768px) 92vw, 1060px"
+              className="h-auto w-full"
+              unoptimized={unoptimized}
+            />
             {caption ? <figcaption>{caption}</figcaption> : null}
           </figure>
         );

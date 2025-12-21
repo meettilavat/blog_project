@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getPublishedPosts } from "@/lib/data/posts";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, isSignificantlyUpdated, isAllowedImageHost } from "@/lib/utils";
@@ -16,32 +17,21 @@ export default async function HomePage() {
         </div>
       )}
       {posts.map((post) => (
-        <a
+        <Link
           key={post.id}
           href={`/posts/${post.slug}`}
           className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm transition hover:-translate-y-[2px] hover:shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
         >
           <div className="relative aspect-[4/3] overflow-hidden rounded-t-3xl bg-muted">
             {post.cover_image_url ? (
-              isAllowedImageHost(post.cover_image_url) ? (
-                <Image
-                  src={post.cover_image_url}
-                  alt={post.title}
-                  width={1200}
-                  height={900}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-                />
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={post.cover_image_url}
-                  alt={post.title}
-                  className="h-full w-full object-cover"
-                  width={1200}
-                  height={900}
-                />
-              )
+              <Image
+                src={post.cover_image_url}
+                alt={post.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                unoptimized={!isAllowedImageHost(post.cover_image_url) && !post.cover_image_url.startsWith("/")}
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.2em] text-foreground/50">
                 Cover pending
@@ -73,7 +63,7 @@ export default async function HomePage() {
               </span>
             </div>
           </div>
-        </a>
+        </Link>
       ))}
     </section>
   );

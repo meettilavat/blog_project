@@ -28,21 +28,6 @@ pipeline {
       }
     }
 
-    stage("Build Apps") {
-      parallel {
-        stage("Build Admin") {
-          steps {
-            sh "npm run build"
-          }
-        }
-        stage("Build Public") {
-          steps {
-            sh "npm run build:public"
-          }
-        }
-      }
-    }
-
     stage("Build Docker Images") {
       steps {
         script {

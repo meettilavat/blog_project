@@ -16,6 +16,7 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN if [ "$APP" = "public" ]; then npm run build:public; else npm run build; fi
+RUN mkdir -p /app/apps/${APP}/public
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -24,15 +25,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV APP=$APP
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
-COPY --from=builder /app/apps ./apps
-COPY --from=builder /app/components ./components
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/styles ./styles
-
-RUN npm prune --omit=dev
+COPY --from=builder /app/apps/${APP}/.next/standalone ./
+COPY --from=builder /app/apps/${APP}/.next/static ./apps/${APP}/.next/static
+COPY --from=builder /app/apps/${APP}/public ./apps/${APP}/public
 
 EXPOSE 3000
-CMD ["sh", "-c", "node_modules/.bin/next start apps/$APP -p 3000"]
+CMD ["sh", "-c", "node apps/$APP/server.js"]

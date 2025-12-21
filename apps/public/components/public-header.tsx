@@ -1,33 +1,51 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 import { Github, Linkedin } from "lucide-react";
 
 export default function PublicHeader() {
+  const pathname = usePathname();
+  const isReadActive = pathname === "/" || pathname.startsWith("/posts");
+  const isResumeActive = pathname === "/resume";
+
+  const navLinkClass = (isActive: boolean) =>
+    cn(
+      "group relative overflow-hidden rounded-full px-3 py-1 transition-transform hover:translate-y-[-1px] active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+      isActive && "text-foreground font-semibold"
+    );
+  const navHighlightClass = (isActive: boolean) =>
+    cn(
+      "absolute inset-0 scale-0 rounded-full bg-foreground/15 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:scale-100 group-hover:opacity-100",
+      isActive && "scale-100 opacity-100"
+    );
+
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-card/80 backdrop-blur-xl dark:bg-card/70">
       <div className="container flex items-center justify-between py-4">
         <div className="flex items-center gap-3">
-          <a href="/" className="text-lg font-semibold tracking-tight">
+          <Link href="/" className="text-lg font-semibold tracking-tight">
             meettilavat.com
-          </a>
+          </Link>
           <div className="h-[18px] w-[1px] bg-border" />
           <nav className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-foreground/80">
-            <a
-              href="/"
-              className="group relative overflow-hidden rounded-full px-3 py-1 transition-transform hover:translate-y-[-1px] active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-            >
-              <span className="absolute inset-0 scale-0 rounded-full bg-foreground/15 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:scale-100 group-hover:opacity-100" />
+            <Link href="/" className={navLinkClass(isReadActive)} aria-current={isReadActive ? "page" : undefined}>
+              <span className={navHighlightClass(isReadActive)} />
               <span className="relative z-10">Read</span>
-            </a>
-            <a
+            </Link>
+            <Link
               href="/resume"
-              className="group relative overflow-hidden rounded-full px-3 py-1 transition-transform hover:translate-y-[-1px] active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              className={navLinkClass(isResumeActive)}
+              aria-current={isResumeActive ? "page" : undefined}
             >
-              <span className="absolute inset-0 scale-0 rounded-full bg-foreground/15 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:scale-100 group-hover:opacity-100" />
+              <span className={navHighlightClass(isResumeActive)} />
               <span className="relative z-10">Resume</span>
-            </a>
+            </Link>
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <div className="flex h-9 items-center overflow-hidden rounded-full border border-border/70 bg-foreground/10 shadow-soft">
             <a
               href="https://github.com/meettilavat"
@@ -48,8 +66,9 @@ export default function PublicHeader() {
             >
               <Linkedin className="h-5 w-5" aria-hidden="true" />
             </a>
+            <span className="h-5 w-px bg-border/70" aria-hidden="true" />
+            <ThemeToggle className="h-full rounded-none border-0 bg-transparent px-3 hover:bg-foreground/10 dark:hover:bg-white/10" />
           </div>
-          <ThemeToggle />
         </div>
       </div>
     </header>

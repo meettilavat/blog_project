@@ -70,30 +70,19 @@ export default async function PostPage({ params }: Props) {
   return (
     <>
       <ReadingProgress offset={68} />
-        <article className="space-y-10">
+      <article className="space-y-10">
         <div className="relative aspect-[16/7] w-full overflow-hidden rounded-[32px] border border-border/80 bg-muted">
           {post.cover_image_url ? (
-            isAllowedImageHost(post.cover_image_url) ? (
-              <Image
-                src={post.cover_image_url}
-                alt={post.title}
-                width={1600}
-                height={700}
-                sizes="(max-width: 1024px) 100vw, 1100px"
-                className="h-full w-full object-cover"
-                priority
-                fetchPriority="high"
-              />
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={post.cover_image_url}
-                alt={post.title}
-                className="h-full w-full object-cover"
-                width={1600}
-                height={700}
-              />
-            )
+            <Image
+              src={post.cover_image_url}
+              alt={post.title}
+              fill
+              sizes="(max-width: 1024px) 100vw, 1100px"
+              className="h-full w-full object-cover"
+              priority
+              fetchPriority="high"
+              unoptimized={!isAllowedImageHost(post.cover_image_url) && !post.cover_image_url.startsWith("/")}
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.2em] text-foreground/50">
               No cover image
