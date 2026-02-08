@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/"
       }
     ],
-    sitemap: "https://meettilavat.com/sitemap.xml"
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com"}/sitemap.xml`
   };
 }
 

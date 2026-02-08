@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const text = plainTextFromContent(post.content);
   const description =
     post.excerpt?.trim() || (text ? text.slice(0, 160) : "Read the latest post from Meet Tilavat.");
-  const url = `https://meettilavat.com/posts/${slug}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com"}/posts/${slug}`;
 
   return {
     title: post.title,

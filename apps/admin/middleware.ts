@@ -15,7 +15,7 @@ function getSupabaseCookieName() {
   }
 }
 
-export default function proxy(req: NextRequest) {
+export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (

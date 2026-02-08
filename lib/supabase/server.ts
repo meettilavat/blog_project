@@ -1,24 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-import path from "path";
-import env from "@next/env";
 import { cookies } from "next/headers";
 
-function ensureEnv() {
-  const hasEnv =
-    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  if (hasEnv) return;
-
-  const { loadEnvConfig } = env as { loadEnvConfig: (dir: string) => void };
-  // Try current working directory and a couple parent levels (public/admin apps vs root).
-  const cwd = process.cwd();
-  loadEnvConfig(cwd);
-  loadEnvConfig(path.resolve(cwd, ".."));
-  loadEnvConfig(path.resolve(cwd, "../.."));
-}
-
 function getSupabaseEnv() {
-  ensureEnv();
   return {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

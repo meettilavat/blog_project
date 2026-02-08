@@ -3,7 +3,7 @@ import { getPublishedPosts } from "@/lib/data/posts";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPublishedPosts();
-  const baseUrl = "https://meettilavat.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com";
 
   const entries: MetadataRoute.Sitemap = [
     {
