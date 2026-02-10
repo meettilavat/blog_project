@@ -10,11 +10,10 @@ export default function LoginPage() {
           Continue to your editorial dashboard.
         </p>
       </div>
-      <AuthForm mode="login" />
+      <AuthForm />
       <p className="text-sm text-foreground/60">
         Access is limited to existing admin accounts. Sign-up is disabled.
       </p>
     </div>
   );
 }
-

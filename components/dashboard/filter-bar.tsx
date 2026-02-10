@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type PostRecord } from "@/lib/types";
+import { type PostListItem } from "@/lib/types";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -13,7 +13,7 @@ import { updateStatusAction } from "@/lib/actions/status";
 import { Input } from "@/components/ui/input";
 
 type Props = {
-  posts: PostRecord[];
+  posts: PostListItem[];
 };
 
 const filters = [

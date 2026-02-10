@@ -21,11 +21,3 @@ export function Card({ children, className }: CardProps) {
 export function CardContent({ children, className }: CardProps) {
   return <div className={cn("p-5", className)}>{children}</div>;
 }
-
-export function CardHeader({ children, className }: CardProps) {
-  return (
-    <div className={cn("flex items-start justify-between gap-3 p-5", className)}>
-      {children}
-    </div>
-  );
-}

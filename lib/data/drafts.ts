@@ -1,11 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { type PostRecord } from "@/lib/types";
+import { type DraftSummary } from "@/lib/types";
 
 export async function getDraftsForUser(userId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("id,title,slug,updated_at")
     .eq("status", "draft")
     .eq("author_id", userId)
     .order("updated_at", { ascending: false })
@@ -15,5 +15,5 @@ export async function getDraftsForUser(userId: string) {
     console.error("Failed to load drafts", error.message);
   }
 
-  return (data as PostRecord[]) ?? [];
+  return (data as DraftSummary[]) ?? [];
 }

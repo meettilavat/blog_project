@@ -3,7 +3,6 @@ import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
   content: [
-    "./app/**/*.{ts,tsx}",
     "./apps/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./lib/**/*.{ts,tsx}"

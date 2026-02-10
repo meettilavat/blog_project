@@ -1,9 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import EditorForm from "@/components/editor/editor-form";
 import { getPostBySlug } from "@/lib/data/posts";
 import { getDraftsForUser } from "@/lib/data/drafts";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -18,13 +17,14 @@ export default async function EditPostPage({ params }: Props) {
     redirect(`/login?redirectedFrom=/editor/${slug}`);
   }
 
-  const post = await getPostBySlug(slug);
+  const [post, drafts] = await Promise.all([
+    getPostBySlug(slug),
+    getDraftsForUser(user.id)
+  ]);
+
   if (!post) {
     notFound();
   }
 
-  const drafts = user ? await getDraftsForUser(user.id) : [];
-
   return <EditorForm initialPost={post} drafts={drafts} />;
 }
-

@@ -1,28 +1,37 @@
 import type { Metadata } from "next";
 import "../../../styles/globals.css";
-import { Space_Grotesk, Literata, IBM_Plex_Mono } from "next/font/google";
+import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import PublicHeader from "../components/public-header";
+
+const LIGHT_THEME_COLOR = "#f6f2ea";
+const DARK_THEME_COLOR = "#15120f";
 
 const themeScript = `
 (() => {
   try {
     const root = document.documentElement;
+    const THEME_COLORS = { light: '${LIGHT_THEME_COLOR}', dark: '${DARK_THEME_COLOR}' };
+    const applyTheme = (theme) => {
+      root.classList.toggle('dark', theme === 'dark');
+      root.dataset.theme = theme;
+      root.style.colorScheme = theme;
+      const meta = document.querySelector('meta[name="theme-color"][data-dynamic-theme]');
+      if (meta) {
+        meta.setAttribute('content', THEME_COLORS[theme] || THEME_COLORS.light);
+      }
+    };
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = stored || (prefersDark ? 'dark' : 'light');
-    root.classList.toggle('dark', theme === 'dark');
-    root.dataset.theme = theme;
-    root.style.colorScheme = theme;
+    applyTheme(theme);
 
     document.addEventListener('click', (event) => {
       const target = event.target;
       const button = target instanceof Element ? target.closest('[data-theme-toggle]') : null;
       if (!button) return;
       const next = root.classList.contains('dark') ? 'light' : 'dark';
-      root.classList.toggle('dark', next === 'dark');
-      root.dataset.theme = next;
-      root.style.colorScheme = next;
+      applyTheme(next);
       try {
         localStorage.setItem('theme', next);
       } catch {
@@ -35,16 +44,15 @@ const themeScript = `
 })();
 `;
 
-const grotesk = Space_Grotesk({
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-grotesk"
 });
 
-const newsreader = Literata({
+const fraunces = Fraunces({
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "600", "700"],
   variable: "--font-serif"
 });
 
@@ -87,17 +95,33 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}
+      data-app="public"
+      className={cn(sourceSans.variable, fraunces.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <head>
         <meta name="color-scheme" content="light dark" />
+        <meta
+          name="theme-color"
+          data-dynamic-theme
+          content={LIGHT_THEME_COLOR}
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content={LIGHT_THEME_COLOR}
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content={DARK_THEME_COLOR}
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased transition-colors">
         <a
           href="#content"
-          className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:outline-none"
+          className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
         >
           Skip to content
         </a>

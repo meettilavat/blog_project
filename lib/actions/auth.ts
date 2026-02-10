@@ -32,13 +32,6 @@ export async function signInAction(
   redirect("/dashboard");
 }
 
-export async function signUpAction(
-  _prevState: AuthState,
-  formData: FormData
-): Promise<AuthState> {
-  return { error: "Sign-up is disabled. Contact the admin to provision access." };
-}
-
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient(true);
   await supabase.auth.signOut();
