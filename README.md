@@ -1,53 +1,71 @@
-# MeetTilavat.com — Blog, Portfolio, Resume
+# MeetTilavat.com - Blog, Portfolio, Resume
 
-Live site: https://meettilavat.com/
+Live public site: https://meettilavat.com/
 
-This repo powers my personal website. It’s split into a read-only public app and a private admin app for writing/publishing posts, both backed by a single Supabase project.
+## Status
+- Deployment is live and healthy (updated after post-merge rollout on February 10, 2026).
+- Public app is internet-facing.
+- Admin app is intended to stay private behind access controls.
 
-## Apps
-- `apps/public` — public site (no auth UI/routes; reads `published` posts only).
-- `apps/admin` — admin/editor/dashboard (Supabase auth, publishing, image uploads).
+## Overview
+This repo powers a dual-app Next.js setup backed by one Supabase project:
+- `apps/public`: read-only public website for published posts and resume.
+- `apps/admin`: private editor/dashboard for writing, publishing, and managing posts.
 
-## Tech stack
+## Tech Stack
 - Next.js (App Router) + React + TypeScript
 - Tailwind CSS
 - Supabase (Postgres, Auth, Storage)
 - Tiptap editor
 
-## Features
-- Per-post cover images + inline images (Supabase Storage).
-- Rich-text posts with tables and links.
-- Optional post description (“excerpt”) shown on the homepage + used for previews.
-- Resume page styled to match the site.
+## Repository Layout
+- `apps/public/app/*` - public routes (`/`, `/posts/[slug]`, `/resume`, `sitemap`, `robots`)
+- `apps/public/components/*` - public-specific UI (header)
+- `apps/admin/app/*` - admin routes (`/dashboard`, `/editor/*`, `/login`)
+- `apps/admin/middleware.ts` - admin route gating middleware
+- `components/*` - shared UI/components used by both apps
+- `lib/*` - shared data access, actions, Supabase clients, utilities
+- `styles/globals.css` - global styles/tokens
 
-## Local development
-1) Install:
+## Features
+- Rich text authoring with headings, links, lists, quotes, tables, and images.
+- Cover image + inline image support with Supabase Storage uploads.
+- Draft/published workflow from admin dashboard.
+- Public SSG/ISR post pages with sitemap + robots support.
+- Resume page shared across public and admin apps.
+
+## Local Development
+### 1. Install dependencies
 ```bash
 npm install
 ```
 
-2) Create `.env.local` in the repo root:
+### 2. Configure environment
+Create `.env.local` at repo root:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-3) Run:
+### 3. Run apps
 ```bash
-# Public app
-npm run dev:public
-
 # Admin app
 npm run dev
+
+# Public app
+npm run dev:public
 ```
 
-Notes:
-- The post listing is cached and revalidates periodically, so newly published posts may appear after a short delay.
+## Validation Commands
+```bash
+npm run lint
+npm run build
+npm run build:public
+```
 
-## Supabase setup
-
+## Supabase Setup
 ### Posts table + RLS
-Run in the Supabase SQL editor:
+Run in Supabase SQL editor:
 ```sql
 create table public.posts (
   id uuid primary key default gen_random_uuid(),
@@ -91,8 +109,14 @@ create policy "authors manage own posts"
   for delete using (auth.uid() = author_id);
 ```
 
+### Legacy schema note
+If your `posts` table was created before `excerpt` existed, run:
+```sql
+alter table public.posts add column if not exists excerpt text;
+```
+
 ### Storage (images)
-Create a bucket named `blog-images` with public read, and allow authenticated uploads:
+Create a bucket named `blog-images` with public read and authenticated write permissions:
 ```sql
 insert into storage.buckets (id, name, public)
 values ('blog-images', 'blog-images', true)
@@ -111,7 +135,20 @@ create policy "owners can delete their uploads"
   using (bucket_id = 'blog-images' and auth.uid() = owner);
 ```
 
-## Security notes
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` is a publishable key, but your **Supabase service role key must never be committed or used in the client**.
-- Keep RLS enabled; the public app relies on it to read only `published` posts.
-- Treat the admin app as private (deploy behind access controls).
+## Auth and Access Behavior
+- Admin middleware allows public paths (`/login`, `/signup`) and protects everything else.
+- `/signup` currently redirects to `/login`.
+- Server action `signUpAction` is disabled and returns an access error message.
+
+## Deployment Notes
+- Docker builds support both apps via `APP=admin|public` build arg.
+- Jenkins pipeline handles linting, image build/push, and EC2 deploy.
+- Production compose setup uses:
+  - `docker-compose.ec2.yml`
+  - Cloudflare tunnel (`cloudflared`) for public ingress.
+
+## Security Notes
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` is a publishable key.
+- Never commit or expose Supabase service role keys.
+- Keep RLS enabled; public read access relies on `status = 'published'` policy.
+- Keep admin app behind access controls in production.
