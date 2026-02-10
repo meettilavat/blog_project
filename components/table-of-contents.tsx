@@ -82,36 +82,55 @@ export function TableOfContents({
   if (!headings.length) return null;
 
   const list = (
-    <ul className="space-y-2 text-sm leading-snug text-foreground/70">
-      {headings.map((heading) => (
-        <li key={heading.id} className="pl-2" style={{ marginLeft: (heading.level - 1) * 10 }}>
-          <a
-            href={`#${heading.id}`}
-            aria-current={trackActive && heading.id === activeId ? "location" : undefined}
-            className={cn(
-              "block rounded-lg px-2 py-1 transition-[color,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
-              trackActive && heading.id === activeId
-                ? "bg-muted text-foreground"
-                : "hover:text-foreground"
-            )}
+    <ul className="relative space-y-1 text-sm leading-snug text-foreground/65">
+      {/* Vertical track line */}
+      <span
+        className="absolute left-0 top-0 h-full w-px bg-border/60"
+        aria-hidden="true"
+      />
+      {headings.map((heading) => {
+        const isActive = trackActive && heading.id === activeId;
+        return (
+          <li
+            key={heading.id}
+            style={{ paddingLeft: `${(heading.level - 1) * 10 + 12}px` }}
+            className="relative"
           >
-            {heading.text}
-          </a>
-        </li>
-      ))}
+            {/* Active indicator dot */}
+            {isActive && (
+              <span
+                className="absolute left-[-3px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-accent transition-[opacity] duration-200"
+                aria-hidden="true"
+              />
+            )}
+            <a
+              href={`#${heading.id}`}
+              aria-current={isActive ? "location" : undefined}
+              className={cn(
+                "block rounded-md px-2 py-1.5 transition-[color,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
+                isActive
+                  ? "bg-accent/10 font-medium text-foreground"
+                  : "hover:text-foreground"
+              )}
+            >
+              {heading.text}
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 
   return (
     <>
-      <details className="mb-6 rounded-2xl border border-border/70 bg-card/80 p-4 md:hidden">
-        <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-foreground/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
+      <details className="mb-6 rounded-2xl border border-border/70 bg-card/80 md:hidden">
+        <summary className="cursor-pointer rounded-2xl px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-foreground/60 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
           On this page
         </summary>
-        <div className="mt-3">{list}</div>
+        <div className="border-t border-border/50 px-4 pb-4 pt-3">{list}</div>
       </details>
       <aside className="hidden w-60 flex-shrink-0 md:sticky md:block" style={{ top: offsetTop }}>
-        <p className="mb-3 text-xs uppercase tracking-[0.3em] text-foreground/60">
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3em] text-foreground/50">
           On this page
         </p>
         {list}

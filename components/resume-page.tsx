@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
+import { RevealSection } from "@/components/motion/reveal-section";
 
 type Experience = {
   role: string;
@@ -124,6 +125,7 @@ function PillBadge({ children }: { children: React.ReactNode }) {
 export default function ResumePage() {
   return (
     <div className="resume-sheet mx-auto max-w-[76rem] space-y-8 sm:space-y-10">
+      <RevealSection>
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-6 shadow-soft sm:p-8 lg:p-10">
         <div
           aria-hidden="true"
@@ -218,10 +220,12 @@ export default function ResumePage() {
           </aside>
         </div>
       </section>
+      </RevealSection>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <RevealSection>
+      <section className="grid gap-6 lg:grid-cols-2" role="region" aria-labelledby="resume-experience">
         <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
-          <SectionHeading title="Experience" subtitle="Hands-on product delivery and cross-functional execution." />
+          <SectionHeading title="Experience" subtitle="Hands-on product delivery and cross-functional execution." id="resume-experience" />
           <div className="space-y-6">
             {experiences.map((exp) => (
               <article key={exp.company} className="relative space-y-2 pl-5">
@@ -241,12 +245,12 @@ export default function ResumePage() {
         </div>
 
         <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
-          <SectionHeading title="Education" subtitle="Core academics with strong engineering outcomes." />
+          <SectionHeading title="Education" subtitle="Core academics with strong engineering outcomes." id="resume-education" />
           <div className="space-y-4">
             {education.map((edu) => (
               <article
                 key={edu.school}
-                className="space-y-1 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/35 hover:bg-card/70 motion-reduce:transition-none"
+                className="space-y-1 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/25 hover:bg-card/70 motion-reduce:transition-none"
               >
                 <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{edu.period}</p>
                 <p className="text-lg font-semibold text-foreground">{edu.school}</p>
@@ -257,17 +261,20 @@ export default function ResumePage() {
           </div>
         </div>
       </section>
+      </RevealSection>
 
-      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
+      <RevealSection>
+      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7" role="region" aria-labelledby="resume-projects">
         <SectionHeading
           title="Selected Projects"
           subtitle="Production work and applied ML builds across web, infra, and experimentation."
+          id="resume-projects"
         />
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {projects.map((project) => (
             <article
               key={project.name}
-              className="group space-y-3 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/35 hover:bg-card/70 motion-reduce:transform-none motion-reduce:transition-none"
+              className="group relative space-y-3 overflow-hidden rounded-2xl border border-border/45 bg-muted/50 p-5 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/25 hover:bg-card/70 motion-reduce:transform-none motion-reduce:transition-none"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -281,7 +288,7 @@ export default function ResumePage() {
                     href={project.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70 transition-[border-color,color] duration-200 hover:border-foreground/50 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
+                    className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/8 px-3 py-1 text-xs uppercase tracking-[0.18em] text-accent transition-[border-color,background-color,color] duration-200 hover:border-accent/50 hover:bg-accent/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
                   >
                     Source
                     <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -293,9 +300,11 @@ export default function ResumePage() {
           ))}
         </div>
       </section>
+      </RevealSection>
 
-      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
-        <SectionHeading title="Skills" subtitle="Current stack and tools used in day-to-day delivery." />
+      <RevealSection>
+      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7" role="region" aria-labelledby="resume-skills">
+        <SectionHeading title="Skills" subtitle="Current stack and tools used in day-to-day delivery." id="resume-skills" />
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-12">
           <SkillCard
             className="xl:col-span-5"
@@ -308,15 +317,16 @@ export default function ResumePage() {
           <SkillCard className="xl:col-span-7" title="Other" items={skills.other} />
         </div>
       </section>
+      </RevealSection>
     </div>
   );
 }
 
-function SectionHeading({ title, subtitle }: { title: string; subtitle: string }) {
+function SectionHeading({ title, subtitle, id }: { title: string; subtitle: string; id?: string }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+        <h2 id={id} className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
         <p className="text-sm text-foreground/68 dark:text-foreground/78">{subtitle}</p>
       </div>
       <span className="h-px w-16 bg-border" aria-hidden="true" />
@@ -413,7 +423,7 @@ function SkillCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/45 bg-muted/40 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/35 hover:bg-card/65 motion-reduce:transition-none",
+        "rounded-2xl border border-border/45 bg-muted/40 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/25 hover:bg-card/65 motion-reduce:transition-none",
         className
       )}
     >
@@ -422,7 +432,7 @@ function SkillCard({
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center rounded-full border border-border/55 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.14),rgb(36_30_24_/_0.14))] px-3.5 py-1.5 text-[0.8rem] font-medium leading-none text-foreground/92 shadow-[inset_0_1px_0_rgb(255_250_242_/_0.16)] transition-[border-color,background-color,color] duration-200 hover:border-foreground/45 hover:text-foreground motion-reduce:transition-none"
+            className="inline-flex items-center rounded-full border border-border/55 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.14),rgb(36_30_24_/_0.14))] px-3.5 py-1.5 text-[0.8rem] font-medium leading-none text-foreground/92 shadow-[inset_0_1px_0_rgb(255_250_242_/_0.16)] transition-[border-color,background-color,color,transform] duration-200 hover:border-foreground/45 hover:text-foreground hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none"
           >
             {item}
           </span>

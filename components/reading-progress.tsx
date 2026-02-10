@@ -1,16 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  offset?: number;
+  /** z-index layer — should be above the sticky header */
+  className?: string;
 };
 
-export function ReadingProgress({ offset = 0 }: Props) {
+export function ReadingProgress({ className }: Props) {
   const barRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let raf = 0;
+
+    /* Measure the sticky header and position the bar at its bottom edge */
+    const positionBar = () => {
+      const header = document.querySelector("header");
+      if (header && containerRef.current) {
+        containerRef.current.style.top = `${header.offsetHeight}px`;
+      }
+    };
 
     const update = () => {
       raf = 0;
@@ -29,27 +39,33 @@ export function ReadingProgress({ offset = 0 }: Props) {
       raf = window.requestAnimationFrame(update);
     };
 
+    const onResize = () => {
+      positionBar();
+      onScroll();
+    };
+
+    positionBar();
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
 
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
   return (
     <div
-      className="fixed left-0 right-0 z-30 h-1"
-      style={{ top: offset }}
+      ref={containerRef}
+      className="fixed left-0 right-0 z-50 h-[3px]"
       aria-hidden
       data-reading-progress
     >
       <div
         ref={barRef}
-        className="h-full origin-left rounded-r-full bg-border/80 will-change-transform dark:bg-border/70"
+        className="h-full origin-left rounded-r-full bg-accent will-change-transform"
         style={{ transform: "scaleX(0)" }}
         data-reading-progress-bar
       />

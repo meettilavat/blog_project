@@ -92,6 +92,34 @@ html {
   -webkit-tap-highlight-color: rgb(36 30 24 / 0.12);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Selection highlight */
+::selection {
+  background: var(--accent);
+  color: var(--background);
+}
+
+::-moz-selection {
+  background: var(--accent);
+  color: var(--background);
+}
+
+/* Custom horizontal rule in content */
+.tiptap hr {
+  border: none;
+  height: 1px;
+  width: 3rem;
+  background: var(--accent);
+  opacity: 0.4;
+  margin: 2.5rem auto;
+  border-radius: 1px;
+}
+
 body[data-typestyle="serif"] {
   font-family: var(--font-serif);
 }
@@ -113,13 +141,13 @@ html[data-app="public"] .grid-ruled {
 }
 
 .dark .grid-ruled {
-  background-image: linear-gradient(rgb(229 231 235 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(229 231 235 / 0.04) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(229 231 235 / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(229 231 235 / 0.03) 1px, transparent 1px);
 }
 
 html[data-app="public"].dark .grid-ruled {
-  background-image: linear-gradient(rgb(244 234 216 / 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(244 234 216 / 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(244 234 216 / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 234 216 / 0.03) 1px, transparent 1px);
 }
 
 .tiptap {
@@ -194,19 +222,36 @@ html[data-app="public"].dark .tiptap > p:first-of-type {
 }
 
 .tiptap blockquote {
-  border-left: 3px solid var(--foreground);
-  padding-left: 1rem;
-  margin: 1.5rem 0;
+  border-left: 3px solid var(--accent);
+  padding-left: 1.25rem;
+  margin: 2rem 0;
   color: var(--foreground);
   font-style: italic;
   background: linear-gradient(90deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.02));
   max-width: min(70ch, 92vw);
   margin-left: auto;
   margin-right: auto;
+  position: relative;
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.tiptap blockquote::before {
+  content: "\201C";
+  position: absolute;
+  top: -0.35rem;
+  left: -0.15rem;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.25;
+  pointer-events: none;
 }
 
 html[data-app="public"] .tiptap blockquote {
-  background: linear-gradient(90deg, rgb(184 92 56 / 0.1), rgb(216 199 173 / 0.08));
+  background: linear-gradient(90deg, rgb(184 92 56 / 0.08), rgb(216 199 173 / 0.04));
 }
 
 .tiptap code {
@@ -223,26 +268,29 @@ html[data-app="public"] .tiptap code {
 }
 
 html[data-app="public"].dark .tiptap code {
-  background: rgb(244 234 216 / 0.14);
-  color: var(--foreground);
+  background: rgb(244 234 216 / 0.12);
+  color: #f4ead8;
 }
 
 .tiptap pre {
   background: var(--foreground);
   color: var(--background);
-  padding: 1rem;
+  padding: 1.25rem;
   border-radius: 0.75rem;
   overflow: auto;
+  font-size: 0.92rem;
+  line-height: 1.7;
 }
 
 html[data-app="public"] .tiptap pre {
-  background: rgb(36 30 24 / 0.9);
+  background: rgb(36 30 24 / 0.92);
   color: #fffaf2;
 }
 
 html[data-app="public"].dark .tiptap pre {
-  background: rgb(244 234 216 / 0.14);
-  color: var(--foreground);
+  background: rgb(62 52 40 / 0.5);
+  color: #f4ead8;
+  border: 1px solid rgb(244 234 216 / 0.08);
 }
 
 .tiptap a {
@@ -300,10 +348,22 @@ html[data-app="public"].dark .tiptap-figure {
 }
 
 .tiptap figcaption {
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #6b7280;
+  position: relative;
+}
+
+.tiptap figcaption::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.35;
+  margin: 0 auto 0.6rem;
 }
 
 html[data-app="public"] .tiptap figcaption {

@@ -11,6 +11,7 @@ export default function PublicHeader() {
   const pathname = usePathname();
   const menuId = useId();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const isReadActive = pathname === "/" || pathname.startsWith("/posts");
   const isResumeActive = pathname === "/resume";
 
@@ -38,27 +39,39 @@ export default function PublicHeader() {
     return () => window.removeEventListener("keydown", onEscape);
   }, [isMenuOpen]);
 
+  // Scroll-driven header shadow
+  useEffect(() => {
+    const onScroll = () => {
+      setIsScrolled(window.scrollY > 8);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const navLinkClass = (isActive: boolean, isMobile = false) =>
     cn(
-      "group relative overflow-hidden rounded-full px-3 py-1 transition-[transform,color,background-color] duration-200 hover:translate-y-[-1px] active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none",
-      isMobile && "block rounded-xl px-3 py-2 text-[11px]",
+      "relative px-3 py-1.5 text-foreground/70 transition-[color] duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
+      isMobile && "block rounded-xl px-3 py-2.5 text-[11px]",
       isActive && "text-foreground font-semibold"
-    );
-  const navHighlightClass = (isActive: boolean) =>
-    cn(
-      "absolute inset-0 scale-0 rounded-full bg-foreground/15 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:scale-100 group-hover:opacity-100 motion-reduce:scale-100 motion-reduce:transition-none",
-      isActive && "scale-100 opacity-100"
     );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-card/80 backdrop-blur-xl dark:bg-card/70">
+    <header
+      className={cn(
+        "sticky top-0 z-30 border-b bg-card/80 backdrop-blur-xl transition-[border-color,box-shadow] duration-300 dark:bg-card/70",
+        isScrolled
+          ? "border-border/70 shadow-[0_1px_12px_rgba(36,30,24,0.06)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.2)]"
+          : "border-transparent"
+      )}
+    >
       <div className="container py-3 sm:py-4">
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/" className="text-base font-semibold tracking-tight sm:text-lg">
             meettilavat.com
           </Link>
           <div className="hidden h-[18px] w-px bg-border sm:block" aria-hidden="true" />
-          <nav className="ml-1 hidden items-center gap-2 text-xs uppercase tracking-[0.18em] text-foreground/80 md:flex">
+          <nav className="ml-1 hidden items-center gap-1 text-xs uppercase tracking-[0.18em] md:flex" aria-label="Main">
             {navLinks.map((item) => (
               <Link
                 key={item.href}
@@ -66,34 +79,42 @@ export default function PublicHeader() {
                 className={navLinkClass(item.isActive)}
                 aria-current={item.isActive ? "page" : undefined}
               >
-                <span className={navHighlightClass(item.isActive)} />
-                <span className="relative z-10">{item.label}</span>
+                {item.label}
+                {/* Active underline indicator */}
+                <span
+                  className={cn(
+                    "absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-accent transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
+                    item.isActive
+                      ? "scale-x-100 opacity-100"
+                      : "scale-x-0 opacity-0"
+                  )}
+                  aria-hidden="true"
+                />
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="flex h-9 items-center overflow-hidden rounded-full border border-border/70 bg-foreground/10 shadow-soft">
+          <div className="ml-auto flex items-center gap-3">
+            {/* Social links — ghost style, no pill wrapper */}
+            <div className="flex items-center gap-1">
               <a
                 href="https://github.com/meettilavat"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="GitHub"
-                className="inline-flex h-full w-10 items-center justify-center rounded-l-full text-foreground/70 transition-[transform,background-color,color] duration-200 hover:translate-y-[-1px] hover:bg-foreground/10 hover:text-foreground active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground dark:hover:bg-white/10 motion-reduce:transform-none motion-reduce:transition-none"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
               >
-                <Github className="h-5 w-5" aria-hidden="true" />
+                <Github className="h-[18px] w-[18px]" aria-hidden="true" />
               </a>
-              <span className="h-5 w-px bg-border/70" aria-hidden="true" />
               <a
                 href="https://www.linkedin.com/in/meettilavat/"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="LinkedIn"
-                className="inline-flex h-full w-10 items-center justify-center text-foreground/70 transition-[transform,background-color,color] duration-200 hover:translate-y-[-1px] hover:bg-foreground/10 hover:text-foreground active:translate-y-[1px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground dark:hover:bg-white/10 motion-reduce:transform-none motion-reduce:transition-none"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
               >
-                <Linkedin className="h-5 w-5" aria-hidden="true" />
+                <Linkedin className="h-[18px] w-[18px]" aria-hidden="true" />
               </a>
-              <span className="h-5 w-px bg-border/70" aria-hidden="true" />
-              <ThemeToggle className="h-full rounded-none border-0 bg-transparent px-3 hover:bg-foreground/10 dark:hover:bg-white/10" />
+              <ThemeToggle className="h-8 w-8 border-0 bg-transparent text-foreground/50 hover:bg-foreground/8 hover:text-foreground" />
             </div>
             <button
               type="button"
@@ -110,6 +131,8 @@ export default function PublicHeader() {
 
         <div
           id={menuId}
+          role="navigation"
+          aria-label="Mobile navigation"
           className={cn(
             "overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out md:hidden motion-reduce:transition-none",
             isMenuOpen
@@ -122,12 +145,14 @@ export default function PublicHeader() {
               <Link
                 key={`mobile-${item.href}`}
                 href={item.href}
-                className={navLinkClass(item.isActive, true)}
+                className={cn(
+                  navLinkClass(item.isActive, true),
+                  item.isActive && "bg-muted rounded-xl"
+                )}
                 aria-current={item.isActive ? "page" : undefined}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className={navHighlightClass(item.isActive)} />
-                <span className="relative z-10">{item.label}</span>
+                {item.label}
               </Link>
             ))}
           </nav>

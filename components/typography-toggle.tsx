@@ -40,7 +40,7 @@ export function TypographyToggle() {
       size="sm"
       className="rounded-full border border-border/70 px-3"
       onClick={toggle}
-      aria-label="Toggle typography"
+      aria-label={style === "sans" ? "Switch to serif font" : "Switch to sans-serif font"}
     >
       <Type className="h-4 w-4" />
       <span className="ml-1 text-xs uppercase tracking-[0.2em]">{style}</span>

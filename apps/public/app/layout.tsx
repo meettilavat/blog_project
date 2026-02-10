@@ -3,6 +3,7 @@ import "../../../styles/globals.css";
 import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import PublicHeader from "../components/public-header";
+import PublicFooter from "../components/public-footer";
 
 const LIGHT_THEME_COLOR = "#f6f2ea";
 const DARK_THEME_COLOR = "#15120f";
@@ -125,7 +126,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <div className="pointer-events-none fixed inset-0 -z-10 opacity-40" aria-hidden="true">
+        <div className="pointer-events-none fixed inset-0 -z-10 opacity-35 dark:opacity-20" aria-hidden="true">
           <div className="grid-ruled h-full w-full" />
         </div>
         <div className="relative">
@@ -133,6 +134,7 @@ export default function RootLayout({
           <main id="content" className="container pb-20 pt-10">
             {children}
           </main>
+          <PublicFooter />
         </div>
       </body>
     </html>
