@@ -1,7 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { JSONContent } from "@tiptap/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,15 +10,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import CoverImageField from "@/components/editor/cover-image-field";
-import RichEditor from "@/components/editor/rich-editor";
 import { savePostAction } from "@/lib/actions/posts";
-import { type PostRecord, type PostStatus } from "@/lib/types";
+import { type DraftSummary, type PostRecord, type PostStatus } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 
+const RichEditor = dynamic(() => import("@/components/editor/rich-editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-soft">
+      <p className="text-sm text-foreground/60">Loading editor...</p>
+    </div>
+  )
+});
+
 type Props = {
   initialPost?: PostRecord | null;
-  drafts?: PostRecord[];
+  drafts?: DraftSummary[];
 };
 
 const blankDoc: JSONContent = {
@@ -37,10 +46,9 @@ export function EditorForm({ initialPost, drafts = [] }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const createdInfo = useMemo(() => {
-    if (!initialPost) return null;
-    return `${initialPost.status === "published" ? "Published" : "Drafted"} ${formatDate(initialPost.created_at)}`;
-  }, [initialPost]);
+  const createdInfo = initialPost
+    ? `${initialPost.status === "published" ? "Published" : "Drafted"} ${formatDate(initialPost.created_at)}`
+    : null;
 
   const handleSave = (nextStatus: PostStatus) => {
     if (!title.trim()) {

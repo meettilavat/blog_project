@@ -10,7 +10,6 @@ export default async function NewPostPage() {
   if (!user) {
     redirect("/login?redirectedFrom=/editor/new");
   }
-  const drafts = user ? await getDraftsForUser(user.id) : [];
+  const drafts = await getDraftsForUser(user.id);
   return <EditorForm drafts={drafts} />;
 }
-

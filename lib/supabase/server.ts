@@ -60,15 +60,6 @@ export function createSupabasePublicServerClient() {
   });
 }
 
-export async function getCurrentSession() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error("Unable to fetch Supabase session", error.message);
-  }
-  return data?.session ?? null;
-}
-
 export async function getCurrentUser() {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();

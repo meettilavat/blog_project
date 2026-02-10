@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  /* Fallback tokens if an app scope is not set. */
   --background: #fdfdfd;
   --foreground: #0f172a;
   --border: #e5e7eb;
@@ -22,15 +23,73 @@
   color-scheme: dark;
 }
 
+html[data-app="public"] {
+  --background: #f6f2ea;
+  --foreground: #241e18;
+  --border: #d8c7ad;
+  --muted: #ede4d6;
+  --accent: #b85c38;
+  --card: #fffaf2;
+  color-scheme: light;
+}
+
+html[data-app="public"].dark {
+  --background: #15120f;
+  --foreground: #f4ead8;
+  --border: #3e3428;
+  --muted: #2a241d;
+  --accent: #e59a72;
+  --card: #1e1915;
+  color-scheme: dark;
+}
+
+html[data-app="admin"] {
+  --background: #fdfdfd;
+  --foreground: #0f172a;
+  --border: #e5e7eb;
+  --muted: #f8fafc;
+  --accent: #0b0b0f;
+  --card: #ffffff;
+  color-scheme: light;
+}
+
+html[data-app="admin"].dark {
+  --background: #0c0c12;
+  --foreground: #e5e7eb;
+  --border: #1f2533;
+  --muted: #111725;
+  --accent: #e5e7eb;
+  --card: #0f1522;
+  color-scheme: dark;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   transition: background-color 200ms ease, color 200ms ease;
+  text-rendering: optimizeLegibility;
+}
+
+html[data-app="public"] body {
+  background-color: var(--background);
+  background-image: radial-gradient(1200px 520px at 8% -12%, rgb(184 92 56 / 0.16), transparent 62%),
+    radial-gradient(900px 500px at 102% 8%, rgb(216 199 173 / 0.28), transparent 56%),
+    linear-gradient(180deg, rgb(255 250 242 / 0.7), rgb(246 242 234 / 0.9));
+  background-attachment: fixed;
+}
+
+html[data-app="public"].dark body {
+  background-color: var(--background);
+  background-image: radial-gradient(900px 460px at 10% -15%, rgb(229 154 114 / 0.12), transparent 58%),
+    radial-gradient(780px 420px at 98% 8%, rgb(62 52 40 / 0.38), transparent 62%),
+    linear-gradient(180deg, rgb(30 25 21 / 0.45), rgb(21 18 15 / 0.85));
+  background-attachment: fixed;
 }
 
 html {
   scrollbar-gutter: stable both-edges;
+  -webkit-tap-highlight-color: rgb(36 30 24 / 0.12);
 }
 
 body[data-typestyle="serif"] {
@@ -43,20 +102,24 @@ a {
 }
 
 .grid-ruled {
-  background-image: linear-gradient(
-      rgba(15, 23, 42, 0.04) 1px,
-      transparent 1px
-    ),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(15 23 42 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(15 23 42 / 0.04) 1px, transparent 1px);
   background-size: 24px 24px, 24px 24px;
 }
 
+html[data-app="public"] .grid-ruled {
+  background-image: linear-gradient(rgb(36 30 24 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(36 30 24 / 0.05) 1px, transparent 1px);
+}
+
 .dark .grid-ruled {
-  background-image: linear-gradient(
-      rgba(229, 231, 235, 0.04) 1px,
-      transparent 1px
-    ),
-    linear-gradient(90deg, rgba(229, 231, 235, 0.04) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(229 231 235 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(229 231 235 / 0.04) 1px, transparent 1px);
+}
+
+html[data-app="public"].dark .grid-ruled {
+  background-image: linear-gradient(rgb(244 234 216 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 234 216 / 0.05) 1px, transparent 1px);
 }
 
 .tiptap {
@@ -73,26 +136,61 @@ a {
 .tiptap h3,
 .tiptap h4 {
   letter-spacing: -0.02em;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
   font-weight: 600;
+  line-height: 1.25;
+  scroll-margin-top: 118px;
+  text-wrap: balance;
 }
 
 .tiptap p {
-  margin: 0.75rem 0;
+  margin: 0.8rem 0;
+  line-height: 1.9;
+  color: rgb(15 23 42 / 0.9);
+  text-wrap: pretty;
+}
+
+html[data-app="public"] .tiptap p {
+  color: rgb(36 30 24 / 0.9);
+}
+
+html[data-app="public"].dark .tiptap p {
+  color: rgb(244 234 216 / 0.88);
+}
+
+.tiptap > p:first-of-type {
+  font-size: clamp(1.05rem, 1rem + 0.18vw, 1.16rem);
   line-height: 1.75;
+  margin-top: 0.25rem;
+}
+
+html[data-app="public"] .tiptap > p:first-of-type {
+  color: rgb(36 30 24 / 0.95);
+}
+
+html[data-app="public"].dark .tiptap > p:first-of-type {
+  color: rgb(250 243 232 / 0.94);
 }
 
 .tiptap ul {
   list-style: disc;
   margin-left: 1.25rem;
   padding-left: 0.5rem;
+  margin-top: 0.95rem;
+  margin-bottom: 1rem;
 }
 
 .tiptap ol {
   list-style: decimal;
   margin-left: 1.25rem;
   padding-left: 0.5rem;
+  margin-top: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap li {
+  margin-bottom: 0.38rem;
 }
 
 .tiptap blockquote {
@@ -101,11 +199,14 @@ a {
   margin: 1.5rem 0;
   color: var(--foreground);
   font-style: italic;
-  background: linear-gradient(
-    90deg,
-    rgba(15, 23, 42, 0.06),
-    rgba(15, 23, 42, 0.02)
-  );
+  background: linear-gradient(90deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.02));
+  max-width: min(70ch, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html[data-app="public"] .tiptap blockquote {
+  background: linear-gradient(90deg, rgb(184 92 56 / 0.1), rgb(216 199 173 / 0.08));
 }
 
 .tiptap code {
@@ -116,12 +217,49 @@ a {
   font-size: 0.95em;
 }
 
+html[data-app="public"] .tiptap code {
+  background: rgb(36 30 24 / 0.9);
+  color: #fffaf2;
+}
+
+html[data-app="public"].dark .tiptap code {
+  background: rgb(244 234 216 / 0.14);
+  color: var(--foreground);
+}
+
 .tiptap pre {
   background: var(--foreground);
   color: var(--background);
   padding: 1rem;
   border-radius: 0.75rem;
   overflow: auto;
+}
+
+html[data-app="public"] .tiptap pre {
+  background: rgb(36 30 24 / 0.9);
+  color: #fffaf2;
+}
+
+html[data-app="public"].dark .tiptap pre {
+  background: rgb(244 234 216 / 0.14);
+  color: var(--foreground);
+}
+
+.tiptap a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgb(15 23 42 / 0.35);
+  text-underline-offset: 0.22rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+html[data-app="public"] .tiptap a {
+  text-decoration-color: rgb(184 92 56 / 0.38);
+}
+
+.tiptap a:hover {
+  text-decoration-color: currentColor;
 }
 
 .tiptap figure,
@@ -132,12 +270,22 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: min(92vw, 1060px);
-  max-width: min(92vw, 1060px);
+  width: 100%;
+  max-width: 100%;
   padding: clamp(0.6rem, 1vw, 1rem);
   border: 1px solid var(--border);
   border-radius: 1.5rem;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.02));
+  background: linear-gradient(145deg, rgb(15 23 42 / 0.05), rgb(15 23 42 / 0.02));
+}
+
+html[data-app="public"] .tiptap figure,
+html[data-app="public"] .tiptap-figure {
+  background: linear-gradient(145deg, rgb(184 92 56 / 0.04), rgb(216 199 173 / 0.05));
+}
+
+html[data-app="public"].dark .tiptap figure,
+html[data-app="public"].dark .tiptap-figure {
+  background: linear-gradient(145deg, rgb(229 154 114 / 0.05), rgb(62 52 40 / 0.16));
 }
 
 .tiptap figure img,
@@ -145,7 +293,7 @@ a {
   display: block;
   margin: 0 auto;
   border-radius: 1rem;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 20px 45px rgb(15 23 42 / 0.12);
   transition: transform 200ms ease, box-shadow 200ms ease;
   max-width: 100%;
   width: 100%;
@@ -158,8 +306,17 @@ a {
   color: #6b7280;
 }
 
+html[data-app="public"] .tiptap figcaption {
+  color: rgb(97 78 61 / 0.95);
+}
+
+html[data-app="public"].dark .tiptap figcaption {
+  color: rgb(214 192 165 / 0.86);
+}
+
 .tiptap table {
-  width: min(92vw, 1060px);
+  width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 1.5rem auto;
   border: 1px solid var(--border);
@@ -176,6 +333,7 @@ a {
   border: 1px solid var(--border);
   padding: 0.75rem 0.9rem;
   text-align: left;
+  font-variant-numeric: tabular-nums;
   transition: background-color 0.2s ease;
 }
 
@@ -189,12 +347,80 @@ a {
 
 .tiptap figure img:hover {
   transform: translateY(-4px);
-  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 25px 50px rgb(15 23 42 / 0.15);
 }
 
-.tiptap blockquote {
-  max-width: min(70ch, 92vw);
-  margin-left: auto;
-  margin-right: auto;
+html[data-app="public"] .tiptap figure img:hover {
+  box-shadow: 0 25px 50px rgb(36 30 24 / 0.2);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tiptap figure img:hover {
+    transform: none;
+    box-shadow: 0 20px 45px rgb(15 23 42 / 0.12);
+  }
+
+  html[data-app="public"] .tiptap figure img:hover {
+    box-shadow: 0 20px 45px rgb(36 30 24 / 0.14);
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  html[data-app="public"] body,
+  html[data-app="public"].dark body {
+    background-image: none !important;
+  }
+
+  header,
+  .grid-ruled {
+    display: none !important;
+  }
+
+  #content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .resume-sheet {
+    max-width: none !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  .resume-sheet > section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 0.8rem !important;
+    border-color: #d1d5db !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .resume-sheet a {
+    color: #111111 !important;
+    text-decoration: none !important;
+  }
+
+  .resume-sheet .pointer-events-none {
+    display: none !important;
+  }
+
+  .resume-sheet * {
+    transition: none !important;
+  }
+}

@@ -91,12 +91,6 @@ create policy "authors manage own posts"
   for delete using (auth.uid() = author_id);
 ```
 
-### Migrating existing tables
-If you created `public.posts` before `excerpt` existed:
-```sql
-alter table public.posts add column if not exists excerpt text;
-```
-
 ### Storage (images)
 Create a bucket named `blog-images` with public read, and allow authenticated uploads:
 ```sql
@@ -121,4 +115,3 @@ create policy "owners can delete their uploads"
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` is a publishable key, but your **Supabase service role key must never be committed or used in the client**.
 - Keep RLS enabled; the public app relies on it to read only `published` posts.
 - Treat the admin app as private (deploy behind access controls).
-

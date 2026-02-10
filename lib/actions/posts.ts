@@ -3,7 +3,6 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { isMissingColumnError } from "@/lib/supabase/errors";
 import { slugify } from "@/lib/utils";
 import { type PostStatus } from "@/lib/types";
 import type { JSONContent } from "@tiptap/core";
@@ -43,17 +42,12 @@ export async function savePostAction(payload: SavePayload) {
   };
 
   const isEditing = Boolean(payload.id);
-  const { excerpt: _excerpt, ...bodyWithoutExcerpt } = body;
-  const runQuery = (values: typeof body | typeof bodyWithoutExcerpt) =>
+  const runQuery = (values: typeof body) =>
     isEditing
       ? supabase.from("posts").update(values).eq("id", payload.id).select().single()
       : supabase.from("posts").insert(values).select().single();
 
-  let { data, error } = await runQuery(body);
-
-  if (error && isMissingColumnError(error, "posts", "excerpt")) {
-    ({ data, error } = await runQuery(bodyWithoutExcerpt));
-  }
+  const { data, error } = await runQuery(body);
 
   if (error) {
     return { error: error.message };

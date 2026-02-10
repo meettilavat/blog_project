@@ -13,7 +13,9 @@ export type PostRecord = {
   updated_at: string;
 };
 
-export type SessionUser = {
-  id: string;
-  email?: string;
-};
+export type PostListItem = Pick<
+  PostRecord,
+  "id" | "title" | "slug" | "excerpt" | "cover_image_url" | "status" | "created_at" | "updated_at"
+>;
+
+export type DraftSummary = Pick<PostRecord, "id" | "title" | "slug" | "updated_at">;

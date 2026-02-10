@@ -1,3 +1,6 @@
+import { cn } from "@/lib/utils";
+import { ArrowUpRight, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
+
 type Experience = {
   role: string;
   company: string;
@@ -27,9 +30,9 @@ const experiences: Experience[] = [
     period: "May – Jul 2023",
     location: "Surat, India",
     bullets: [
-      "Built responsive web interfaces with HTML5, CSS3, and JavaScript.",
-      "Collaborated with designers to ship user-friendly UI and tuned based on feedback.",
-      "Helped triage and resolve UX issues across breakpoints."
+      "Built responsive product interfaces in HTML, CSS, and JavaScript that held up across desktop and mobile breakpoints.",
+      "Partnered with designers to translate mockups into production-ready UI and iterated quickly from feedback.",
+      "Triaged and fixed UX regressions in layouts and interactions to improve overall polish and consistency."
     ]
   }
 ];
@@ -110,9 +113,9 @@ const skills = {
   other: ["Custom PC building", "Hardware troubleshooting"]
 };
 
-function Badge({ children }: { children: React.ReactNode }) {
+function PillBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70">
+    <span className="inline-flex items-center rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70">
       {children}
     </span>
   );
@@ -120,49 +123,110 @@ function Badge({ children }: { children: React.ReactNode }) {
 
 export default function ResumePage() {
   return (
-    <div className="space-y-12">
-      <section className="rounded-3xl border border-border/70 bg-card/80 p-8 shadow-soft">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
+    <div className="resume-sheet mx-auto max-w-[76rem] space-y-8 sm:space-y-10">
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-6 shadow-soft sm:p-8 lg:p-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(560px_220px_at_8%_0%,rgb(184_92_56_/_0.12),transparent),radial-gradient(420px_180px_at_94%_4%,rgb(216_199_173_/_0.18),transparent)]"
+        />
+        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] lg:items-start">
+          <div className="space-y-5">
             <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Meet Tilavat</p>
-            <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+            <h1 className="max-w-[19ch] font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-[3.65rem]">
               Software engineer building dependable web products and systems.
             </h1>
-            <p className="max-w-2xl text-lg leading-relaxed text-foreground/70">
+            <p className="max-w-[58ch] text-lg leading-relaxed text-foreground/80 dark:text-foreground/88">
               I enjoy working end-to-end—from feature development to shipping and operations—with a focus on clarity,
               reliability, and automation.
             </p>
-            <div className="flex flex-wrap gap-2 text-sm text-foreground/70">
-              <Badge>Based in Gujarat, India</Badge>
-              <Badge>Open to full-time roles</Badge>
+            <div className="flex flex-wrap gap-2">
+              <PillBadge>Based in Gujarat, India</PillBadge>
+              <PillBadge>Open to full-time roles</PillBadge>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <a
+                className="inline-flex items-center rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+                href="mailto:tilavatmeet2@gmail.com"
+              >
+                Email Me
+              </a>
+              <a
+                className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+                href="https://github.com/meettilavat"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
             </div>
           </div>
-          <div className="flex flex-col gap-2 text-sm text-foreground/80">
-            <a className="underline-offset-4 hover:underline" href="mailto:tilavatmeet2@gmail.com">
-              tilavatmeet2@gmail.com
-            </a>
-            <a className="underline-offset-4 hover:underline" href="tel:+919913320031">
-              +91 99133 20031
-            </a>
-            <a className="underline-offset-4 hover:underline" href="https://www.linkedin.com/in/meettilavat">
-              linkedin.com/in/meettilavat
-            </a>
-            <a className="underline-offset-4 hover:underline" href="https://github.com/meettilavat">
-              github.com/meettilavat
-            </a>
-          </div>
+          <aside className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(160deg,rgb(255_250_242_/_0.16),rgb(36_30_24_/_0.08))] p-5 shadow-soft backdrop-blur-sm sm:p-6">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(320px_160px_at_12%_-8%,rgb(184_92_56_/_0.2),transparent_62%),radial-gradient(280px_130px_at_100%_0%,rgb(216_199_173_/_0.24),transparent_66%)]"
+            />
+            <div className="relative flex items-center justify-between gap-3">
+              <h2 className="text-[11px] font-medium uppercase tracking-[0.26em] text-foreground/70">Contact</h2>
+              <span className="inline-flex items-center rounded-full border border-border/70 bg-card/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-foreground/70">
+                Open to Work
+              </span>
+            </div>
+            <ul className="relative mt-5 space-y-3">
+              <li>
+                <ContactRow
+                  label="Email"
+                  value="tilavatmeet2@gmail.com"
+                  href="mailto:tilavatmeet2@gmail.com"
+                  icon={<Mail className="h-4 w-4" aria-hidden="true" />}
+                />
+              </li>
+              <li>
+                <ContactRow
+                  label="Phone"
+                  value="+91 99133 20031"
+                  href="tel:+919913320031"
+                  icon={<Phone className="h-4 w-4" aria-hidden="true" />}
+                />
+              </li>
+              <li>
+                <ContactRow
+                  label="LinkedIn"
+                  value="linkedin.com/in/meettilavat"
+                  href="https://www.linkedin.com/in/meettilavat"
+                  external
+                  icon={<Linkedin className="h-4 w-4" aria-hidden="true" />}
+                />
+              </li>
+              <li>
+                <ContactRow
+                  label="GitHub"
+                  value="github.com/meettilavat"
+                  href="https://github.com/meettilavat"
+                  external
+                  icon={<Github className="h-4 w-4" aria-hidden="true" />}
+                />
+              </li>
+              <li>
+                <ContactRow
+                  label="Location"
+                  value="Gujarat, India"
+                  icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
+                />
+              </li>
+            </ul>
+          </aside>
         </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Experience</h2>
-            <span className="h-px w-16 bg-border" />
-          </div>
+        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
+          <SectionHeading title="Experience" subtitle="Hands-on product delivery and cross-functional execution." />
           <div className="space-y-6">
             {experiences.map((exp) => (
-              <div key={exp.company} className="space-y-2">
+              <article key={exp.company} className="relative space-y-2 pl-5">
+                <span className="absolute left-0 top-2 h-[calc(100%-0.2rem)] w-px bg-border/80" aria-hidden="true" />
+                <span className="absolute left-[-3px] top-2 inline-block h-2 w-2 rounded-full bg-accent/80" aria-hidden="true" />
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{exp.period}</p>
@@ -170,45 +234,41 @@ export default function ResumePage() {
                     <p className="text-sm text-foreground/70">{exp.company} · {exp.location}</p>
                   </div>
                 </div>
-                <ul className="space-y-1 text-sm leading-relaxed text-foreground/80">
-                  {exp.bullets.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className="mt-[6px] inline-block h-[6px] w-[6px] rounded-full bg-foreground/40" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <ResumeBulletList items={exp.bullets} className="mt-3" />
+              </article>
             ))}
           </div>
         </div>
 
-        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Education</h2>
-            <span className="h-px w-16 bg-border" />
-          </div>
+        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
+          <SectionHeading title="Education" subtitle="Core academics with strong engineering outcomes." />
           <div className="space-y-4">
             {education.map((edu) => (
-              <div key={edu.school} className="space-y-1 rounded-2xl border border-border/60 bg-muted/50 p-4">
+              <article
+                key={edu.school}
+                className="space-y-1 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/35 hover:bg-card/70 motion-reduce:transition-none"
+              >
                 <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{edu.period}</p>
                 <p className="text-lg font-semibold text-foreground">{edu.school}</p>
                 <p className="text-sm text-foreground/80">{edu.credential}</p>
                 <p className="text-sm text-foreground/60">{edu.location}</p>
-              </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Projects</h2>
-          <span className="h-px w-16 bg-border" />
-        </div>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
+        <SectionHeading
+          title="Selected Projects"
+          subtitle="Production work and applied ML builds across web, infra, and experimentation."
+        />
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {projects.map((project) => (
-            <div key={project.name} className="rounded-2xl border border-border/60 bg-muted/50 p-4">
+            <article
+              key={project.name}
+              className="group space-y-3 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/35 hover:bg-card/70 motion-reduce:transform-none motion-reduce:transition-none"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold text-foreground">{project.name}</p>
@@ -221,51 +281,148 @@ export default function ResumePage() {
                     href={project.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center rounded-full border border-border/70 bg-card px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70 hover:border-foreground/50"
+                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70 transition-[border-color,color] duration-200 hover:border-foreground/50 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
                   >
-                    GitHub
+                    Source
+                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                 )}
               </div>
-              <ul className="mt-3 space-y-1 text-sm leading-relaxed text-foreground/80">
-                {project.bullets.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-[6px] inline-block h-[6px] w-[6px] rounded-full bg-foreground/40" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <ResumeBulletList items={project.bullets} className="pt-0.5" itemClassName="text-[0.98rem]" />
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Skills</h2>
-          <span className="h-px w-16 bg-border" />
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <SkillCard title="Languages & Frameworks" items={[...skills.languages, ...skills.frameworks]} />
-          <SkillCard title="DevOps & Cloud" items={skills.devops} />
-          <SkillCard title="Tools" items={skills.tools} />
-          <SkillCard title="Languages (Spoken)" items={skills.languagesSpoken} />
-          <SkillCard title="Other" items={skills.other} />
+      <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
+        <SectionHeading title="Skills" subtitle="Current stack and tools used in day-to-day delivery." />
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <SkillCard
+            className="xl:col-span-5"
+            title="Languages & Frameworks"
+            items={[...skills.languages, ...skills.frameworks]}
+          />
+          <SkillCard className="xl:col-span-4" title="DevOps & Cloud" items={skills.devops} />
+          <SkillCard className="xl:col-span-3" title="Tools" items={skills.tools} />
+          <SkillCard className="xl:col-span-5" title="Languages (Spoken)" items={skills.languagesSpoken} />
+          <SkillCard className="xl:col-span-7" title="Other" items={skills.other} />
         </div>
       </section>
     </div>
   );
 }
 
-function SkillCard({ title, items }: { title: string; items: string[] }) {
+function SectionHeading({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-muted/40 p-4">
-      <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{title}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+        <p className="text-sm text-foreground/68 dark:text-foreground/78">{subtitle}</p>
+      </div>
+      <span className="h-px w-16 bg-border" aria-hidden="true" />
+    </div>
+  );
+}
+
+function ContactRow({
+  label,
+  value,
+  icon,
+  href,
+  external = false
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  href?: string;
+  external?: boolean;
+}) {
+  const rowContent = (
+    <>
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/65 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.28),rgb(36_30_24_/_0.08))] text-foreground/72 shadow-sm">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] uppercase tracking-[0.2em] text-foreground/56">{label}</span>
+        <span className="block break-words text-sm font-medium text-foreground/88">{value}</span>
+      </span>
+      {external ? (
+        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/65">
+          <ArrowUpRight className="h-3.5 w-3.5 text-foreground/56" aria-hidden="true" />
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (!href) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-border/45 bg-card/50 px-3.5 py-2.5">
+        {rowContent}
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className="group flex items-center gap-3 rounded-xl border border-border/45 bg-card/50 px-3.5 py-2.5 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/35 hover:bg-card/78 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+    >
+      {rowContent}
+    </a>
+  );
+}
+
+function ResumeBulletList({
+  items,
+  className,
+  itemClassName
+}: {
+  items: string[];
+  className?: string;
+  itemClassName?: string;
+}) {
+  return (
+    <ul className={cn("m-0 list-none space-y-2.5 p-0", className)}>
+      {items.map((item) => (
+        <li
+          key={item}
+          className="group grid grid-cols-[0.625rem_minmax(0,1fr)] items-start gap-3 rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-card/25 motion-reduce:transition-none"
+        >
+          <span
+            aria-hidden="true"
+            className="mt-[0.56rem] inline-block h-1.5 w-1.5 rounded-full bg-[#9f6f52] ring-[1.5px] ring-[#9f6f52]/20 transition-transform duration-200 group-hover:scale-110 dark:bg-[#c99778] dark:ring-[#c99778]/28 motion-reduce:transition-none"
+          />
+          <span className={cn("block text-sm leading-[1.72] text-foreground/88 dark:text-foreground/92", itemClassName)}>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SkillCard({
+  title,
+  items,
+  className
+}: {
+  title: string;
+  items: string[];
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-border/45 bg-muted/40 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/35 hover:bg-card/65 motion-reduce:transition-none",
+        className
+      )}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground/68">{title}</p>
+      <div className="mt-3.5 flex flex-wrap gap-2.5">
         {items.map((item) => (
           <span
             key={item}
-            className="rounded-full bg-card px-3 py-1 text-xs font-medium text-foreground/80 shadow-sm"
+            className="inline-flex items-center rounded-full border border-border/55 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.14),rgb(36_30_24_/_0.14))] px-3.5 py-1.5 text-[0.8rem] font-medium leading-none text-foreground/92 shadow-[inset_0_1px_0_rgb(255_250_242_/_0.16)] transition-[border-color,background-color,color] duration-200 hover:border-foreground/45 hover:text-foreground motion-reduce:transition-none"
           >
             {item}
           </span>
