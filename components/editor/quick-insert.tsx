@@ -1,24 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Command, Heading2, Quote, List, Table as TableIcon, Minus } from "lucide-react";
+import { Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Editor } from "@tiptap/react";
+import type { EditorCommand } from "@/components/editor/commands";
 
 type Props = {
-  editor: Editor;
+  commands: EditorCommand[];
+  initialOpen?: boolean;
 };
 
-const items = [
-  { label: "Heading 2", icon: Heading2, action: (e: Editor) => e.chain().focus().toggleHeading({ level: 2 }).run() },
-  { label: "Block quote", icon: Quote, action: (e: Editor) => e.chain().focus().toggleBlockquote().run() },
-  { label: "Bulleted list", icon: List, action: (e: Editor) => e.chain().focus().toggleBulletList().run() },
-  { label: "Divider", icon: Minus, action: (e: Editor) => e.chain().focus().setHorizontalRule().run() },
-  { label: "Table", icon: TableIcon, action: (e: Editor) => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() }
-];
-
-export function QuickInsert({ editor }: Props) {
-  const [open, setOpen] = useState(false);
+export function QuickInsert({ commands, initialOpen = false }: Props) {
+  const [open, setOpen] = useState(initialOpen);
 
   return (
     <div className="relative">
@@ -27,26 +20,27 @@ export function QuickInsert({ editor }: Props) {
         variant="outline"
         size="sm"
         className="gap-2 uppercase tracking-[0.2em]"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
       >
         <Command className="h-4 w-4" />
         Quick insert
       </Button>
       {open && (
         <div className="absolute z-20 mt-2 w-52 rounded-2xl border border-border/70 bg-card p-2 shadow-soft">
-          {items.map((item) => {
-            const Icon = item.icon;
+          {commands.map((command) => {
+            const Icon = command.icon;
             return (
               <button
-                key={item.label}
+                key={command.id}
+                type="button"
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"
                 onClick={() => {
-                  item.action(editor);
+                  command.run();
                   setOpen(false);
                 }}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                {command.label}
               </button>
             );
           })}
@@ -55,5 +49,3 @@ export function QuickInsert({ editor }: Props) {
     </div>
   );
 }
-
-export default QuickInsert;

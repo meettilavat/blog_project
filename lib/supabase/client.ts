@@ -1,13 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { loadSupabaseEnv } from "./bootstrap/env";
 
 export function createSupabaseBrowserClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error(
-      "Supabase client unavailable. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    );
-  }
+  const { url, anonKey } = loadSupabaseEnv();
 
   return createBrowserClient(url, anonKey);
 }

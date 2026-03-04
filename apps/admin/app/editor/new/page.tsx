@@ -1,15 +1,21 @@
-import EditorForm from "@/components/editor/editor-form";
-import { getDraftsForUser } from "@/lib/data/drafts";
-import { getCurrentUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-
 export const dynamic = "force-dynamic";
 
+import { EditorForm } from "@/apps/admin/features/editor/ui/editor-form";
+import { getDraftsForUser } from "@/lib/data/drafts";
+import { requireAuthenticatedUserSession } from "@/lib/services/current-user-service";
+import { redirect } from "next/navigation";
+
 export default async function NewPostPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login?redirectedFrom=/editor/new");
+  const session = await requireAuthenticatedUserSession();
+  if (!session.ok) {
+    if (session.error.kind === "unauthenticated") {
+      redirect("/login?redirectedFrom=/editor/new");
+    }
+    throw new Error(session.error.message);
   }
-  const drafts = await getDraftsForUser(user.id);
-  return <EditorForm drafts={drafts} />;
+  const draftsResult = await getDraftsForUser(session.user.id);
+  if (!draftsResult.ok) {
+    throw new Error(draftsResult.error.message);
+  }
+  return <EditorForm drafts={draftsResult.data} />;
 }

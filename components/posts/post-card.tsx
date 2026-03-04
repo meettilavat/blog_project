@@ -1,8 +1,7 @@
 import Link from "next/link";
 import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
-import { type PostListItem } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { type PostListItem } from "@/lib/posts/contracts/domain/types";
 
 type PostCardProps = {
   post: PostListItem;
@@ -44,7 +43,7 @@ export function PostCard({ post, href, variant }: PostCardProps) {
     <Link key={post.id} href={href} className={classes.card}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-3xl bg-muted">
         <PostCoverMedia
-          src={post.cover_image_url}
+          src={post.coverImageUrl}
           alt={post.title}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
@@ -55,8 +54,8 @@ export function PostCard({ post, href, variant }: PostCardProps) {
       <div className={classes.content}>
         <div className={classes.body}>
           <PostMetaRow
-            createdAt={post.created_at}
-            updatedAt={post.updated_at}
+            createdAt={post.createdAt}
+            updatedAt={post.updatedAt}
             className={classes.meta}
           />
           <h2 className={classes.title}>{post.title}</h2>
@@ -91,5 +90,3 @@ export function PostCard({ post, href, variant }: PostCardProps) {
     </Link>
   );
 }
-
-export default PostCard;

@@ -1,18 +1,24 @@
-import Link from "next/link";
-import { getAllPosts } from "@/lib/data/posts";
-import { Button } from "@/components/ui/button";
-import FilteredDashboardList from "@/components/dashboard/filter-bar";
-import { getCurrentUser } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
+import { getAllPosts } from "@/lib/posts/repository/admin-posts-repository";
+import { Button } from "@/components/ui/button";
+import FilteredDashboardList from "@/components/dashboard/filter-bar";
+import { requireAuthenticatedUserSession } from "@/lib/services/current-user-service";
+import { redirect } from "next/navigation";
+
 export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login?redirectedFrom=/dashboard");
+  const session = await requireAuthenticatedUserSession();
+  if (!session.ok) {
+    if (session.error.kind === "unauthenticated") {
+      redirect("/login?redirectedFrom=/dashboard");
+    }
+    throw new Error(session.error.message);
   }
-  const posts = await getAllPosts();
+  const postsResult = await getAllPosts();
+  if (!postsResult.ok) {
+    throw new Error(postsResult.error.message);
+  }
 
   return (
     <div className="space-y-8">
@@ -26,8 +32,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <FilteredDashboardList posts={posts} />
+      <FilteredDashboardList posts={postsResult.data} />
     </div>
   );
 }
-

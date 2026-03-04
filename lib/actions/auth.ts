@@ -1,9 +1,10 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClientOrThrow } from "@/lib/supabase/clients/next-request-client";
+import { getErrorMessage } from "@/lib/errors/get-error-message";
 import { redirect } from "next/navigation";
 
-export type AuthState = {
+type AuthState = {
   error?: string;
 };
 
@@ -16,9 +17,9 @@ export async function signInAction(
 
   let supabase;
   try {
-    supabase = await createSupabaseServerClient(true);
-  } catch (error: any) {
-    return { error: error.message || "Supabase is not configured." };
+    supabase = await createSupabaseServerClientOrThrow({ access: "write" });
+  } catch (error: unknown) {
+    return { error: getErrorMessage(error, "Supabase is not configured.") };
   }
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -33,7 +34,7 @@ export async function signInAction(
 }
 
 export async function signOutAction() {
-  const supabase = await createSupabaseServerClient(true);
+  const supabase = await createSupabaseServerClientOrThrow({ access: "write" });
   await supabase.auth.signOut();
   redirect("/");
 }

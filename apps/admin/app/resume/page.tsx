@@ -1,4 +1,4 @@
-import ResumePage from "@/components/resume-page";
+import ResumePage from "@/components/profile/resume-page";
 
 export const dynamic = "force-dynamic";
 

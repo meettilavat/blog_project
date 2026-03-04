@@ -1,10 +1,11 @@
-import { getPublishedPosts } from "@/lib/data/posts";
-import PostCard from "@/components/posts/post-card";
-
 export const dynamic = "force-dynamic";
 
+import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
+import { PostCard } from "@/components/posts/post-card";
+
 export default async function HomePage() {
-  const posts = await getPublishedPosts();
+  const postsResult = await getPublishedPosts();
+  const posts = postsResult.ok ? postsResult.data : [];
 
   return (
     <section className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">

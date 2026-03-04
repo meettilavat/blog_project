@@ -1,0 +1,30 @@
+{
+  "architecturePaths": [
+    "components/ui/button.tsx",
+    "components/ui/input.tsx",
+    "components/ui/label.tsx",
+    "components/ui/textarea.tsx",
+    "lib/ui/classnames.ts",
+    "config/tailwind/preset.ts"
+  ],
+  "contractRules": [
+    {
+      "id": "shared-ui-contracts",
+      "sensitive": [
+        "components/ui/button.tsx",
+        "components/ui/input.tsx",
+        "components/ui/label.tsx",
+        "components/ui/textarea.tsx",
+        "lib/ui/classnames.ts",
+        "config/tailwind/preset.ts"
+      ],
+      "required": [
+        "components/ui/__tests__/button.test.tsx",
+        "components/ui/__tests__/input.test.tsx",
+        "components/ui/__tests__/label.test.tsx",
+        "lib/ui/classnames.test.ts",
+        "config/tailwind/preset.test.ts"
+      ]
+    }
+  ]
+}

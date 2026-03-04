@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { cn, formatDate, isSignificantlyUpdated } from "@/lib/utils";
+import { formatDate, isSignificantlyUpdated } from "@/lib/typography/date";
+import { cn } from "@/lib/ui/classnames";
 
 type ReadStats = {
   minutes: number;

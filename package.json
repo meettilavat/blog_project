@@ -11,7 +11,9 @@
     "build:public": "next build apps/public",
     "start": "next start apps/admin",
     "start:public": "next start apps/public",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run --config config/testing/vitest.config.ts",
+    "test:governance": "node scripts/check-contract-governance.mjs"
   },
   "keywords": [
     "nextjs",
@@ -51,6 +53,7 @@
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

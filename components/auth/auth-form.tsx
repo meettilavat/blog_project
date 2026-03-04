@@ -1,12 +1,13 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { signInAction, type AuthState } from "@/lib/actions/auth";
+import { signInAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const initialState: AuthState = {};
+type SignInState = Awaited<ReturnType<typeof signInAction>>;
+const initialState: SignInState = {};
 
 export function AuthForm() {
   const [state, formAction] = useFormState(signInAction, initialState);
@@ -45,5 +46,3 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
     </Button>
   );
 }
-
-export default AuthForm;

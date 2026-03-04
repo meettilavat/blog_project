@@ -5,6 +5,10 @@ node_modules/
 .next/
 .vercel/
 .turbo/
+next-env.d.ts
+
+# Build artifacts
+*.tsbuildinfo
 
 # Env & local config
 .env

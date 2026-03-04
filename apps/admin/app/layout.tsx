@@ -1,40 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "../../../styles/globals.css";
 import { Space_Grotesk, Literata, IBM_Plex_Mono } from "next/font/google";
-import Header from "@/components/header";
-import { cn } from "@/lib/utils";
-import TypographyToggle from "@/components/typography-toggle";
-
-const themeScript = `
-(() => {
-  try {
-    const root = document.documentElement;
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = stored || (prefersDark ? 'dark' : 'light');
-    root.classList.toggle('dark', theme === 'dark');
-    root.dataset.theme = theme;
-    root.style.colorScheme = theme;
-
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      const button = target instanceof Element ? target.closest('[data-theme-toggle]') : null;
-      if (!button) return;
-      const next = root.classList.contains('dark') ? 'light' : 'dark';
-      root.classList.toggle('dark', next === 'dark');
-      root.dataset.theme = next;
-      root.style.colorScheme = next;
-      try {
-        localStorage.setItem('theme', next);
-      } catch {
-        // ignore
-      }
-    });
-  } catch {
-    // ignore
-  }
-})();
-`;
+import Header from "@/apps/admin/components/shell/header";
+import { cn } from "@/lib/ui/classnames";
+import TypographyToggle from "@/apps/admin/components/shell/typography-toggle";
+import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 
 const grotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -76,30 +47,32 @@ export default function RootLayout({
     >
       <head>
         <meta name="color-scheme" content="light dark" />
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script src="/scripts/theme-admin.js" strategy="beforeInteractive" />
       </head>
       <body
         className="min-h-screen bg-background text-foreground antialiased transition-colors"
         data-typestyle="sans"
       >
-        <a
-          href="#content"
-          className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-        >
-          Skip to content
-        </a>
-        <div className="pointer-events-none fixed inset-0 -z-10 opacity-40" aria-hidden="true">
-          <div className="grid-ruled h-full w-full" />
-        </div>
-        <div className="relative">
-          <Header />
-          <div className="container flex items-center justify-end pt-2">
-            <TypographyToggle />
+        <UiEnvironmentProvider>
+          <a
+            href="#content"
+            className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            Skip to content
+          </a>
+          <div className="pointer-events-none fixed inset-0 -z-10 opacity-40" aria-hidden="true">
+            <div className="grid-ruled h-full w-full" />
           </div>
-          <main id="content" className="container pb-20 pt-10">
-            {children}
-          </main>
-        </div>
+          <div className="relative">
+            <Header />
+            <div className="container flex items-center justify-end pt-2">
+              <TypographyToggle />
+            </div>
+            <main id="content" className="container pb-20 pt-10">
+              {children}
+            </main>
+          </div>
+        </UiEnvironmentProvider>
       </body>
     </html>
   );

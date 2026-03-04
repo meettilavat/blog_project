@@ -11,6 +11,28 @@ const config = [
       }
     }
   },
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/lib/supabase/server",
+              message:
+                "Import request/public client modules directly to preserve Supabase auth/public boundary seams."
+            },
+            {
+              name: "@/lib/data/posts",
+              message:
+                "Import post repositories directly from '@/lib/posts/repository/*' to avoid mixing public and admin data boundaries."
+            }
+          ]
+        }
+      ]
+    }
+  },
   ...next
 ];
 

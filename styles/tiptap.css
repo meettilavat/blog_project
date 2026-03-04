@@ -1,0 +1,264 @@
+.tiptap {
+  min-height: 360px;
+  outline: none;
+}
+
+.tiptap:focus-visible {
+  outline: none;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4 {
+  letter-spacing: -0.02em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  scroll-margin-top: 118px;
+  text-wrap: balance;
+}
+
+.tiptap p {
+  margin: 0.8rem 0;
+  line-height: 1.9;
+  color: rgb(15 23 42 / 0.9);
+  text-wrap: pretty;
+}
+
+html[data-app="public"] .tiptap p {
+  color: rgb(36 30 24 / 0.9);
+}
+
+html[data-app="public"].dark .tiptap p {
+  color: rgb(244 234 216 / 0.88);
+}
+
+.tiptap > p:first-of-type {
+  font-size: clamp(1.05rem, 1rem + 0.18vw, 1.16rem);
+  line-height: 1.75;
+  margin-top: 0.25rem;
+}
+
+html[data-app="public"] .tiptap > p:first-of-type {
+  color: rgb(36 30 24 / 0.95);
+}
+
+html[data-app="public"].dark .tiptap > p:first-of-type {
+  color: rgb(250 243 232 / 0.94);
+}
+
+.tiptap ul {
+  list-style: disc;
+  margin-left: 1.25rem;
+  padding-left: 0.5rem;
+  margin-top: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap ol {
+  list-style: decimal;
+  margin-left: 1.25rem;
+  padding-left: 0.5rem;
+  margin-top: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap li {
+  margin-bottom: 0.38rem;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1.25rem;
+  margin: 2rem 0;
+  color: var(--foreground);
+  font-style: italic;
+  background: linear-gradient(90deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.02));
+  max-width: min(70ch, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  border-radius: 0 0.75rem 0.75rem 0;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.tiptap blockquote::before {
+  content: "\201C";
+  position: absolute;
+  top: -0.35rem;
+  left: -0.15rem;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+html[data-app="public"] .tiptap blockquote {
+  background: linear-gradient(90deg, rgb(184 92 56 / 0.08), rgb(216 199 173 / 0.04));
+}
+
+.tiptap code {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.95em;
+}
+
+html[data-app="public"] .tiptap code {
+  background: rgb(36 30 24 / 0.9);
+  color: #fffaf2;
+}
+
+html[data-app="public"].dark .tiptap code {
+  background: rgb(244 234 216 / 0.12);
+  color: #f4ead8;
+}
+
+.tiptap pre {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  overflow: auto;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+html[data-app="public"] .tiptap pre {
+  background: rgb(36 30 24 / 0.92);
+  color: #fffaf2;
+}
+
+html[data-app="public"].dark .tiptap pre {
+  background: rgb(62 52 40 / 0.5);
+  color: #f4ead8;
+  border: 1px solid rgb(244 234 216 / 0.08);
+}
+
+.tiptap a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgb(15 23 42 / 0.35);
+  text-underline-offset: 0.22rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+html[data-app="public"] .tiptap a {
+  text-decoration-color: rgb(184 92 56 / 0.38);
+}
+
+.tiptap a:hover {
+  text-decoration-color: currentColor;
+}
+
+.tiptap figure,
+.tiptap-figure {
+  margin: 1.5rem auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(0.6rem, 1vw, 1rem);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgb(15 23 42 / 0.05), rgb(15 23 42 / 0.02));
+}
+
+html[data-app="public"] .tiptap figure,
+html[data-app="public"] .tiptap-figure {
+  background: linear-gradient(145deg, rgb(184 92 56 / 0.04), rgb(216 199 173 / 0.05));
+}
+
+html[data-app="public"].dark .tiptap figure,
+html[data-app="public"].dark .tiptap-figure {
+  background: linear-gradient(145deg, rgb(229 154 114 / 0.05), rgb(62 52 40 / 0.16));
+}
+
+.tiptap figure img,
+.tiptap-figure img {
+  display: block;
+  margin: 0 auto;
+  border-radius: 1rem;
+  box-shadow: 0 20px 45px rgb(15 23 42 / 0.12);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  max-width: 100%;
+  width: 100%;
+}
+
+.tiptap figcaption {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #6b7280;
+  position: relative;
+}
+
+.tiptap figcaption::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.35;
+  margin: 0 auto 0.6rem;
+}
+
+html[data-app="public"] .tiptap figcaption {
+  color: rgb(97 78 61 / 0.95);
+}
+
+html[data-app="public"].dark .tiptap figcaption {
+  color: rgb(214 192 165 / 0.86);
+}
+
+.tiptap table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.tiptap thead {
+  background: var(--muted);
+}
+
+.tiptap td,
+.tiptap th {
+  border: 1px solid var(--border);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.2s ease;
+}
+
+.tiptap tbody tr:hover td {
+  background: var(--muted);
+}
+
+.floating-toolbar {
+  backdrop-filter: blur(8px);
+}
+
+.tiptap figure img:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px rgb(15 23 42 / 0.15);
+}
+
+html[data-app="public"] .tiptap figure img:hover {
+  box-shadow: 0 25px 50px rgb(36 30 24 / 0.2);
+}
+

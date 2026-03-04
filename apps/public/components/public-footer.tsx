@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { getPublicLinks } from "@/lib/public-links";
 
 export function PublicFooter() {
   const year = new Date().getFullYear();
+  const publicLinks = getPublicLinks();
 
   return (
     <footer className="border-t border-border/50 bg-card/40">
@@ -23,7 +25,7 @@ export function PublicFooter() {
             Resume
           </Link>
           <a
-            href="https://github.com/meettilavat/blog_project"
+            href={publicLinks.sourceRepository}
             target="_blank"
             rel="noreferrer"
             className="transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"

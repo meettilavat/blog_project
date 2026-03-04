@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/ui/classnames";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium tracking-tight transition-[transform,box-shadow] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60 active:translate-y-[1px]",
@@ -29,19 +29,28 @@ const buttonVariants = cva(
   }
 );
 
-export interface ButtonProps
+interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  /**
+   * Loading state contract: replaces children with loading UI, forces non-interactive button semantics,
+   * and sets aria-busy for assistive technologies.
+   */
   isLoading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, children, ...props }, ref) => {
+  ({ className, variant, size, isLoading, children, disabled, "aria-busy": ariaBusy, ...props }, ref) => {
+    const isDisabled = Boolean(disabled || isLoading);
+    const computedAriaBusy = isLoading ? true : ariaBusy;
+
     return (
       <button
         className={cn("group relative overflow-hidden", buttonVariants({ variant, size }), className)}
         ref={ref}
         {...props}
+        disabled={isDisabled}
+        aria-busy={computedAriaBusy}
       >
         <span className="pointer-events-none absolute inset-0 scale-95 rounded-full bg-white/10 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100 group-active:opacity-70" />
         {isLoading ? <span className="animate-pulse">···</span> : children}

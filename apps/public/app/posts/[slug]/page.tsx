@@ -1,40 +1,46 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublishedPostBySlug, getPublishedPosts } from "@/lib/data/posts";
 import {
-  cn,
-  extractHeadings,
-  readingTimeFromContent,
-  plainTextFromContent
-} from "@/lib/utils";
-import RichTextViewer from "@/components/rich-text-viewer";
-import TableOfContents from "@/components/table-of-contents";
-import ReadingProgress from "@/components/reading-progress";
+  getPublishedPostBySlug,
+  getPublishedPosts
+} from "@/lib/posts/repository/public-posts-repository";
+import {
+  analyzeContent
+} from "@/lib/tiptap/content-pipeline";
+import { getConfiguredSiteUrl } from "@/lib/site-url";
+import { cn } from "@/lib/ui/classnames";
+import RichTextViewer from "@/components/content/rich-text/rich-text-viewer";
+import TableOfContents from "@/components/content/chrome/table-of-contents";
+import { ReadingProgress } from "@/components/content/chrome/reading-progress";
 import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
 import { FadeIn } from "@/components/motion/fade-in";
-
-export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateStaticParams() {
-  const posts = await getPublishedPosts();
+  const postsResult = await getPublishedPosts();
+  const posts = postsResult.ok ? postsResult.data : [];
   return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPostBySlug(slug);
-  if (!post) return {};
+  const postResult = await getPublishedPostBySlug(slug);
+  if (!postResult.ok || !postResult.data) {
+    return {};
+  }
+  const post = postResult.data;
 
-  const text = plainTextFromContent(post.content);
+  const contentPipeline = analyzeContent(post.content);
+  const text = contentPipeline.plainText;
   const description =
     post.excerpt?.trim() || (text ? text.slice(0, 160) : "Read the latest post from Meet Tilavat.");
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com"}/posts/${slug}`;
+  const configuredSiteUrl = getConfiguredSiteUrl();
+  const url = configuredSiteUrl ? `${configuredSiteUrl}/posts/${slug}` : `/posts/${slug}`;
 
   return {
     title: post.title,
@@ -45,28 +51,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       title: post.title,
       description,
-      images: post.cover_image_url ? [{ url: post.cover_image_url }] : undefined
+      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : undefined
     },
     twitter: {
-      card: post.cover_image_url ? "summary_large_image" : "summary",
+      card: post.coverImageUrl ? "summary_large_image" : "summary",
       title: post.title,
       description,
-      images: post.cover_image_url ? [post.cover_image_url] : undefined
+      images: post.coverImageUrl ? [post.coverImageUrl] : undefined
     }
   };
 }
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPublishedPostBySlug(slug);
+  const postResult = await getPublishedPostBySlug(slug);
 
-  if (!post) {
-    notFound();
+  if (!postResult.ok) {
+    throw new Error(postResult.error.message);
   }
 
-  const headings = extractHeadings(post.content);
+  if (!postResult.data) {
+    notFound();
+  }
+  const post = postResult.data;
+
+  const contentPipeline = analyzeContent(post.content);
+  const headings = contentPipeline.headings;
   const hasHeadings = headings.length > 0;
-  const reading = readingTimeFromContent(post.content);
+  const reading = contentPipeline.reading;
   const centeredReadingClass = "mx-auto w-full max-w-[62rem]";
 
   return (
@@ -88,7 +100,7 @@ export default async function PostPage({ params }: Props) {
         <FadeIn y={16} duration={0.5} delay={0.05}>
           <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[32px] border border-border/80 bg-muted">
             <PostCoverMedia
-              src={post.cover_image_url}
+              src={post.coverImageUrl}
               alt={post.title}
               fill
               sizes="(max-width: 1024px) 100vw, 1100px"
@@ -104,8 +116,8 @@ export default async function PostPage({ params }: Props) {
           <div className={cn("space-y-6", !hasHeadings && centeredReadingClass)}>
             <div className="space-y-5">
               <PostMetaRow
-                createdAt={post.created_at}
-                updatedAt={post.updated_at}
+                createdAt={post.createdAt}
+                updatedAt={post.updatedAt}
                 publishedPrefix="Published"
                 readStats={reading}
                 className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-foreground/55 [font-variant-numeric:tabular-nums]"
@@ -125,7 +137,7 @@ export default async function PostPage({ params }: Props) {
           )}
         >
           <div className={cn("min-w-0", hasHeadings ? "max-w-[46rem]" : centeredReadingClass)}>
-            <RichTextViewer content={post.content as any} className="mx-0 max-w-none" />
+            <RichTextViewer content={contentPipeline.content} className="mx-0 max-w-none" />
           </div>
           {hasHeadings && <TableOfContents headings={headings} offsetTop={112} trackActive />}
         </div>

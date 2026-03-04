@@ -1,0 +1,72 @@
+{
+  "architecturePaths": [
+    "lib/posts/contracts/domain/types.ts",
+    "lib/posts/contracts/compat/current.ts",
+    "lib/posts/contracts/types.ts",
+    "lib/posts/contracts/post-contract.ts",
+    "lib/posts/repository/admin-posts-repository.ts",
+    "lib/posts/repository/public-posts-repository.ts",
+    "lib/posts/repository/post-query.ts"
+  ],
+  "contractRules": [
+    {
+      "id": "core-types",
+      "sensitive": [
+        "lib/posts/contracts/domain/types.ts",
+        "lib/posts/contracts/compat/current.ts",
+        "lib/posts/contracts/types.ts"
+      ],
+      "required": [
+        "lib/posts/contracts/domain/types.test.ts",
+        "lib/posts/contracts/compat/current.test.ts",
+        "lib/posts/contracts/types.test.ts",
+        "lib/posts/contracts/post-contract.test.ts",
+        "lib/posts/repository/posts-repository.test.ts"
+      ]
+    },
+    {
+      "id": "post-contract",
+      "sensitive": [
+        "lib/posts/contracts/post-contract.ts"
+      ],
+      "required": [
+        "lib/posts/contracts/post-contract.test.ts",
+        "lib/posts/repository/posts-repository.test.ts"
+      ]
+    },
+    {
+      "id": "posts-repository",
+      "sensitive": [
+        "lib/posts/repository/admin-posts-repository.ts",
+        "lib/posts/repository/public-posts-repository.ts",
+        "lib/posts/repository/post-query.ts"
+      ],
+      "required": [
+        "lib/posts/repository/posts-repository.test.ts",
+        "lib/posts/repository/post-query.contract.test.ts"
+      ]
+    },
+    {
+      "id": "post-contract-compatibility",
+      "sensitive": [
+        "lib/posts/contracts/domain/types.ts",
+        "lib/posts/contracts/compat/current.ts",
+        "lib/posts/contracts/types.ts",
+        "lib/posts/contracts/persistence/types.ts",
+        "lib/posts/contracts/post-contract.ts"
+      ],
+      "required": [
+        "lib/posts/contracts/compatibility.contract.test.ts"
+      ]
+    },
+    {
+      "id": "post-query-policy-matrix",
+      "sensitive": [
+        "lib/posts/repository/post-query.ts"
+      ],
+      "required": [
+        "lib/posts/repository/post-query.contract.test.ts"
+      ]
+    }
+  ]
+}

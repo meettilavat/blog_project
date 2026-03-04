@@ -1,49 +1,17 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "../../../styles/globals.css";
 import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/ui/classnames";
+import { getConfiguredSiteUrl } from "@/lib/site-url";
 import PublicHeader from "../components/public-header";
 import PublicFooter from "../components/public-footer";
+import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 
 const LIGHT_THEME_COLOR = "#f6f2ea";
 const DARK_THEME_COLOR = "#15120f";
-
-const themeScript = `
-(() => {
-  try {
-    const root = document.documentElement;
-    const THEME_COLORS = { light: '${LIGHT_THEME_COLOR}', dark: '${DARK_THEME_COLOR}' };
-    const applyTheme = (theme) => {
-      root.classList.toggle('dark', theme === 'dark');
-      root.dataset.theme = theme;
-      root.style.colorScheme = theme;
-      const meta = document.querySelector('meta[name="theme-color"][data-dynamic-theme]');
-      if (meta) {
-        meta.setAttribute('content', THEME_COLORS[theme] || THEME_COLORS.light);
-      }
-    };
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = stored || (prefersDark ? 'dark' : 'light');
-    applyTheme(theme);
-
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      const button = target instanceof Element ? target.closest('[data-theme-toggle]') : null;
-      if (!button) return;
-      const next = root.classList.contains('dark') ? 'light' : 'dark';
-      applyTheme(next);
-      try {
-        localStorage.setItem('theme', next);
-      } catch {
-        // ignore
-      }
-    });
-  } catch {
-    // ignore
-  }
-})();
-`;
+const configuredSiteUrl = getConfiguredSiteUrl();
+const metadataBase = configuredSiteUrl ? new URL(configuredSiteUrl) : undefined;
 
 const sourceSans = Source_Sans_3({
   subsets: ["latin"],
@@ -65,7 +33,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://meettilavat.com"),
+  metadataBase,
   title: {
     default: "Meet Tilavat",
     template: "%s — Meet Tilavat"
@@ -76,7 +44,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    url: "https://meettilavat.com",
+    url: configuredSiteUrl ?? undefined,
     title: "Meet Tilavat",
     description: "Software engineer portfolio and blog.",
     siteName: "meettilavat.com"
@@ -117,25 +85,27 @@ export default function RootLayout({
           media="(prefers-color-scheme: dark)"
           content={DARK_THEME_COLOR}
         />
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script src="/scripts/theme-public.js" strategy="beforeInteractive" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased transition-colors">
-        <a
-          href="#content"
-          className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-        >
-          Skip to content
-        </a>
-        <div className="pointer-events-none fixed inset-0 -z-10 opacity-35 dark:opacity-20" aria-hidden="true">
-          <div className="grid-ruled h-full w-full" />
-        </div>
-        <div className="relative">
-          <PublicHeader />
-          <main id="content" className="container pb-20 pt-10">
-            {children}
-          </main>
-          <PublicFooter />
-        </div>
+        <UiEnvironmentProvider>
+          <a
+            href="#content"
+            className="sr-only rounded-full bg-foreground px-4 py-2 text-xs uppercase tracking-[0.2em] text-background shadow-soft focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            Skip to content
+          </a>
+          <div className="pointer-events-none fixed inset-0 -z-10 opacity-35 dark:opacity-20" aria-hidden="true">
+            <div className="grid-ruled h-full w-full" />
+          </div>
+          <div className="relative">
+            <PublicHeader />
+            <main id="content" className="container pb-20 pt-10">
+              {children}
+            </main>
+            <PublicFooter />
+          </div>
+        </UiEnvironmentProvider>
       </body>
     </html>
   );

@@ -1,9 +1,15 @@
 import type { MetadataRoute } from "next";
-import { getPublishedPosts } from "@/lib/data/posts";
+import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
+import { getConfiguredSiteUrl } from "@/lib/site-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getPublishedPosts();
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com";
+  const postsResult = await getPublishedPosts();
+  const posts = postsResult.ok ? postsResult.data : [];
+  const baseUrl = getConfiguredSiteUrl();
+
+  if (!baseUrl) {
+    return [];
+  }
 
   const entries: MetadataRoute.Sitemap = [
     {
@@ -19,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   posts.forEach((post) => {
-    const lastModified = new Date(post.updated_at ?? post.created_at ?? Date.now());
+    const lastModified = new Date(post.updatedAt ?? post.createdAt ?? Date.now());
     entries.push({
       url: `${baseUrl}/posts/${post.slug}`,
       lastModified,
@@ -30,4 +36,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return entries;
 }
-

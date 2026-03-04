@@ -1,0 +1,1 @@
+../../../../public/scripts/theme-public.js

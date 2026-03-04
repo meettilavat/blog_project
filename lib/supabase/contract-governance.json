@@ -1,0 +1,59 @@
+{
+  "architecturePaths": [
+    "lib/supabase/bootstrap/env.ts",
+    "lib/supabase/contracts/request-boundary.ts",
+    "lib/supabase/clients/server-client-factory.ts",
+    "lib/supabase/clients/next-request-client.ts",
+    "lib/supabase/clients/public-client.ts",
+    "lib/supabase/errors/error-mapping.ts",
+    "lib/auth/current-user.ts",
+    "lib/auth/current-user-error.ts"
+  ],
+  "forbiddenShims": [
+    "lib/supabase/next-request-client.ts"
+  ],
+  "contractRules": [
+    {
+      "id": "supabase-adapter",
+      "sensitive": [
+        "lib/supabase/bootstrap/env.ts",
+        "lib/supabase/contracts/request-boundary.ts",
+        "lib/supabase/clients/server-client-factory.ts",
+        "lib/supabase/clients/next-request-client.ts",
+        "lib/supabase/clients/public-client.ts",
+        "lib/supabase/errors/error-mapping.ts",
+        "lib/auth/current-user.ts",
+        "lib/auth/current-user-error.ts"
+      ],
+      "required": [
+        "lib/supabase/bootstrap/env.contract.test.ts",
+        "lib/supabase/contracts/request-boundary.test.ts",
+        "lib/supabase/clients/next-request-client.test.ts",
+        "lib/supabase/clients/next-request-client.contract.test.ts",
+        "lib/supabase/clients/public-client.test.ts",
+        "lib/supabase/clients/server-client-factory.contract.test.ts",
+        "lib/supabase/compatibility.contract.test.ts",
+        "lib/auth/current-user.test.ts",
+        "lib/auth/current-user-error.test.ts"
+      ]
+    },
+    {
+      "id": "supabase-entrypoint-compatibility",
+      "sensitive": [
+        "lib/supabase/clients/next-request-client.ts"
+      ],
+      "required": [
+        "lib/supabase/compatibility.contract.test.ts"
+      ]
+    },
+    {
+      "id": "supabase-policy-matrix",
+      "sensitive": [
+        "lib/supabase/clients/server-client-factory.ts"
+      ],
+      "required": [
+        "lib/supabase/clients/server-client-factory.contract.test.ts"
+      ]
+    }
+  ]
+}

@@ -1,10 +1,10 @@
-import { notFound, redirect } from "next/navigation";
-import EditorForm from "@/components/editor/editor-form";
-import { getPostBySlug } from "@/lib/data/posts";
-import { getDraftsForUser } from "@/lib/data/drafts";
-import { getCurrentUser } from "@/lib/supabase/server";
-
 export const dynamic = "force-dynamic";
+
+import { notFound, redirect } from "next/navigation";
+import { EditorForm } from "@/apps/admin/features/editor/ui/editor-form";
+import { getPostBySlug } from "@/lib/posts/repository/admin-posts-repository";
+import { getDraftsForUser } from "@/lib/data/drafts";
+import { requireAuthenticatedUserSession } from "@/lib/services/current-user-service";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -12,19 +12,31 @@ type Props = {
 
 export default async function EditPostPage({ params }: Props) {
   const { slug } = await params;
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect(`/login?redirectedFrom=/editor/${slug}`);
+  const session = await requireAuthenticatedUserSession();
+  if (!session.ok) {
+    if (session.error.kind === "unauthenticated") {
+      redirect(`/login?redirectedFrom=/editor/${slug}`);
+    }
+    throw new Error(session.error.message);
   }
+  const user = session.user;
 
-  const [post, drafts] = await Promise.all([
+  const [postResult, draftsResult] = await Promise.all([
     getPostBySlug(slug),
     getDraftsForUser(user.id)
   ]);
 
-  if (!post) {
+  if (!postResult.ok) {
+    throw new Error(postResult.error.message);
+  }
+
+  if (!postResult.data) {
     notFound();
   }
 
-  return <EditorForm initialPost={post} drafts={drafts} />;
+  if (!draftsResult.ok) {
+    throw new Error(draftsResult.error.message);
+  }
+
+  return <EditorForm initialPost={postResult.data} drafts={draftsResult.data} />;
 }

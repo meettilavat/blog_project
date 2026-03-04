@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import Image from "next/image";
-import { cn, isAllowedImageHost } from "@/lib/utils";
+import { cn } from "@/lib/ui/classnames";
+import { isAllowedImageHost } from "@/lib/content/image-host-policy";
+import { getRuntimeImageHostPolicy } from "@/lib/content/runtime-image-host-policy";
 
 type PostCoverMediaProps = {
   src?: string | null;
@@ -27,6 +29,8 @@ export function PostCoverMedia({
   fetchPriority,
   className
 }: PostCoverMediaProps) {
+  const imageHostPolicy = getRuntimeImageHostPolicy();
+
   if (!src) {
     return (
       <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.2em] text-foreground/50">
@@ -35,7 +39,7 @@ export function PostCoverMedia({
     );
   }
 
-  if (isAllowedImageHost(src)) {
+  if (isAllowedImageHost(src, imageHostPolicy)) {
     if (fill) {
       return (
         <Image

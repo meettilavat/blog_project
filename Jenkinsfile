@@ -28,6 +28,18 @@ pipeline {
       }
     }
 
+    stage("Test") {
+      steps {
+        sh "npm test"
+      }
+    }
+
+    stage("Contract Governance") {
+      steps {
+        sh "npm run test:governance"
+      }
+    }
+
     stage("Build Docker Images") {
       steps {
         script {

@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { getPublishedPosts } from "@/lib/data/posts";
-import PostCard from "@/components/posts/post-card";
+import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
+import { PostCard } from "@/components/posts/post-card";
 import { StaggeredList, StaggeredItem } from "@/components/motion/staggered-list";
 import { FadeIn } from "@/components/motion/fade-in";
 
-export const revalidate = 3600;
-
 export default async function HomePage() {
-  const posts = await getPublishedPosts();
+  const postsResult = await getPublishedPosts();
+  const posts = postsResult.ok ? postsResult.data : [];
 
   return (
     <div className="space-y-10">

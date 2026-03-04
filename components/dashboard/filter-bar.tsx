@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type PostListItem } from "@/lib/types";
+import { type PostListItem } from "@/lib/posts/contracts/domain/types";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/dashboard/filter-card";
 import Image from "next/image";
-import { deletePostAction } from "@/lib/actions/posts";
-import { formatDate, isAllowedImageHost } from "@/lib/utils";
+import { deletePostAction } from "@/apps/admin/features/editor/server/post-actions";
+import { formatDate } from "@/lib/typography/date";
+import { isAllowedImageHost } from "@/lib/content/image-host-policy";
+import { getRuntimeImageHostPolicy } from "@/lib/content/runtime-image-host-policy";
 import { updateStatusAction } from "@/lib/actions/status";
 import { Input } from "@/components/ui/input";
 
@@ -25,6 +27,7 @@ const filters = [
 export function FilteredDashboardList({ posts }: Props) {
   const [filter, setFilter] = useState<(typeof filters)[number]["value"]>("all");
   const [query, setQuery] = useState("");
+  const imageHostPolicy = getRuntimeImageHostPolicy();
 
   const list = useMemo(() => {
     const filtered = filter === "all" ? posts : posts.filter((p) => p.status === filter);
@@ -66,10 +69,10 @@ export function FilteredDashboardList({ posts }: Props) {
             <CardContent className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-1 items-center gap-4">
                 <div className="relative h-20 w-28 overflow-hidden rounded-xl bg-muted">
-                  {post.cover_image_url ? (
-                    isAllowedImageHost(post.cover_image_url) ? (
+                  {post.coverImageUrl ? (
+                    isAllowedImageHost(post.coverImageUrl, imageHostPolicy) ? (
                       <Image
-                        src={post.cover_image_url}
+                        src={post.coverImageUrl}
                         alt={post.title}
                         fill
                         sizes="112px"
@@ -78,7 +81,7 @@ export function FilteredDashboardList({ posts }: Props) {
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        src={post.cover_image_url}
+                        src={post.coverImageUrl}
                         alt={post.title}
                         className="h-full w-full object-cover"
                       />
@@ -95,7 +98,7 @@ export function FilteredDashboardList({ posts }: Props) {
                       {post.status}
                     </Badge>
                     <span className="text-xs uppercase tracking-[0.2em] text-foreground/60">
-                      {formatDate(post.updated_at)}
+                      {formatDate(post.updatedAt)}
                     </span>
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-foreground">{post.title}</p>
@@ -110,7 +113,7 @@ export function FilteredDashboardList({ posts }: Props) {
                     Edit
                   </Button>
                 </Link>
-                <form action={updateStatusAction.bind(null, post.id, post.status === "published" ? "draft" : "published")}>
+                <form action={async () => { await updateStatusAction(post.id, post.status === "published" ? "draft" : "published"); }}>
                   <Button
                     type="submit"
                     variant="subtle"
@@ -120,7 +123,7 @@ export function FilteredDashboardList({ posts }: Props) {
                     {post.status === "published" ? "Mark draft" : "Publish"}
                   </Button>
                 </form>
-                <form action={deletePostAction.bind(null, post.id, post.slug)}>
+                <form action={async () => { await deletePostAction(post.id, post.slug); }}>
                   <Button
                     type="submit"
                     variant="ghost"

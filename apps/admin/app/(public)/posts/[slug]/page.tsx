@@ -1,16 +1,15 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
-import { getPostBySlug } from "@/lib/data/posts";
+import { getPostBySlug } from "@/lib/posts/repository/admin-posts-repository";
 import {
-  extractHeadings,
-  readingTimeFromContent
-} from "@/lib/utils";
-import RichTextViewer from "@/components/rich-text-viewer";
-import TableOfContents from "@/components/table-of-contents";
-import ReadingProgress from "@/components/reading-progress";
+  analyzeContent
+} from "@/lib/tiptap/content-pipeline";
+import RichTextViewer from "@/components/content/rich-text/rich-text-viewer";
+import TableOfContents from "@/components/content/chrome/table-of-contents";
+import { ReadingProgress } from "@/components/content/chrome/reading-progress";
 import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
-
-export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,14 +17,20 @@ type Props = {
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const postResult = await getPostBySlug(slug);
 
-  if (!post || post.status !== "published") {
-    notFound();
+  if (!postResult.ok) {
+    throw new Error(postResult.error.message);
   }
 
-  const headings = extractHeadings(post.content);
-  const reading = readingTimeFromContent(post.content);
+  if (!postResult.data || postResult.data.status !== "published") {
+    notFound();
+  }
+  const post = postResult.data;
+
+  const contentPipeline = analyzeContent(post.content);
+  const headings = contentPipeline.headings;
+  const reading = contentPipeline.reading;
 
   return (
     <>
@@ -33,7 +38,7 @@ export default async function PostPage({ params }: Props) {
       <article className="space-y-10">
         <div className="relative aspect-[16/7] w-full overflow-hidden rounded-[32px] border border-border/80 bg-muted">
           <PostCoverMedia
-            src={post.cover_image_url}
+            src={post.coverImageUrl}
             alt={post.title}
             width={1600}
             height={700}
@@ -48,8 +53,8 @@ export default async function PostPage({ params }: Props) {
         <div className="space-y-10">
           <div className="space-y-3">
             <PostMetaRow
-              createdAt={post.created_at}
-              updatedAt={post.updated_at}
+              createdAt={post.createdAt}
+              updatedAt={post.updatedAt}
               publishedPrefix="Published"
               readStats={reading}
               className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-foreground/60"
@@ -61,7 +66,7 @@ export default async function PostPage({ params }: Props) {
 
           <TableOfContents headings={headings} />
 
-          <RichTextViewer content={post.content as any} />
+          <RichTextViewer content={contentPipeline.content} />
         </div>
       </article>
     </>

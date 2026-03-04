@@ -1,0 +1,41 @@
+{
+  "architecturePaths": [
+    "apps/admin/proxy.ts",
+    "lib/public-links.ts",
+    "lib/site-url.ts",
+    "lib/config/http-url.ts",
+    "lib/config/runtime-url-policy.ts",
+    "lib/typography/date.ts",
+    "lib/content/image-host-policy.ts",
+    "lib/content/slug.ts"
+  ],
+  "contractRules": [
+    {
+      "id": "shared-url-utils",
+      "sensitive": [
+        "lib/public-links.ts",
+        "lib/site-url.ts",
+        "lib/config/http-url.ts",
+        "lib/config/runtime-url-policy.ts"
+      ],
+      "required": [
+        "lib/public-links.test.ts",
+        "lib/site-url.test.ts",
+        "lib/config/runtime-url-policy.test.ts"
+      ]
+    },
+    {
+      "id": "utility-policy",
+      "sensitive": [
+        "lib/typography/date.ts",
+        "lib/content/image-host-policy.ts",
+        "lib/content/slug.ts"
+      ],
+      "required": [
+        "lib/typography/date.test.ts",
+        "lib/content/image-host-policy.test.ts",
+        "lib/tiptap/__tests__/content-pipeline.test.ts"
+      ]
+    }
+  ]
+}

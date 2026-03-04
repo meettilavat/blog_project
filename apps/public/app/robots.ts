@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next";
+import { getConfiguredSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
+  const configuredSiteUrl = getConfiguredSiteUrl();
+  const sitemap = configuredSiteUrl ? `${configuredSiteUrl}/sitemap.xml` : undefined;
+
   return {
     rules: [
       {
@@ -8,7 +12,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/"
       }
     ],
-    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || "https://meettilavat.com"}/sitemap.xml`
+    sitemap
   };
 }
-
