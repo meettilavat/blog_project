@@ -61,6 +61,16 @@ const nextConfig = {
         headers: securityHeaders
       }
     ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "meettilavat.com" }],
+        destination: "https://www.meettilavat.com/:path*",
+        permanent: true
+      }
+    ];
   }
 };
 

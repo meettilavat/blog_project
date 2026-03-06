@@ -1,6 +1,6 @@
 # MeetTilavat.com - Blog, Portfolio, Resume
 
-Live public site: https://meettilavat.com/
+Live public site: https://www.meettilavat.com/
 
 ## Status
 - Deployment is live and healthy (updated after post-merge rollout on February 10, 2026).
@@ -50,10 +50,12 @@ npm install
 ### 2. Configure environment
 Create `.env.local` at repo root:
 ```bash
+NEXT_PUBLIC_SITE_URL=https://www.meettilavat.com
+SITE_URL=https://www.meettilavat.com
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
-Both values are required. Server-side Supabase client factories validate this boundary through a typed `loadSupabaseEnv()` step before constructing clients.
+`NEXT_PUBLIC_SITE_URL` and `SITE_URL` keep sitemap, canonical, Open Graph, and robots metadata aligned on the production `www` host. Supabase env values are required for data access; server-side Supabase client factories validate this boundary through a typed `loadSupabaseEnv()` step before constructing clients.
 
 ### 3. Run apps
 ```bash

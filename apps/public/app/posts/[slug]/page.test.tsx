@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { notFound } from "next/navigation";
+import { POST_DESCRIPTION_FALLBACK } from "@/lib/seo/public-site";
 
 const HTTPS_PROTOCOL = "https://";
-const SITE_DOMAIN = "meettilavat.com";
+const SITE_DOMAIN = "www.meettilavat.com";
 const SITE_URL = `${HTTPS_PROTOCOL}${SITE_DOMAIN}`;
 const REMOTE_COVER_IMAGE_URL = [HTTPS_PROTOCOL, "images.example.com", "/cover.png"].join("");
 
@@ -131,6 +132,30 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(metadata.twitter?.card).toBe("summary_large_image");
   });
 
+  it("falls back to the default post description when excerpt and plain text are empty", async () => {
+    getPublishedPostBySlugMock.mockResolvedValue({
+      ok: true,
+      data: {
+        title: "Empty Post",
+        excerpt: "",
+        content: { type: "doc", content: [] },
+        coverImageUrl: null
+      }
+    });
+    analyzeContentMock.mockReturnValue({
+      plainText: "",
+      headings: [],
+      reading: { minutes: 1 },
+      content: { type: "doc" }
+    });
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ slug: "empty-post" })
+    });
+
+    expect(metadata.description).toBe(POST_DESCRIPTION_FALLBACK);
+  });
+
   it("throws when published post loading fails", async () => {
     getPublishedPostBySlugMock.mockResolvedValue({
       ok: false,
@@ -193,5 +218,8 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(html).toContain("PostMetaRowStub:2024-01-01T00:00:00.000Z:2024-01-02T00:00:00.000Z");
     expect(html).toContain("RichTextViewerStub:doc");
     expect(html).toContain("TableOfContentsStub:1");
+    expect(html).toContain("application/ld+json");
+    expect(html).toContain("\"@type\":\"BlogPosting\"");
+    expect(html).toContain(`\"url\":\"${SITE_URL}/posts/published-post\"`);
   });
 });

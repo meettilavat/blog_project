@@ -16,10 +16,26 @@ import { ReadingProgress } from "@/components/content/chrome/reading-progress";
 import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
 import { FadeIn } from "@/components/motion/fade-in";
+import StructuredDataScript from "@/components/seo/structured-data-script";
+import {
+  POST_DESCRIPTION_FALLBACK,
+  buildPublicAssetUrl,
+  buildBlogPostingStructuredData
+} from "@/lib/seo/public-site";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+function buildPostDescription({
+  excerpt,
+  plainText
+}: {
+  excerpt?: string | null;
+  plainText: string;
+}) {
+  return excerpt?.trim() || (plainText ? plainText.slice(0, 160) : POST_DESCRIPTION_FALLBACK);
+}
 
 export async function generateStaticParams() {
   const postsResult = await getPublishedPosts();
@@ -36,11 +52,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = postResult.data;
 
   const contentPipeline = analyzeContent(post.content);
-  const text = contentPipeline.plainText;
-  const description =
-    post.excerpt?.trim() || (text ? text.slice(0, 160) : "Read the latest post from Meet Tilavat.");
+  const description = buildPostDescription({
+    excerpt: post.excerpt,
+    plainText: contentPipeline.plainText
+  });
   const configuredSiteUrl = getConfiguredSiteUrl();
   const url = configuredSiteUrl ? `${configuredSiteUrl}/posts/${slug}` : `/posts/${slug}`;
+  const imageUrl =
+    configuredSiteUrl && post.coverImageUrl
+      ? buildPublicAssetUrl(post.coverImageUrl, configuredSiteUrl)
+      : post.coverImageUrl;
 
   return {
     title: post.title,
@@ -51,13 +72,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       title: post.title,
       description,
-      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : undefined
+      images: imageUrl ? [{ url: imageUrl }] : undefined
     },
     twitter: {
-      card: post.coverImageUrl ? "summary_large_image" : "summary",
+      card: imageUrl ? "summary_large_image" : "summary",
       title: post.title,
       description,
-      images: post.coverImageUrl ? [post.coverImageUrl] : undefined
+      images: imageUrl ? [imageUrl] : undefined
     }
   };
 }
@@ -76,6 +97,11 @@ export default async function PostPage({ params }: Props) {
   const post = postResult.data;
 
   const contentPipeline = analyzeContent(post.content);
+  const configuredSiteUrl = getConfiguredSiteUrl();
+  const description = buildPostDescription({
+    excerpt: post.excerpt,
+    plainText: contentPipeline.plainText
+  });
   const headings = contentPipeline.headings;
   const hasHeadings = headings.length > 0;
   const reading = contentPipeline.reading;
@@ -83,6 +109,19 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <>
+      {configuredSiteUrl ? (
+        <StructuredDataScript
+          data={buildBlogPostingStructuredData({
+            siteUrl: configuredSiteUrl,
+            slug,
+            title: post.title,
+            description,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            coverImageUrl: post.coverImageUrl
+          })}
+        />
+      ) : null}
       <ReadingProgress />
       <article className="space-y-8">
         <FadeIn y={12} duration={0.4}>

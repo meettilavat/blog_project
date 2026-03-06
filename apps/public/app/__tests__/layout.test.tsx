@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import {
+  DEFAULT_SOCIAL_IMAGE_PATH,
+  HOME_PAGE_DESCRIPTION,
+  PUBLIC_SITE_NAME
+} from "@/lib/seo/public-site";
 
 const { SITE_URL } = vi.hoisted(() => {
   const protocol = "https://";
-  const domain = "meettilavat.com";
+  const domain = "www.meettilavat.com";
   return {
     SITE_URL: `${protocol}${domain}`
   };
@@ -39,11 +44,22 @@ import RootLayout, { metadata } from "../layout";
 
 describe("apps/public/app/layout.tsx", () => {
   it("exports expected metadata", () => {
+    expect(metadata.applicationName).toBe(PUBLIC_SITE_NAME);
     expect(metadata.metadataBase?.toString()).toBe(`${SITE_URL}/`);
-    expect(metadata.description).toBe("Meet Tilavat — software engineer portfolio and writing.");
-    expect(metadata.alternates?.canonical).toBe("/");
+    expect(metadata.description).toBe(HOME_PAGE_DESCRIPTION);
+    expect(metadata.authors).toEqual([{ name: PUBLIC_SITE_NAME, url: "/resume" }]);
     expect(metadata.openGraph?.url).toBe(SITE_URL);
+    expect(metadata.openGraph?.siteName).toBe(PUBLIC_SITE_NAME);
+    expect(metadata.openGraph?.images).toEqual([
+      {
+        url: DEFAULT_SOCIAL_IMAGE_PATH,
+        alt: "Meet Tilavat — software engineer portfolio, resume, and writing.",
+        width: 1200,
+        height: 630
+      }
+    ]);
     expect(metadata.twitter?.card).toBe("summary_large_image");
+    expect(metadata.twitter?.images).toEqual([DEFAULT_SOCIAL_IMAGE_PATH]);
   });
 
   it("renders public shell around page content", () => {

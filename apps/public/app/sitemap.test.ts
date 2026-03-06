@@ -16,7 +16,7 @@ vi.mock("@/lib/posts/repository/public-posts-repository", () => ({
 import sitemap from "./sitemap";
 
 const HTTPS_PROTOCOL = "https";
-const SITE_HOST = "meettilavat.com";
+const SITE_HOST = "www.meettilavat.com";
 const SITE_URL = `${HTTPS_PROTOCOL}://${SITE_HOST}`;
 
 describe("apps/public/app/sitemap.ts", () => {

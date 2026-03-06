@@ -4,6 +4,15 @@ import "../../../styles/globals.css";
 import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import { cn } from "@/lib/ui/classnames";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
+import {
+  AUTHOR_NAME,
+  DEFAULT_SOCIAL_IMAGE_ALT,
+  DEFAULT_SOCIAL_IMAGE_PATH,
+  HOME_PAGE_DESCRIPTION,
+  PUBLIC_SITE_LOCALE,
+  PUBLIC_SITE_NAME,
+  PUBLIC_SITE_TITLE_TEMPLATE
+} from "@/lib/seo/public-site";
 import PublicHeader from "../components/public-header";
 import PublicFooter from "../components/public-footer";
 import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
@@ -34,25 +43,36 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase,
+  applicationName: PUBLIC_SITE_NAME,
   title: {
-    default: "Meet Tilavat",
-    template: "%s — Meet Tilavat"
+    default: PUBLIC_SITE_NAME,
+    template: PUBLIC_SITE_TITLE_TEMPLATE
   },
-  description: "Meet Tilavat — software engineer portfolio and writing.",
-  alternates: {
-    canonical: "/"
-  },
+  description: HOME_PAGE_DESCRIPTION,
+  authors: [{ name: AUTHOR_NAME, url: "/resume" }],
+  creator: AUTHOR_NAME,
+  publisher: AUTHOR_NAME,
   openGraph: {
     type: "website",
+    locale: PUBLIC_SITE_LOCALE,
     url: configuredSiteUrl ?? undefined,
-    title: "Meet Tilavat",
-    description: "Software engineer portfolio and blog.",
-    siteName: "meettilavat.com"
+    title: PUBLIC_SITE_NAME,
+    description: HOME_PAGE_DESCRIPTION,
+    siteName: PUBLIC_SITE_NAME,
+    images: [
+      {
+        url: DEFAULT_SOCIAL_IMAGE_PATH,
+        alt: DEFAULT_SOCIAL_IMAGE_ALT,
+        width: 1200,
+        height: 630
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Meet Tilavat",
-    description: "Software engineer portfolio and blog."
+    title: PUBLIC_SITE_NAME,
+    description: HOME_PAGE_DESCRIPTION,
+    images: [DEFAULT_SOCIAL_IMAGE_PATH]
   }
 };
 
