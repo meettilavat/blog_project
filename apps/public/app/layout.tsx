@@ -17,6 +17,7 @@ import PublicHeader from "../components/public-header";
 import PublicFooter from "../components/public-footer";
 import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const LIGHT_THEME_COLOR = "#f6f2ea";
 const DARK_THEME_COLOR = "#15120f";
@@ -128,6 +129,7 @@ export default function RootLayout({
           </div>
         </UiEnvironmentProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
