@@ -6,6 +6,7 @@ import Header from "@/apps/admin/components/shell/header";
 import { cn } from "@/lib/ui/classnames";
 import TypographyToggle from "@/apps/admin/components/shell/typography-toggle";
 import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const grotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -73,6 +74,7 @@ export default function RootLayout({
             </main>
           </div>
         </UiEnvironmentProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
