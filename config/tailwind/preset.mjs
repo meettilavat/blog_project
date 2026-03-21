@@ -2,6 +2,7 @@ import defaultTheme from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
 const preset = {
+  darkMode: "class",
   content: [],
   theme: {
     container: {
