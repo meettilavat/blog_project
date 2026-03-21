@@ -27,8 +27,8 @@ type CreateNextSupabaseServerClientOptions = {
 export const SUPABASE_REQUEST_CLIENT_CONTRACT_SCOPE = "lib/supabase/clients/next-request-client";
 export const SUPABASE_REQUEST_CLIENT_CONTRACT_VERSION = 1 as const;
 
-function readNextRequestCookieStore(): Promise<SupabaseCookieStore | null> {
-  return Promise.resolve(cookies());
+async function readNextRequestCookieStore(): Promise<SupabaseCookieStore | null> {
+  return await cookies();
 }
 
 /**

@@ -40,9 +40,9 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.554.0",
-    "next": "^16.1.6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "next": "^16.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -52,7 +52,7 @@
     "autoprefixer": "^10.4.22",
     "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9.14.0",
-    "eslint-config-next": "^16.1.6",
+    "eslint-config-next": "^16.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.9.3",
