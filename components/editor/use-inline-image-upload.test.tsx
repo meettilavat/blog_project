@@ -19,6 +19,7 @@ vi.mock("@/lib/services/editor-image-upload", () => ({
 let hookResult: ReturnType<typeof useInlineImageUpload> | null = null;
 
 function InlineImageUploadHarness() {
+  // eslint-disable-next-line react-hooks/globals -- test harness captures hook output for direct upload assertions.
   hookResult = useInlineImageUpload();
   return <div>{`uploadsEnabled:${String(hookResult.uploadsEnabled)}`}</div>;
 }

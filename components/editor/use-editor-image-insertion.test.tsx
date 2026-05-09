@@ -18,6 +18,7 @@ function EditorImageInsertionHarness({
     | { ok: false; message: string }
   >;
 }) {
+  // eslint-disable-next-line react-hooks/globals -- test harness captures hook output for direct callback assertions.
   hookResult = useEditorImageInsertion({
     editor,
     uploadInlineImage

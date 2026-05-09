@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/clients/next-request-client";
 import { slugify } from "@/lib/content/slug";
 import { parsePostRecord } from "@/lib/posts/contracts/post-contract";
@@ -124,7 +124,7 @@ function revalidatePostViews({ slug, includeEditor }: { slug: string; includeEdi
   if (includeEditor) {
     revalidatePath(`/editor/${slug}`);
   }
-  updateTag("posts");
+  revalidateTag("posts", { expire: 0 });
 }
 
 export async function savePostAction(

@@ -4,13 +4,11 @@ import { notFound } from "next/navigation";
 
 const getPostBySlugMock = vi.fn();
 const analyzeContentMock = vi.fn();
-const readingProgressRenderMock = vi.fn((props: { offset: number }) => (
-  <div>{`ReadingProgressStub:${props.offset}`}</div>
-));
+const readingProgressRenderMock = vi.fn(() => <div>ReadingProgressStub</div>);
 const tableOfContentsRenderMock = vi.fn((props: { headings: unknown[] }) => (
   <div>{`TableOfContentsStub:${props.headings.length}`}</div>
 ));
-const richTextViewerRenderMock = vi.fn((props: { content: { type: string } }) => (
+const richTextViewerRenderMock = vi.fn((props: { content: { type: string }; className?: string }) => (
   <div>{`RichTextViewerStub:${props.content.type}`}</div>
 ));
 const postCoverMediaRenderMock = vi.fn((props: { src?: string; alt: string }) => (
@@ -29,7 +27,7 @@ vi.mock("@/lib/tiptap/content-pipeline", () => ({
 }));
 
 vi.mock("@/components/content/rich-text/rich-text-viewer", () => ({
-  default: (props: { content: { type: string } }) => richTextViewerRenderMock(props)
+  default: (props: { content: { type: string }; className?: string }) => richTextViewerRenderMock(props)
 }));
 
 vi.mock("@/components/content/chrome/table-of-contents", () => ({
@@ -37,7 +35,7 @@ vi.mock("@/components/content/chrome/table-of-contents", () => ({
 }));
 
 vi.mock("@/components/content/chrome/reading-progress", () => ({
-  ReadingProgress: (props: { offset: number }) => readingProgressRenderMock(props)
+  ReadingProgress: () => readingProgressRenderMock()
 }));
 
 vi.mock("@/components/posts/post-cover-media", () => ({
@@ -75,10 +73,10 @@ describe("apps/admin/app/(public)/posts/[slug]/page.tsx", () => {
     ).rejects.toThrow("fetch failed");
   });
 
-  it("calls notFound when the post is missing or unpublished", async () => {
+  it("calls notFound when the post is missing", async () => {
     getPostBySlugMock.mockResolvedValue({
       ok: true,
-      data: { status: "draft" }
+      data: null
     });
 
     await expect(
@@ -88,6 +86,37 @@ describe("apps/admin/app/(public)/posts/[slug]/page.tsx", () => {
     ).rejects.toThrow("notFound");
 
     expect(notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a draft preview banner for unpublished posts", async () => {
+    getPostBySlugMock.mockResolvedValue({
+      ok: true,
+      data: {
+        id: "post-1",
+        slug: "draft-post",
+        status: "draft",
+        title: "Draft post",
+        coverImageUrl: "/cover.png",
+        content: { type: "doc", content: [] },
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-02T00:00:00.000Z"
+      }
+    });
+    analyzeContentMock.mockReturnValue({
+      headings: [],
+      reading: { words: 120, minutes: 1 },
+      content: { type: "doc", content: [] }
+    });
+
+    const html = renderToStaticMarkup(
+      await PostPage({
+        params: Promise.resolve({ slug: "draft-post" })
+      })
+    );
+
+    expect(html).toContain("Draft preview");
+    expect(html).toContain("/editor/draft-post");
+    expect(html).toContain("Draft post");
   });
 
   it("renders post metadata, toc, and rich text for a published post", async () => {
@@ -119,10 +148,13 @@ describe("apps/admin/app/(public)/posts/[slug]/page.tsx", () => {
     expect(getPostBySlugMock).toHaveBeenCalledWith("published-post");
     expect(analyzeContentMock).toHaveBeenCalledWith({ type: "doc", content: [] });
     expect(html).toContain("Published post");
-    expect(html).toContain("ReadingProgressStub:68");
+    expect(html).toContain("ReadingProgressStub");
     expect(html).toContain("PostCoverMediaStub:/cover.png:Published post");
     expect(html).toContain("PostMetaRowStub:2024-01-01T00:00:00.000Z:2024-01-02T00:00:00.000Z");
     expect(html).toContain("TableOfContentsStub:1");
     expect(html).toContain("RichTextViewerStub:doc");
+    expect(richTextViewerRenderMock).toHaveBeenCalledWith(
+      expect.objectContaining({ className: "tiptap-editorial mx-0 max-w-none" })
+    );
   });
 });

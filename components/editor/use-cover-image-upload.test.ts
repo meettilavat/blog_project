@@ -16,7 +16,7 @@ vi.mock("@/lib/services/editor-image-upload", () => ({
 import { useCoverImageUpload } from "./use-cover-image-upload";
 
 describe("components/editor/use-cover-image-upload.ts", () => {
-  it("surfaces uploader availability state from service configuration", () => {
+  it("hides uploader configuration errors during server render", () => {
     function HookProbe() {
       const { canUpload, error } = useCoverImageUpload();
       return createElement(
@@ -28,6 +28,6 @@ describe("components/editor/use-cover-image-upload.ts", () => {
 
     const html = renderToStaticMarkup(createElement(HookProbe));
 
-    expect(html).toContain("disabled:misconfigured");
+    expect(html).toContain("disabled:");
   });
 });

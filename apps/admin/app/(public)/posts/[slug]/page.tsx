@@ -1,15 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug } from "@/lib/posts/repository/admin-posts-repository";
 import {
   analyzeContent
 } from "@/lib/tiptap/content-pipeline";
-import RichTextViewer from "@/components/content/rich-text/rich-text-viewer";
-import TableOfContents from "@/components/content/chrome/table-of-contents";
 import { ReadingProgress } from "@/components/content/chrome/reading-progress";
-import PostCoverMedia from "@/components/posts/post-cover-media";
-import PostMetaRow from "@/components/posts/post-meta-row";
+import PostDetailArticle from "@/components/posts/post-detail-article";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -23,52 +21,40 @@ export default async function PostPage({ params }: Props) {
     throw new Error(postResult.error.message);
   }
 
-  if (!postResult.data || postResult.data.status !== "published") {
+  if (!postResult.data) {
     notFound();
   }
   const post = postResult.data;
+  const isDraft = post.status !== "published";
 
   const contentPipeline = analyzeContent(post.content);
-  const headings = contentPipeline.headings;
-  const reading = contentPipeline.reading;
+  const draftBanner = isDraft ? (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-dashed border-foreground/30 bg-card/70 px-4 py-3 text-xs uppercase tracking-[0.2em] text-foreground/70">
+      <span>Draft preview &middot; not visible to readers</span>
+      <Link
+        href={`/editor/${post.slug}`}
+        className="rounded-full border border-border/70 bg-background px-3 py-1 font-medium tracking-[0.2em] text-foreground hover:border-foreground/60"
+      >
+        Edit
+      </Link>
+    </div>
+  ) : null;
 
   return (
     <>
-      <ReadingProgress offset={68} />
-      <article className="space-y-10">
-        <div className="relative aspect-[16/7] w-full overflow-hidden rounded-[32px] border border-border/80 bg-muted">
-          <PostCoverMedia
-            src={post.coverImageUrl}
-            alt={post.title}
-            width={1600}
-            height={700}
-            sizes="(max-width: 1024px) 100vw, 960px"
-            className="h-full w-full object-cover"
-            priority
-            fetchPriority="high"
-            emptyLabel="No cover image"
-          />
-        </div>
-
-        <div className="space-y-10">
-          <div className="space-y-3">
-            <PostMetaRow
-              createdAt={post.createdAt}
-              updatedAt={post.updatedAt}
-              publishedPrefix="Published"
-              readStats={reading}
-              className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-foreground/60"
-            />
-            <h1 className="font-serif text-4xl leading-tight tracking-tight text-foreground sm:text-5xl">
-              {post.title}
-            </h1>
-          </div>
-
-          <TableOfContents headings={headings} />
-
-          <RichTextViewer content={contentPipeline.content} />
-        </div>
-      </article>
+      <ReadingProgress />
+      <PostDetailArticle
+        title={post.title}
+        excerpt={post.excerpt}
+        coverImageUrl={post.coverImageUrl}
+        content={contentPipeline.content}
+        headings={contentPipeline.headings}
+        reading={contentPipeline.reading}
+        createdAt={post.createdAt}
+        updatedAt={post.updatedAt}
+        publishedPrefix={isDraft ? "Drafted" : "Published"}
+        draftBanner={draftBanner}
+      />
     </>
   );
 }

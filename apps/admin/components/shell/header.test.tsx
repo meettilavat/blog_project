@@ -13,6 +13,10 @@ vi.mock("@/components/layout/theme-toggle", () => ({
   default: () => <span>ThemeToggle</span>
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/posts/hello-world"
+}));
+
 vi.mock("@/lib/actions/auth", () => ({
   signOutAction: vi.fn()
 }));

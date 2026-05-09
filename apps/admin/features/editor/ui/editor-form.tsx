@@ -35,7 +35,7 @@ type Props = {
 
 const blankDoc: NonNullable<PostContent> = {
   type: "doc",
-  content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }]
+  content: [{ type: "paragraph" }]
 };
 
 export function EditorForm({ initialPost, drafts = [] }: Props) {
@@ -176,15 +176,21 @@ export function EditorForm({ initialPost, drafts = [] }: Props) {
         )}
         <ul className="space-y-3">
           {drafts.map((draft) => (
-            <li key={draft.id}>
+            <li key={draft.id} className="space-y-1">
               <Link
-                href={`/editor/${draft.slug}`}
+                href={`/posts/${draft.slug}`}
                 className="block rounded-xl border border-border/70 bg-muted px-3 py-2 text-sm font-medium text-foreground hover:border-foreground/50"
               >
                 <div className="text-xs uppercase tracking-[0.2em] text-foreground/60">
                   {formatDate(draft.updatedAt)}
                 </div>
                 {draft.title}
+              </Link>
+              <Link
+                href={`/editor/${draft.slug}`}
+                className="ml-3 text-xs uppercase tracking-[0.2em] text-foreground/60 hover:text-foreground"
+              >
+                Edit
               </Link>
             </li>
           ))}

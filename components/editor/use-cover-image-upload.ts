@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createSupabaseEditorImageUploader,
   toEditorImageUploadError,
@@ -21,8 +21,12 @@ export function useCoverImageUpload() {
   const uploaderState = useMemo(() => createSupabaseEditorImageUploader(), []);
   const [isUploading, setIsUploading] = useState(false);
   const [runtimeError, setRuntimeError] = useState<EditorImageUploadError | null>(null);
-  const canUpload = uploaderState.ok;
-  const error = runtimeError ?? (!uploaderState.ok ? uploaderState.error : null);
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  const canUpload = hasMounted && uploaderState.ok;
+  const error = runtimeError ?? (hasMounted && !uploaderState.ok ? uploaderState.error : null);
 
   const uploadCoverImage = useCallback(
     async (file: File): Promise<CoverImageUploadResult> => {

@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   createSupabaseServerClientMock,
   revalidatePathMock,
-  updateTagMock
+  revalidateTagMock
 } = vi.hoisted(() => ({
   createSupabaseServerClientMock: vi.fn(),
   revalidatePathMock: vi.fn(),
-  updateTagMock: vi.fn()
+  revalidateTagMock: vi.fn()
 }));
 
 vi.mock("@/lib/supabase/clients/next-request-client", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/lib/supabase/clients/next-request-client", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
-  updateTag: updateTagMock
+  revalidateTag: revalidateTagMock
 }));
 
 import { deletePostAction, savePostAction } from "./post-actions";
@@ -119,7 +119,7 @@ describe("apps/admin/features/editor/server/post-actions.ts", () => {
     expect(eqIdMock).toHaveBeenCalledWith("id", "post-1");
     expect(eqAuthorMock).toHaveBeenCalledWith("author_id", "author-1");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
-    expect(updateTagMock).toHaveBeenCalledWith("posts");
+    expect(revalidateTagMock).toHaveBeenCalledWith("posts", { expire: 0 });
   });
 
   it("returns a permission error when user role is not editor/admin", async () => {

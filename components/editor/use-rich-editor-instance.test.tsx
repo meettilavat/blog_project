@@ -127,7 +127,8 @@ describe("components/editor/use-rich-editor-instance.ts", () => {
     expect(onChange).toHaveBeenCalledWith({ type: "doc", content: [] });
     expect(mocks.starterKitConfigureMock).toHaveBeenCalledWith({
       heading: { levels: [1, 2, 3] },
-      horizontalRule: {}
+      horizontalRule: {},
+      link: false
     });
     expect(mocks.placeholderConfigureMock).toHaveBeenCalledWith({
       placeholder: "A blank page with Swiss quietude..."

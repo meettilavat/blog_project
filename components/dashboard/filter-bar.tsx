@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type PostListItem } from "@/lib/posts/contracts/domain/types";
@@ -29,12 +29,11 @@ export function FilteredDashboardList({ posts }: Props) {
   const [query, setQuery] = useState("");
   const imageHostPolicy = getRuntimeImageHostPolicy();
 
-  const list = useMemo(() => {
-    const filtered = filter === "all" ? posts : posts.filter((p) => p.status === filter);
-    if (!query.trim()) return filtered;
-    const lower = query.toLowerCase();
-    return filtered.filter((p) => p.title.toLowerCase().includes(lower));
-  }, [filter, posts, query]);
+  const filtered = filter === "all" ? posts : posts.filter((p) => p.status === filter);
+  const normalizedQuery = query.trim().toLowerCase();
+  const list = normalizedQuery
+    ? filtered.filter((p) => p.title.toLowerCase().includes(normalizedQuery))
+    : filtered;
 
   return (
     <div className="space-y-6">
@@ -67,7 +66,11 @@ export function FilteredDashboardList({ posts }: Props) {
         {list.map((post) => (
           <Card key={post.id}>
             <CardContent className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-1 items-center gap-4">
+              <Link
+                href={`/posts/${post.slug}`}
+                className="flex flex-1 items-center gap-4 rounded-2xl outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-foreground/30"
+                aria-label={`Preview ${post.title}`}
+              >
                 <div className="relative h-20 w-28 overflow-hidden rounded-xl bg-muted">
                   {post.coverImageUrl ? (
                     isAllowedImageHost(post.coverImageUrl, imageHostPolicy) ? (
@@ -106,7 +109,7 @@ export function FilteredDashboardList({ posts }: Props) {
                     slug: {post.slug}
                   </p>
                 </div>
-              </div>
+              </Link>
               <div className="flex items-center gap-2">
                 <Link href={`/editor/${post.slug}`}>
                   <Button variant="outline" size="sm" className="uppercase tracking-[0.2em]">

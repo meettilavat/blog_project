@@ -2,17 +2,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const mocks = vi.hoisted(() => ({
-  useFormStateMock: vi.fn(),
+  useActionStateMock: vi.fn(),
   useFormStatusMock: vi.fn(),
   signInActionMock: vi.fn(),
   formActionMock: vi.fn()
 }));
 
+vi.mock("react", async () => {
+  const actual = await vi.importActual<typeof import("react")>("react");
+  return {
+    ...actual,
+    useActionState: (...args: unknown[]) => mocks.useActionStateMock(...args)
+  };
+});
+
 vi.mock("react-dom", async () => {
   const actual = await vi.importActual<typeof import("react-dom")>("react-dom");
   return {
     ...actual,
-    useFormState: (...args: unknown[]) => mocks.useFormStateMock(...args),
     useFormStatus: () => mocks.useFormStatusMock()
   };
 });
@@ -63,19 +70,19 @@ import { AuthForm } from "./auth-form";
 
 describe("components/auth/auth-form.tsx", () => {
   beforeEach(() => {
-    mocks.useFormStateMock.mockReset();
+    mocks.useActionStateMock.mockReset();
     mocks.useFormStatusMock.mockReset();
     mocks.signInActionMock.mockReset();
     mocks.formActionMock.mockReset();
 
-    mocks.useFormStateMock.mockReturnValue([{}, mocks.formActionMock]);
+    mocks.useActionStateMock.mockReturnValue([{}, mocks.formActionMock]);
     mocks.useFormStatusMock.mockReturnValue({ pending: false });
   });
 
   it("renders login fields and submit button", () => {
     const html = renderToStaticMarkup(<AuthForm />);
 
-    expect(mocks.useFormStateMock).toHaveBeenCalledWith(mocks.signInActionMock, {});
+    expect(mocks.useActionStateMock).toHaveBeenCalledWith(mocks.signInActionMock, {});
     expect(html).toContain("for=\"login-email\"");
     expect(html).toContain("name=\"email\"");
     expect(html).toContain("placeholder=\"hi@example.com\"");
@@ -87,7 +94,7 @@ describe("components/auth/auth-form.tsx", () => {
   });
 
   it("shows action errors and loading state while submitting", () => {
-    mocks.useFormStateMock.mockReturnValue([{ error: "Invalid credentials" }, mocks.formActionMock]);
+    mocks.useActionStateMock.mockReturnValue([{ error: "Invalid credentials" }, mocks.formActionMock]);
     mocks.useFormStatusMock.mockReturnValue({ pending: true });
 
     const html = renderToStaticMarkup(<AuthForm />);

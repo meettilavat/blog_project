@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { signInAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ type SignInState = Awaited<ReturnType<typeof signInAction>>;
 const initialState: SignInState = {};
 
 export function AuthForm() {
-  const [state, formAction] = useFormState(signInAction, initialState);
+  const [state, formAction] = useActionState(signInAction, initialState);
 
   return (
     <form action={formAction} className="space-y-5">

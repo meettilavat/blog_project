@@ -41,7 +41,8 @@ function buildEditorExtensions() {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
-      horizontalRule: {}
+      horizontalRule: {},
+      link: false
     }),
     Placeholder.configure({
       placeholder: "A blank page with Swiss quietude..."
