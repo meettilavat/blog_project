@@ -42,7 +42,18 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain("Education");
     expect(html).toContain("Selected Projects");
     expect(html).toContain("Skills");
+    expect(html).toContain("Vriksha Ganana / Tree Census Platform");
+    expect(html).toContain("municipal tree-census platform for SNMC");
+    expect(html).toContain("Django REST Framework");
+    expect(html).toContain("PostgreSQL/PostGIS");
+    expect(html).toContain("Google Cloud");
+    expect(html).toContain("Jetpack Compose");
+    expect(html).toContain("Kotlin");
+    const skillsSection = html.slice(html.indexOf("Skills"));
+    expect(skillsSection).not.toContain("Jetpack Compose");
+    expect(skillsSection).not.toContain("Kotlin");
     expect(html).toContain("MeetTilavat.com (Blog Platform)");
+    expect(html).not.toContain("CPU Scheduling Simulator");
     expect(html).toContain("linkedin.com/in/meettilavat");
     expect(html).toContain("github.com/meettilavat");
     expect(html).toContain("tilavatmeet2@gmail.com");

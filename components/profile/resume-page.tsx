@@ -29,14 +29,14 @@ const publicLinks = getPublicLinks();
 
 const experiences: Experience[] = [
   {
-    role: "Web Dev Trainee",
+    role: "Web Development Trainee",
     company: "Yellow Apple Solutions",
     period: "May – Jul 2023",
     location: "Surat, India",
     bullets: [
-      "Built responsive product interfaces in HTML, CSS, and JavaScript that held up across desktop and mobile breakpoints.",
-      "Partnered with designers to translate mockups into production-ready UI and iterated quickly from feedback.",
-      "Triaged and fixed UX regressions in layouts and interactions to improve overall polish and consistency."
+      "Converted UI mockups into responsive HTML, CSS, and JavaScript pages.",
+      "Refined spacing, interaction states, and feedback-driven interface changes.",
+      "Fixed layout and interaction regressions before handoff."
     ]
   }
 ];
@@ -58,29 +58,29 @@ const education: Education[] = [
 
 const projects: Project[] = [
   {
+    name: "Vriksha Ganana / Tree Census Platform",
+    stack: "Kotlin, Jetpack Compose, Django REST, PostGIS, Next.js, Google Cloud, Cloud SQL, GCS",
+    bullets: [
+      "Built an end-to-end municipal tree-census platform for SNMC across an Android field app, Django/PostGIS APIs, and a Next.js operations dashboard.",
+      "Implemented map-based field workflows, photo evidence, offline sync, Google Sign-In/JWT auth, and supervisor review flows.",
+      "Operated the live SNMC production deployment on GCP with Compute Engine, Cloud SQL/PostgreSQL 18 + PostGIS, GCS photo storage, Nginx, Redis/Celery, and uptime checks."
+    ]
+  },
+  {
     name: "MeetTilavat.com (Blog Platform)",
     stack: "Next.js, Tailwind CSS, Supabase, Tiptap, Docker, Jenkins",
     href: publicLinks.sourceRepository,
     bullets: [
-      "Split public read-only site and a private admin editor for publishing posts.",
-      "Rich-text editor with images, tables, and Supabase Storage uploads.",
-      "Containerized builds with CI/CD automation for repeatable deploys."
+      "Split public read-only site and private admin/editor app backed by Supabase.",
+      "Built rich-text publishing with images, tables, and Supabase Storage uploads.",
+      "Containerized Docker builds with Jenkins CI/CD for repeatable deploys."
     ]
   },
   {
     name: "Personal Blog (PHP/MySQL)",
     stack: "HTML, CSS, PHP, SQL, JavaScript, AWS",
     bullets: [
-      "Full-stack blog with admin panel, CKEditor formatting, and MySQL persistence.",
-      "Deployed on AWS, handling server setup and asset uploads."
-    ]
-  },
-  {
-    name: "CPU Scheduling Simulator",
-    stack: "HTML, CSS, JavaScript",
-    bullets: [
-      "Visualized multiple scheduling algorithms with interactive Gantt views.",
-      "Explainer pages plus JS-driven simulations."
+      "PHP/MySQL blog with admin publishing, CKEditor formatting, local image uploads, and AWS hosting."
     ]
   },
   {
@@ -109,10 +109,11 @@ const projects: Project[] = [
 ];
 
 const skills = {
-  languages: ["Java", "Python", "C/C++", "JavaScript", "PHP", "SQL", "HTML/CSS"],
-  frameworks: ["React", "Angular", "Node.js"],
-  devops: ["Docker", "Kubernetes", "Jenkins", "AWS", "Linux", "vast.ai", "Google Colab"],
+  languages: ["Python", "JavaScript", "SQL", "Java", "PHP", "C/C++", "HTML/CSS"],
+  frameworks: ["Django REST Framework", "Next.js", "React", "Node.js", "Laravel", "Angular"],
+  devops: ["Google Cloud", "Cloud SQL", "GCS", "Docker", "Jenkins", "Nginx", "Linux", "AWS"],
   tools: ["Git", "GitHub", "VS Code", "JetBrains IDEs"],
+  backendData: ["PostgreSQL/PostGIS", "REST APIs", "Celery", "Redis"],
   languagesSpoken: ["English (IELTS 8.0)", "Gujarati", "Hindi"],
   other: ["Custom PC building", "Hardware troubleshooting"]
 };
@@ -342,6 +343,7 @@ function ResumeSkillsSection() {
         />
         <SkillCard className="xl:col-span-4" title="DevOps & Cloud" items={skills.devops} />
         <SkillCard className="xl:col-span-3" title="Tools" items={skills.tools} />
+        <SkillCard className="xl:col-span-5" title="Backend & Data" items={skills.backendData} />
         <SkillCard className="xl:col-span-5" title="Languages (Spoken)" items={skills.languagesSpoken} />
         <SkillCard className="xl:col-span-7" title="Other" items={skills.other} />
       </div>
