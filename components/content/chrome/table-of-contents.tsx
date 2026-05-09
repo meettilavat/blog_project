@@ -13,12 +13,16 @@ type Props = {
   headings: HeadingItem[];
   offsetTop?: number;
   trackActive?: boolean;
+  variant?: "compact" | "rail";
+  className?: string;
 };
 
 export function TableOfContents({
   headings,
   offsetTop = 96,
-  trackActive = true
+  trackActive = true,
+  variant = "compact",
+  className
 }: Props) {
   const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
   const headingIds = useMemo(
@@ -88,60 +92,99 @@ export function TableOfContents({
   if (!headings.length) return null;
 
   const list = (
-    <ul className="relative space-y-1 text-sm leading-snug text-foreground/65">
-      {/* Vertical track line */}
-      <span
-        className="absolute left-0 top-0 h-full w-px bg-border/60"
-        aria-hidden="true"
-      />
-      {headings.map((heading) => {
+    <ol
+      className={cn(
+        "m-0 list-none p-0 text-[13px] leading-snug text-foreground/68",
+        variant === "rail"
+          ? "space-y-1 border-l border-border/50 pl-3"
+          : "space-y-1.5 pt-3"
+      )}
+    >
+      {headings.map((heading, index) => {
         const isActive = trackActive && heading.id === activeId;
         return (
           <li
             key={heading.id}
-            style={{ paddingLeft: `${(heading.level - 1) * 10 + 12}px` }}
             className="relative"
           >
-            {/* Active indicator dot */}
-            {isActive && (
+            {variant === "rail" && isActive ? (
               <span
-                className="absolute left-[-3px] top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-accent transition-[opacity] duration-200"
+                className="absolute -left-[17px] top-0 h-full w-[2px] bg-accent"
                 aria-hidden="true"
               />
-            )}
+            ) : null}
             <a
               href={`#${heading.id}`}
               aria-current={isActive ? "location" : undefined}
+              style={
+                variant === "compact"
+                  ? { paddingLeft: `${(heading.level - 1) * 12}px` }
+                  : undefined
+              }
               className={cn(
-                "block rounded-md px-2 py-1.5 transition-[color,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
-                isActive
-                  ? "bg-accent/10 font-medium text-foreground"
-                  : "hover:text-foreground"
+                "rounded-r-sm py-1.5 transition-colors duration-200 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground motion-reduce:transition-none",
+                variant === "rail"
+                  ? "grid grid-cols-[1.65rem_minmax(0,1fr)] gap-2"
+                  : "block",
+                isActive ? "font-semibold text-foreground" : "hover:text-foreground",
+                variant === "rail" && isActive ? "text-accent" : null
               )}
             >
-              {heading.text}
+              {variant === "rail" ? (
+                <>
+                  <span className="font-mono text-[10px] leading-5 text-foreground/38 [font-variant-numeric:tabular-nums]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span style={{ paddingLeft: `${Math.max(heading.level - 1, 0) * 8}px` }}>
+                    {heading.text}
+                  </span>
+                </>
+              ) : (
+                heading.text
+              )}
             </a>
           </li>
         );
       })}
-    </ul>
+    </ol>
   );
 
-  return (
-    <>
-      <details className="mb-6 rounded-2xl border border-border/70 bg-card/80 md:hidden">
-        <summary className="cursor-pointer rounded-2xl px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-foreground/60 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
-          On this page
-        </summary>
-        <div className="border-t border-border/50 px-4 pb-4 pt-3">{list}</div>
-      </details>
-      <aside className="hidden w-60 flex-shrink-0 md:sticky md:block" style={{ top: offsetTop }}>
-        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3em] text-foreground/50">
-          On this page
-        </p>
+  if (variant === "rail") {
+    return (
+      <aside
+        className={cn("self-start overflow-y-auto pr-1 pt-1", className)}
+        aria-label="On this page"
+        style={{
+          top: offsetTop,
+          maxHeight:
+            typeof offsetTop === "number"
+              ? `calc(100vh - ${offsetTop + 24}px)`
+              : undefined
+        }}
+      >
+        <div className="mb-3 border-b border-border/35 pb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/48">
+            On this page
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-foreground/42">
+            Sticky chapter map
+          </p>
+        </div>
         {list}
       </aside>
-    </>
+    );
+  }
+
+  return (
+    <details
+      className={cn("mb-8 border-y border-border/45 py-3 2xl:hidden", className)}
+      aria-label="On this page"
+    >
+      <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/55 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+        On this page
+      </summary>
+      {list}
+    </details>
   );
 }
 

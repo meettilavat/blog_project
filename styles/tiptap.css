@@ -27,6 +27,10 @@
   text-wrap: pretty;
 }
 
+.dark .tiptap p {
+  color: rgb(229 231 235 / 0.88);
+}
+
 html[data-app="public"] .tiptap p {
   color: rgb(36 30 24 / 0.9);
 }
@@ -43,6 +47,10 @@ html[data-app="public"].dark .tiptap p {
 
 html[data-app="public"] .tiptap > p:first-of-type {
   color: rgb(36 30 24 / 0.95);
+}
+
+.dark .tiptap > p:first-of-type {
+  color: rgb(243 244 246 / 0.94);
 }
 
 html[data-app="public"].dark .tiptap > p:first-of-type {
@@ -251,6 +259,53 @@ html[data-app="public"].dark .tiptap figcaption {
 
 .floating-toolbar {
   backdrop-filter: blur(8px);
+}
+
+/* ── Editorial public-post refinements ───────────────────────────── */
+
+.tiptap-editorial h2 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.625rem;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.tiptap-editorial h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1.2rem, 1rem + 0.5vw, 1.45rem);
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  margin-top: 2.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editorial p {
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.tiptap-editorial a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28rem;
+  transition: text-decoration-color 200ms ease, color 200ms ease;
+}
+
+.tiptap-editorial a:hover {
+  text-decoration-color: var(--accent);
+  color: var(--accent);
+}
+
+.tiptap-editorial ul li::marker {
+  color: var(--accent);
+}
+
+.tiptap-editorial ol li::marker {
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .tiptap figure img:hover {

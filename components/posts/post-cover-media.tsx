@@ -33,8 +33,15 @@ export function PostCoverMedia({
 
   if (!src) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-[0.2em] text-foreground/50">
-        {emptyLabel}
+      <div
+        className={cn(
+          "h-full w-full bg-[radial-gradient(circle_at_20%_10%,rgb(184_92_56_/_0.24),transparent_38%),linear-gradient(135deg,rgb(237_228_214_/_0.95),rgb(216_199_173_/_0.86)_58%,rgb(184_92_56_/_0.2))]",
+          className
+        )}
+        role="img"
+        aria-label={emptyLabel}
+      >
+        <span className="sr-only">{emptyLabel}</span>
       </div>
     );
   }

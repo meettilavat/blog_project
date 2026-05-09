@@ -19,11 +19,26 @@ describe("components/content/table-of-contents.tsx", () => {
       />
     );
 
+    expect(html).toContain("aria-label=\"On this page\"");
     expect(html).toContain("On this page");
     expect(html).toContain("href=\"#intro\"");
     expect(html).toContain("href=\"#details\"");
     expect(html).toContain("aria-current=\"location\"");
+    expect(html).not.toContain("<aside");
+  });
+
+  it("can render as a sticky rail without changing the reading column", () => {
+    const html = renderToStaticMarkup(
+      <TableOfContents
+        headings={[{ id: "intro", text: "Introduction", level: 1 }]}
+        offsetTop={112}
+        variant="rail"
+      />
+    );
+
+    expect(html).toContain("<aside");
     expect(html).toContain("top:112px");
+    expect(html).toContain("href=\"#intro\"");
   });
 
   it("does not mark headings active when trackActive is disabled", () => {

@@ -42,6 +42,9 @@ const SOCIAL_LINKS: Array<{ href: string; label: string; Icon: LucideIcon }> = [
   }
 ];
 
+const HEADER_SURFACE_CLASS =
+  "sticky top-0 z-30 overflow-hidden border-b bg-background/92 text-foreground backdrop-blur-2xl backdrop-saturate-150 transition-[background-color,border-color,box-shadow] duration-300 dark:bg-background/94";
+
 const navLinkClass = (isActive: boolean, isMobile = false) =>
   cn(
     "relative px-3 py-1.5 text-foreground/70 transition-[color] duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
@@ -168,13 +171,21 @@ export default function PublicHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 border-b bg-card/80 backdrop-blur-xl transition-[border-color,box-shadow] duration-300 dark:bg-card/70",
+        HEADER_SURFACE_CLASS,
         isScrolled
-          ? "border-border/70 shadow-[0_1px_12px_rgba(36,30,24,0.06)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.2)]"
-          : "border-transparent"
+          ? "border-border/75 shadow-[0_1px_16px_rgba(36,30,24,0.1)] dark:shadow-[0_1px_18px_rgba(0,0,0,0.34)]"
+          : "border-border/40"
       )}
     >
-      <div className="container py-3 sm:py-4">
+      <div
+        className="pointer-events-none absolute inset-0 bg-background/82 shadow-[inset_0_-1px_0_rgb(255_255_255_/_0.08)] dark:bg-background/86"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-foreground/10"
+        aria-hidden="true"
+      />
+      <div className="container relative z-10 py-3 sm:py-4">
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/" className="text-base font-semibold tracking-tight sm:text-lg">
             meettilavat.com

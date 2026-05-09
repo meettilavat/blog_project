@@ -62,7 +62,6 @@ describe("apps/public/app/page.tsx", () => {
 
     expect(html).toContain("Notes on building software");
     expect(html).toContain("No posts yet. Fresh writing is on the way.");
-    expect(html).toContain(">resume<");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"WebSite\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}\"`);

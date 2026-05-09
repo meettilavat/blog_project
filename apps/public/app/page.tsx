@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
 import { PostCard } from "@/components/posts/post-card";
 import { StaggeredList, StaggeredItem } from "@/components/motion/staggered-list";
@@ -70,18 +69,6 @@ export default async function HomePage() {
           <FadeIn delay={0.2}>
             <div className="rounded-3xl border border-dashed border-border/80 bg-card/70 p-10 text-foreground/70">
               <p className="text-base">No posts yet. Fresh writing is on the way.</p>
-              <p className="mt-3 text-sm text-foreground/60">
-                Until then, visit the{" "}
-                <span className="font-medium text-accent">
-                  <Link
-                    href="/resume"
-                    className="underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
-                  >
-                    resume
-                  </Link>
-                </span>{" "}
-                for background and projects.
-              </p>
             </div>
           </FadeIn>
         ) : (

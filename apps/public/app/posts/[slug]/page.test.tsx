@@ -19,7 +19,7 @@ const postCoverMediaRenderMock = vi.fn((props: { src?: string; alt: string }) =>
 const postMetaRowRenderMock = vi.fn((props: { createdAt: string; updatedAt: string }) => (
   <div>{`PostMetaRowStub:${props.createdAt}:${props.updatedAt}`}</div>
 ));
-const richTextViewerRenderMock = vi.fn((props: { content: { type: string } }) => (
+const richTextViewerRenderMock = vi.fn((props: { content: { type: string }; className?: string }) => (
   <div>{`RichTextViewerStub:${props.content.type}`}</div>
 ));
 const tableOfContentsRenderMock = vi.fn((props: { headings: unknown[] }) => (
@@ -40,7 +40,7 @@ vi.mock("@/lib/site-url", () => ({
 }));
 
 vi.mock("@/components/content/rich-text/rich-text-viewer", () => ({
-  default: (props: { content: { type: string } }) => richTextViewerRenderMock(props)
+  default: (props: { content: { type: string }; className?: string }) => richTextViewerRenderMock(props)
 }));
 
 vi.mock("@/components/content/chrome/table-of-contents", () => ({
@@ -212,12 +212,15 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(getPublishedPostBySlugMock).toHaveBeenCalledWith("published-post");
     expect(analyzeContentMock).toHaveBeenCalledWith({ type: "doc", content: [] });
     expect(readingProgressRenderMock).toHaveBeenCalledTimes(1);
-    expect(html).toContain("Back to Posts");
+    expect(html).toContain("Back to posts");
     expect(html).toContain("Published Post");
     expect(html).toContain("PostCoverMediaStub:/cover.png:Published Post");
     expect(html).toContain("PostMetaRowStub:2024-01-01T00:00:00.000Z:2024-01-02T00:00:00.000Z");
     expect(html).toContain("RichTextViewerStub:doc");
     expect(html).toContain("TableOfContentsStub:1");
+    expect(richTextViewerRenderMock).toHaveBeenCalledWith(
+      expect.objectContaining({ className: "tiptap-editorial mx-0 max-w-none" })
+    );
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"BlogPosting\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}/posts/published-post\"`);
