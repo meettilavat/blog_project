@@ -1,4 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 /** @type {import('next').NextConfig} */
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const allowedSupabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : undefined;
@@ -36,6 +41,10 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  reactStrictMode: process.env.NODE_ENV === "production",
+  turbopack: {
+    root: __dirname
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
@@ -55,6 +64,9 @@ const nextConfig = {
     ]
   },
   async headers() {
+    if (process.env.NODE_ENV !== "production") {
+      return [];
+    }
     return [
       {
         source: "/:path*",

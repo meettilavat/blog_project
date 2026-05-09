@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import "../../../styles/globals.css";
 import { Space_Grotesk, Literata, IBM_Plex_Mono } from "next/font/google";
 import Header from "@/apps/admin/components/shell/header";
@@ -8,6 +9,11 @@ import TypographyToggle from "@/apps/admin/components/shell/typography-toggle";
 import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+
+const themeBootstrapScript = readFileSync(
+  path.join(process.cwd(), "apps/admin/public/scripts/theme-admin.js"),
+  "utf8"
+);
 
 const grotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -44,17 +50,18 @@ export default function RootLayout({
     <html
       lang="en"
       data-app="admin"
+      data-scroll-behavior="smooth"
       className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <head>
         <meta name="color-scheme" content="light dark" />
-        <Script src="/scripts/theme-admin.js" strategy="beforeInteractive" />
       </head>
       <body
         className="min-h-screen bg-background text-foreground antialiased transition-colors"
         data-typestyle="sans"
       >
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <UiEnvironmentProvider>
           <a
             href="#content"

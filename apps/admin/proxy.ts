@@ -22,7 +22,9 @@ export default function proxy(req: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/assets") ||
-    pathname.startsWith("/public")
+    pathname.startsWith("/public") ||
+    pathname.startsWith("/images") ||
+    pathname.startsWith("/scripts")
   ) {
     return NextResponse.next();
   }

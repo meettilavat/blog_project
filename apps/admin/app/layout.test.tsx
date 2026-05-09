@@ -40,11 +40,12 @@ describe("apps/admin/app/layout.tsx", () => {
     );
 
     expect(html).toContain("data-app=\"admin\"");
+    expect(html).toContain("data-scroll-behavior=\"smooth\"");
     expect(html).toContain("Skip to content");
     expect(html).toContain("HeaderStub");
     expect(html).toContain("TypographyToggleStub");
     expect(html).toContain("ChildContentStub");
     expect(html).toContain("id=\"content\"");
-    expect(html).toContain("/scripts/theme-admin.js");
+    expect(html).toContain("localStorage.getItem(\"theme\")");
   });
 });

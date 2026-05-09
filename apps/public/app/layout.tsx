@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import "../../../styles/globals.css";
 import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import { cn } from "@/lib/ui/classnames";
@@ -18,6 +19,11 @@ import PublicFooter from "../components/public-footer";
 import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+
+const themeBootstrapScript = readFileSync(
+  path.join(process.cwd(), "apps/public/public/scripts/theme-public.js"),
+  "utf8"
+);
 
 const LIGHT_THEME_COLOR = "#f6f2ea";
 const DARK_THEME_COLOR = "#15120f";
@@ -87,6 +93,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-app="public"
+      data-scroll-behavior="smooth"
       className={cn(sourceSans.variable, fraunces.variable, plexMono.variable)}
       suppressHydrationWarning
     >
@@ -107,9 +114,9 @@ export default function RootLayout({
           media="(prefers-color-scheme: dark)"
           content={DARK_THEME_COLOR}
         />
-        <Script src="/scripts/theme-public.js" strategy="beforeInteractive" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased transition-colors">
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <UiEnvironmentProvider>
           <a
             href="#content"

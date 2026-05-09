@@ -70,12 +70,13 @@ describe("apps/public/app/layout.tsx", () => {
     );
 
     expect(html).toContain("data-app=\"public\"");
+    expect(html).toContain("data-scroll-behavior=\"smooth\"");
     expect(html).toContain("Skip to content");
     expect(html).toContain("PublicHeaderStub");
     expect(html).toContain("PublicFooterStub");
     expect(html).toContain("ChildContentStub");
     expect(html).toContain("id=\"content\"");
-    expect(html).toContain("/scripts/theme-public.js");
+    expect(html).toContain("localStorage.getItem(\"theme\")");
     expect(html).toContain("name=\"theme-color\"");
   });
 });
