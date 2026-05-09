@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import "../../../styles/globals.css";
 import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
@@ -20,8 +20,10 @@ import { UiEnvironmentProvider } from "@/components/ui/ui-environment";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
+const publicThemeScriptPath = path.join(process.cwd(), "public/scripts/theme-public.js");
+const repoThemeScriptPath = path.join(process.cwd(), "apps/public/public/scripts/theme-public.js");
 const themeBootstrapScript = readFileSync(
-  path.join(process.cwd(), "apps/public/public/scripts/theme-public.js"),
+  existsSync(publicThemeScriptPath) ? publicThemeScriptPath : repoThemeScriptPath,
   "utf8"
 );
 
