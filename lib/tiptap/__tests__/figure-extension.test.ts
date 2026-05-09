@@ -35,7 +35,9 @@ describe("lib/tiptap/extensions/figure-extension.ts", () => {
     expect(attrs).toEqual({
       src: { default: null },
       alt: { default: null },
-      caption: { default: "" }
+      caption: { default: "" },
+      layout: { default: "center" },
+      align: { default: "right" }
     });
   });
 
@@ -56,6 +58,10 @@ describe("lib/tiptap/extensions/figure-extension.ts", () => {
         if (selector === "img") return image;
         if (selector === "figcaption") return { textContent: "Figure caption" };
         return null;
+      },
+      dataset: {
+        layout: "side",
+        align: "left"
       }
     } as unknown as HTMLElement);
 
@@ -63,7 +69,9 @@ describe("lib/tiptap/extensions/figure-extension.ts", () => {
       src: REMOTE_FIGURE_IMAGE_SRC,
       alt: "Photo alt",
       title: "Photo title",
-      caption: "Figure caption"
+      caption: "Figure caption",
+      layout: "side",
+      align: "left"
     });
     expect(parseRules[1]).toEqual({ tag: "img[src]" });
   });
@@ -96,14 +104,16 @@ describe("lib/tiptap/extensions/figure-extension.ts", () => {
         HTMLAttributes: {
           src: "/cover.png",
           alt: "Cover",
-          caption: "Cover caption"
+          caption: "Cover caption",
+          layout: "wide",
+          align: "right"
         }
       }
     );
 
     expect(html).toEqual([
       "figure",
-      { class: "tiptap-figure" },
+      { class: "tiptap-figure", "data-layout": "wide", "data-align": "right" },
       ["img", { loading: "lazy", src: "/cover.png", alt: "Cover" }],
       ["figcaption", {}, "Cover caption"]
     ]);

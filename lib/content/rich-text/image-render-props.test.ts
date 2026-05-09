@@ -28,7 +28,9 @@ describe("lib/content/rich-text/image-render-props.ts", () => {
       caption: "Cover caption",
       width: 640,
       height: 360,
-      unoptimized: false
+      unoptimized: false,
+      layout: "center",
+      align: "right"
     });
   });
 
@@ -48,7 +50,9 @@ describe("lib/content/rich-text/image-render-props.ts", () => {
       src: "/images/cover.png",
       alt: "Cover alt",
       caption: "",
-      unoptimized: false
+      unoptimized: false,
+      layout: "center",
+      align: "right"
     });
     expect(result?.width).toBe(1200);
     expect(result?.height).toBe(800);
@@ -68,7 +72,28 @@ describe("lib/content/rich-text/image-render-props.ts", () => {
     expect(result).toMatchObject({
       src: "data:image/png;base64,abc123",
       alt: "Embedded image",
-      unoptimized: true
+      unoptimized: true,
+      layout: "center",
+      align: "right"
+    });
+  });
+
+  it("resolves supported figure layout attributes", () => {
+    const result = resolveImageRenderProps(
+      {
+        type: "image",
+        attrs: {
+          src: "/images/phone.png",
+          layout: "side",
+          align: "left"
+        }
+      },
+      BASE_IMAGE_HOST_POLICY
+    );
+
+    expect(result).toMatchObject({
+      layout: "side",
+      align: "left"
     });
   });
 

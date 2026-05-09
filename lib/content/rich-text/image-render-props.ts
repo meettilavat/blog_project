@@ -13,6 +13,8 @@ type RichTextImageRenderProps = {
   width: number;
   height: number;
   unoptimized: boolean;
+  layout: "center" | "side" | "wide";
+  align: "left" | "right";
 };
 
 function isRemoteHttpUrl(src: string) {
@@ -36,6 +38,8 @@ export function resolveImageRenderProps(
 
   const caption = typeof node.attrs?.caption === "string" ? node.attrs.caption.trim() : "";
   const alt = typeof node.attrs?.alt === "string" && node.attrs.alt ? node.attrs.alt : "";
+  const layout = node.attrs?.layout === "side" || node.attrs?.layout === "wide" ? node.attrs.layout : "center";
+  const align = node.attrs?.align === "left" ? "left" : "right";
 
   return {
     src,
@@ -43,6 +47,8 @@ export function resolveImageRenderProps(
     caption,
     width: parsePositiveInteger(node.attrs?.width) ?? FALLBACK_IMAGE_WIDTH,
     height: parsePositiveInteger(node.attrs?.height) ?? FALLBACK_IMAGE_HEIGHT,
-    unoptimized: !isOptimizableImage(src, imageHostPolicy)
+    unoptimized: !isOptimizableImage(src, imageHostPolicy),
+    layout,
+    align
   };
 }

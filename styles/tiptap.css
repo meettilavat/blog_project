@@ -317,3 +317,44 @@ html[data-app="public"] .tiptap figure img:hover {
   box-shadow: 0 25px 50px rgb(36 30 24 / 0.2);
 }
 
+.tiptap .tiptap-figure-side {
+  width: min(34%, 260px);
+  max-width: 260px;
+  padding: 0.55rem;
+  margin-top: 0.35rem;
+  margin-bottom: 1rem;
+  clear: none;
+}
+
+.tiptap .tiptap-figure-side-left {
+  float: left;
+  margin-right: 1.35rem;
+  margin-left: 0;
+}
+
+.tiptap .tiptap-figure-side-right {
+  float: right;
+  margin-right: 0;
+  margin-left: 1.35rem;
+}
+
+.tiptap .tiptap-figure-side figcaption {
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.tiptap .tiptap-figure-wide {
+  max-width: min(100%, 1060px);
+}
+
+@media (max-width: 768px) {
+  .tiptap .tiptap-figure-side,
+  .tiptap .tiptap-figure-side-left,
+  .tiptap .tiptap-figure-side-right {
+    float: none;
+    width: min(100%, 300px);
+    max-width: 300px;
+    margin: 1.5rem auto;
+  }
+}
+

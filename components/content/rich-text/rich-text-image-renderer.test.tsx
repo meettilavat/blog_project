@@ -65,7 +65,9 @@ describe("components/content/rich-text-image-renderer.tsx", () => {
       caption: "Cover caption",
       width: 640,
       height: 360,
-      unoptimized: false
+      unoptimized: false,
+      layout: "center",
+      align: "right"
     });
 
     const html = renderToStaticMarkup(
@@ -86,7 +88,9 @@ describe("components/content/rich-text-image-renderer.tsx", () => {
       caption: "",
       width: 1200,
       height: 800,
-      unoptimized: true
+      unoptimized: true,
+      layout: "center",
+      align: "right"
     });
 
     const html = renderToStaticMarkup(
@@ -105,6 +109,37 @@ describe("components/content/rich-text-image-renderer.tsx", () => {
     expect(html).toContain("data-unoptimized=\"true\"");
     expect(html).toContain("width=\"1200\"");
     expect(html).toContain("height=\"800\"");
+  });
+
+  it("renders side figures with layout and alignment classes", () => {
+    resolveImageRenderPropsMock.mockReturnValue({
+      src: ALLOWED_IMAGE_URL,
+      alt: "Phone screenshot",
+      caption: "Phone caption",
+      width: 1080,
+      height: 2400,
+      unoptimized: false,
+      layout: "side",
+      align: "left"
+    });
+
+    const html = renderToStaticMarkup(
+      <>{renderImageNode(
+        {
+          type: "image",
+          attrs: {
+            src: ALLOWED_IMAGE_URL
+          }
+        },
+        "image-side",
+        IMAGE_HOST_POLICY
+      )}</>
+    );
+
+    expect(html).toContain("tiptap-figure-side");
+    expect(html).toContain("tiptap-figure-side-left");
+    expect(html).toContain("data-layout=\"side\"");
+    expect(html).toContain("data-align=\"left\"");
   });
 
   it("skips rendering disallowed image sources", () => {

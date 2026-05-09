@@ -14,6 +14,12 @@ const Figure = Image.extend({
       ...baseAttributes,
       caption: {
         default: ""
+      },
+      layout: {
+        default: "center"
+      },
+      align: {
+        default: "right"
       }
     };
   },
@@ -28,7 +34,9 @@ const Figure = Image.extend({
             src: image.getAttribute("src"),
             alt: image.getAttribute("alt"),
             title: image.getAttribute("title"),
-            caption: element.querySelector("figcaption")?.textContent ?? ""
+            caption: element.querySelector("figcaption")?.textContent ?? "",
+            layout: element.dataset.layout ?? "center",
+            align: element.dataset.align ?? "right"
           };
         }
       },
@@ -36,12 +44,15 @@ const Figure = Image.extend({
     ];
   },
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
-    const { caption, ...attrs } = HTMLAttributes;
+    const { caption, layout, align, ...attrs } = HTMLAttributes;
+    const figureAttrs = {
+      class: "tiptap-figure",
+      "data-layout": layout || "center",
+      "data-align": align || "right"
+    };
     return [
       "figure",
-      {
-        class: "tiptap-figure"
-      },
+      figureAttrs,
       ["img", mergeAttributes(this.options.HTMLAttributes, attrs)],
       ["figcaption", {}, caption || ""]
     ];
