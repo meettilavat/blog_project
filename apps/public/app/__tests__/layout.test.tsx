@@ -48,6 +48,16 @@ describe("apps/public/app/layout.tsx", () => {
     expect(metadata.metadataBase?.toString()).toBe(`${SITE_URL}/`);
     expect(metadata.description).toBe(HOME_PAGE_DESCRIPTION);
     expect(metadata.authors).toEqual([{ name: PUBLIC_SITE_NAME, url: "/resume" }]);
+    expect(metadata.robots).toEqual({
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1
+      }
+    });
     expect(metadata.openGraph?.url).toBe(SITE_URL);
     expect(metadata.openGraph?.siteName).toBe(PUBLIC_SITE_NAME);
     expect(metadata.openGraph?.images).toEqual([

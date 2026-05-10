@@ -54,6 +54,7 @@ describe("apps/public/components/public-header.tsx", () => {
     expect(html).toContain("aria-label=\"LinkedIn\"");
     expect(html).toContain("ThemeToggleStub");
     expect(html).toContain("Open navigation menu");
+    expect(html).toContain("hidden=\"\"");
     expect(html).toContain(GITHUB_PROFILE_URL);
     expect(html).toContain(LINKEDIN_PROFILE_URL);
     expect(html).toContain("aria-current=\"page\" href=\"/\">Read");

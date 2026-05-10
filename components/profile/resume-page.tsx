@@ -187,7 +187,7 @@ function ResumeHeroSection() {
             </a>
           </div>
         </div>
-        <aside className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(160deg,rgb(255_250_242_/_0.16),rgb(36_30_24_/_0.08))] p-5 shadow-soft backdrop-blur-sm sm:p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(160deg,rgb(255_250_242_/_0.16),rgb(36_30_24_/_0.08))] p-5 shadow-soft backdrop-blur-sm sm:p-6">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(320px_160px_at_12%_-8%,rgb(184_92_56_/_0.2),transparent_62%),radial-gradient(280px_130px_at_100%_0%,rgb(216_199_173_/_0.24),transparent_66%)]"
@@ -241,7 +241,7 @@ function ResumeHeroSection() {
               />
             </li>
           </ul>
-        </aside>
+        </div>
       </div>
     </section>
   );

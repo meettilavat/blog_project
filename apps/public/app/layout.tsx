@@ -62,6 +62,16 @@ export const metadata: Metadata = {
   authors: [{ name: AUTHOR_NAME, url: "/resume" }],
   creator: AUTHOR_NAME,
   publisher: AUTHOR_NAME,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1
+    }
+  },
   openGraph: {
     type: "website",
     locale: PUBLIC_SITE_LOCALE,

@@ -110,8 +110,7 @@ function MobileNav({
   return (
     <div
       id={menuId}
-      role="navigation"
-      aria-label="Mobile navigation"
+      hidden={!isMenuOpen}
       className={cn(
         "overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out md:hidden motion-reduce:transition-none",
         isMenuOpen
@@ -119,7 +118,7 @@ function MobileNav({
           : "pointer-events-none max-h-0 -translate-y-1 opacity-0 motion-reduce:translate-y-0"
       )}
     >
-      <nav aria-label="Primary" className="grid gap-2 rounded-2xl border border-border/70 bg-card/90 p-2 shadow-soft">
+      <nav aria-label="Mobile" className="grid gap-2 rounded-2xl border border-border/70 bg-card/90 p-2 shadow-soft">
         {navLinks.map((item) => (
           <Link
             key={`mobile-${item.href}`}
