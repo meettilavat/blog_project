@@ -38,9 +38,10 @@ describe("components/posts/post-detail-article.tsx", () => {
     );
 
     expect(html).toContain("journal-article-canvas");
-    expect(html).toContain("max-w-[72ch]");
+    expect(html).toContain("max-w-[44rem]");
+    expect(html).not.toContain("max-w-[72ch]");
     expect(html).toContain("space-y-[clamp(2.5rem,4vw,4rem)]");
-    expect(html).toContain("marginalia:grid-cols-[14rem_minmax(0,72ch)_14rem]");
+    expect(html).toContain("marginalia:grid-cols-[14rem_minmax(0,44rem)_14rem]");
     expect(html).toContain("marginalia:justify-center");
     expect(html).not.toContain("marginalia:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_14rem]");
     expect(html).not.toContain("space-y-[clamp(2.75rem,6vw,5.5rem)]");

@@ -236,10 +236,11 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         isSanitized: true
       })
     );
-    expect(html).toContain("max-w-[72ch]");
+    expect(html).toContain("max-w-[44rem]");
+    expect(html).not.toContain("max-w-[72ch]");
     expect(html).not.toContain("max-w-[82ch]");
     expect(html).toContain(
-      "marginalia:grid-cols-[14rem_minmax(0,72ch)_14rem]"
+      "marginalia:grid-cols-[14rem_minmax(0,44rem)_14rem]"
     );
     expect(html).toContain("marginalia:justify-center");
     expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(3);

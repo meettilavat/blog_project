@@ -110,6 +110,15 @@ html[data-app="admin"].dark .tiptap-editor-surface {
   text-wrap: pretty;
 }
 
+.tiptap-editorial p,
+.tiptap-editorial li {
+  font-size: clamp(1.0625rem, 1.03rem + 0.14vw, 1.125rem);
+}
+
+.tiptap-editorial p {
+  line-height: 1.78;
+}
+
 .dark .tiptap p {
   color: rgb(229 231 235 / 0.9);
 }
@@ -393,7 +402,7 @@ html[data-app="public"].dark .tiptap pre {
 
 @media (min-width: 1200px) {
   html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
-    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 39rem));
+    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 31rem));
     width: var(--figure-width);
     max-width: var(--figure-width);
     margin-right: 0;

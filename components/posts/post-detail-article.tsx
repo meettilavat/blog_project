@@ -26,11 +26,11 @@ type PostDetailArticleProps = {
   draftBanner?: React.ReactNode;
 };
 
-const READING_WIDTH_CLASS = "mx-auto w-full max-w-[72ch]";
+const READING_WIDTH_CLASS = "mx-auto w-full max-w-[44rem]";
 const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[48rem]";
 const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[76rem]";
 const ARTICLE_SHELL_CLASS =
-  "journal-article-canvas mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:grid-cols-[14rem_minmax(0,72ch)_14rem] marginalia:justify-center marginalia:gap-x-8";
+  "journal-article-canvas mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:grid-cols-[14rem_minmax(0,44rem)_14rem] marginalia:justify-center marginalia:gap-x-8";
 
 export function PostDetailArticle({
   title,
@@ -108,7 +108,7 @@ export function PostDetailArticle({
         </FadeIn>
 
         <div className={ARTICLE_SHELL_CLASS}>
-          <div className="mx-auto min-w-0 w-full max-w-[72ch] marginalia:col-start-2">
+          <div className="mx-auto min-w-0 w-full max-w-[44rem] marginalia:col-start-2">
             {hasHeadings ? (
               <TableOfContents
                 headings={headings}
