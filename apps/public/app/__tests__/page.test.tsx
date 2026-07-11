@@ -93,6 +93,9 @@ describe("apps/public/app/page.tsx", () => {
       presentation: "featured",
       priority: true
     }));
+    expect(html).toContain("space-y-[clamp(4rem,6vw,5.5rem)]");
+    expect(html).not.toContain("space-y-[clamp(4.5rem,9vw,9rem)]");
+    expect(html).not.toContain("gap-10 border-b border-border/75 pb-[clamp(3rem,7vw,7rem)]");
     expect(html).not.toContain("folio:grid-cols-2");
     expect(html).not.toContain("No posts yet. Fresh writing is on the way.");
   });

@@ -61,8 +61,8 @@ export default async function HomePage() {
       {configuredSiteUrl ? (
         <StructuredDataScript data={buildWebSiteStructuredData(configuredSiteUrl)} />
       ) : null}
-      <div className="space-y-[clamp(4.5rem,9vw,9rem)]">
-        <FadeIn className="grid gap-10 border-b border-border/75 pb-[clamp(3rem,7vw,7rem)] pt-2 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-end">
+      <div className="space-y-[clamp(4rem,6vw,5.5rem)]">
+        <FadeIn className="grid gap-10 pt-2 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-end">
           <div className="max-w-[62rem] space-y-5">
             <p className="journal-label">Meet Tilavat · Software Engineer</p>
             <h1 className="max-w-[14ch] text-balance font-serif text-[clamp(2.75rem,7vw,6.8rem)] leading-[0.94] tracking-[-0.035em] text-foreground">

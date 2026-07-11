@@ -30,7 +30,7 @@ const READING_WIDTH_CLASS = "mx-auto w-full max-w-[72ch]";
 const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[48rem]";
 const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[76rem]";
 const ARTICLE_SHELL_CLASS =
-  "journal-article-canvas mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_14rem] marginalia:gap-x-8";
+  "journal-article-canvas mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:grid-cols-[14rem_minmax(0,72ch)_14rem] marginalia:justify-center marginalia:gap-x-8";
 
 export function PostDetailArticle({
   title,
@@ -51,7 +51,7 @@ export function PostDetailArticle({
   return (
     <>
       {draftBanner ? <div className={cn("mb-6", READING_WIDTH_CLASS)}>{draftBanner}</div> : null}
-      <article className="space-y-[clamp(2.75rem,6vw,5.5rem)]">
+      <article className="space-y-[clamp(2.5rem,4vw,4rem)]">
         <FadeIn y={12} duration={0.4}>
           <div className={HEADER_WIDTH_CLASS}>
             <Link

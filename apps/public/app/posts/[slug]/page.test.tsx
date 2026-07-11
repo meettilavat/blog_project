@@ -239,8 +239,9 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(html).toContain("max-w-[72ch]");
     expect(html).not.toContain("max-w-[82ch]");
     expect(html).toContain(
-      "marginalia:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_14rem]"
+      "marginalia:grid-cols-[14rem_minmax(0,72ch)_14rem]"
     );
+    expect(html).toContain("marginalia:justify-center");
     expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(3);
     expect(tableOfContentsRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
