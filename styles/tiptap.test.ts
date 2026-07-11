@@ -7,7 +7,8 @@ describe("public editorial figure layout", () => {
     const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
 
     expect(css).toContain("@media (min-width: 1200px) {");
-    expect(css).toContain("calc(100vw - 31rem)");
+    expect(css).toContain("calc(100vw - 19rem)");
+    expect(css).not.toContain("calc(100vw - 31rem)");
     expect(css).not.toContain("calc(100vw - 39rem)");
     expect(css).not.toContain("calc(100vw - 6rem)");
     expect(css).not.toContain("@media (min-width: 1200px) and (max-width: 1599px)");

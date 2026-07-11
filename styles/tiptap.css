@@ -402,7 +402,7 @@ html[data-app="public"].dark .tiptap pre {
 
 @media (min-width: 1200px) {
   html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
-    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 31rem));
+    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 19rem));
     width: var(--figure-width);
     max-width: var(--figure-width);
     margin-right: 0;

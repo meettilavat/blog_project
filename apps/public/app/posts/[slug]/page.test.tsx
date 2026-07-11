@@ -236,14 +236,18 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         isSanitized: true
       })
     );
-    expect(html).toContain("max-w-[44rem]");
+    expect(html).toContain("max-w-[56rem]");
+    expect(html).not.toContain("max-w-[44rem]");
     expect(html).not.toContain("max-w-[72ch]");
     expect(html).not.toContain("max-w-[82ch]");
     expect(html).toContain(
-      "marginalia:grid-cols-[14rem_minmax(0,44rem)_14rem]"
+      "marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem]"
     );
     expect(html).toContain("marginalia:justify-center");
-    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(3);
+    expect(html).toContain("marginalia:gap-x-6");
+    expect(html).not.toContain("marginalia:gap-x-8");
+    expect(html.match(/max-w-\[64rem\]/g)).toHaveLength(2);
+    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(1);
     expect(tableOfContentsRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "rail",
@@ -251,7 +255,7 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
           "hidden marginalia:sticky marginalia:col-start-3 marginalia:block marginalia:w-full"
       })
     );
-    expect(html).toContain("max-w-[48rem]");
+    expect(html).toContain("max-w-[64rem]");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"BlogPosting\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}/posts/published-post\"`);
