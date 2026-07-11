@@ -24,28 +24,26 @@ export function PostMetaRow({
   const createdLabel = publishedPrefix
     ? `${publishedPrefix} ${formatDate(createdAt)}`
     : formatDate(createdAt);
-  const items = [createdLabel];
+  const publicationItems = [createdLabel];
 
   if (isSignificantlyUpdated(createdAt, updatedAt)) {
-    items.push(`Last updated ${formatDate(updatedAt)}`);
-  }
-
-  if (readStats) {
-    items.push(`${readStats.minutes} min read`, `${readStats.words} words`);
+    publicationItems.push(`Last updated ${formatDate(updatedAt)}`);
   }
 
   return (
     <div className={cn(className)}>
-      {items.map((item, index) => (
-        <span key={item} className="inline-flex items-center gap-2">
-          {index > 0 ? (
-            <span className="text-foreground/35" aria-hidden="true">
-              ·
-            </span>
-          ) : null}
-          <span>{item}</span>
+      <span data-meta-group="publication" className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+        {publicationItems.map((item) => (
+          <span key={item} className="whitespace-nowrap">{item}</span>
+        ))}
+      </span>
+      {readStats ? (
+        <span data-meta-group="reading" className="inline-flex whitespace-nowrap items-center gap-2">
+          <span>{readStats.minutes} min read</span>
+          <span className="text-accent/70" aria-hidden="true">/</span>
+          <span>{readStats.words} words</span>
         </span>
-      ))}
+      ) : null}
     </div>
   );
 }

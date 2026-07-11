@@ -43,12 +43,12 @@ const SOCIAL_LINKS: Array<{ href: string; label: string; Icon: LucideIcon }> = [
 ];
 
 const HEADER_SURFACE_CLASS =
-  "sticky top-0 z-30 overflow-hidden border-b bg-background/92 text-foreground backdrop-blur-2xl backdrop-saturate-150 transition-[background-color,border-color,box-shadow] duration-300 dark:bg-background/94";
+  "sticky top-0 z-30 overflow-hidden border-b bg-background/[0.97] text-foreground transition-[background-color,border-color,box-shadow] duration-300 dark:bg-background/[0.98]";
 
 const navLinkClass = (isActive: boolean, isMobile = false) =>
   cn(
     "relative px-3 py-1.5 text-foreground/70 transition-[color] duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
-    isMobile && "flex min-h-11 items-center rounded-xl px-3 py-2.5 text-[11px]",
+    isMobile && "flex min-h-11 items-center border-b border-border/55 px-0 py-2.5 text-[11px]",
     isActive && "text-foreground font-semibold"
   );
 
@@ -65,7 +65,7 @@ function DesktopNav({ navLinks }: { navLinks: NavLink[] }) {
           {item.label}
           <span
             className={cn(
-              "absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-accent transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
+              "absolute bottom-0 left-3 right-3 h-px origin-left bg-accent transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
               item.isActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
             )}
             aria-hidden="true"
@@ -76,9 +76,9 @@ function DesktopNav({ navLinks }: { navLinks: NavLink[] }) {
   );
 }
 
-function SocialLinks() {
+function SocialIconLinks() {
   return (
-    <div className="flex items-center gap-1">
+    <div className="hidden items-center gap-0.5 micro:flex">
       {SOCIAL_LINKS.map(({ href, label, Icon }) => (
         <a
           key={href}
@@ -86,12 +86,11 @@ function SocialLinks() {
           target="_blank"
           rel="noreferrer"
           aria-label={label}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground/60 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:h-9 sm:w-9 motion-reduce:transition-none"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-foreground/70 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:h-9 sm:w-9 motion-reduce:transition-none"
         >
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </a>
       ))}
-      <ThemeToggle className="h-11 w-11 border-0 bg-transparent text-foreground/60 hover:bg-foreground/8 hover:text-foreground sm:h-9 sm:w-9" />
     </div>
   );
 }
@@ -110,27 +109,46 @@ function MobileNav({
   return (
     <div
       id={menuId}
-      hidden={!isMenuOpen}
+      aria-hidden={!isMenuOpen}
+      inert={!isMenuOpen}
       className={cn(
-        "overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out md:hidden motion-reduce:transition-none",
+        "overflow-hidden transition-[max-height,opacity,transform,padding] duration-300 ease-out md:hidden motion-reduce:transition-none",
         isMenuOpen
-          ? "max-h-64 opacity-100 pt-3"
+          ? "max-h-[22rem] opacity-100 pt-3"
           : "pointer-events-none max-h-0 -translate-y-1 opacity-0 motion-reduce:translate-y-0"
       )}
     >
-      <nav aria-label="Mobile" className="grid gap-2 rounded-2xl border border-border/70 bg-card/90 p-2 shadow-soft">
+      <div className="border-t border-border/70 pb-1">
+      <nav aria-label="Mobile" className="grid">
         {navLinks.map((item) => (
           <Link
             key={`mobile-${item.href}`}
             href={item.href}
-            className={cn(navLinkClass(item.isActive, true), item.isActive && "bg-muted rounded-xl")}
+            className={cn(navLinkClass(item.isActive, true), item.isActive && "text-accent")}
             aria-current={item.isActive ? "page" : undefined}
+            tabIndex={isMenuOpen ? undefined : -1}
             onClick={onClose}
           >
             {item.label}
           </Link>
         ))}
       </nav>
+      <nav aria-label="Mobile social links" className="grid grid-cols-2 gap-x-5">
+        {SOCIAL_LINKS.map(({ href, label }) => (
+          <a
+            key={`mobile-social-${href}`}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            tabIndex={isMenuOpen ? undefined : -1}
+            className="inline-flex min-h-11 items-center justify-between border-b border-border/55 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            {label}
+            <span aria-hidden="true">↗</span>
+          </a>
+        ))}
+      </nav>
+      </div>
     </div>
   );
 }
@@ -169,6 +187,7 @@ export default function PublicHeader() {
 
   return (
     <header
+      data-public-header="true"
       className={cn(
         HEADER_SURFACE_CLASS,
         isScrolled
@@ -177,25 +196,22 @@ export default function PublicHeader() {
       )}
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-background/82 shadow-[inset_0_-1px_0_rgb(255_255_255_/_0.08)] dark:bg-background/86"
-        aria-hidden="true"
-      />
-      <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-foreground/10"
         aria-hidden="true"
       />
-      <div className="container relative z-10 py-3 sm:py-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="text-base font-semibold tracking-tight sm:text-lg">
+      <div className="journal-canvas relative z-10 py-2.5 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Link href="/" className="min-w-0 truncate font-mono text-[13px] font-semibold tracking-[-0.02em] sm:text-sm">
             meettilavat.com
           </Link>
           <div className="hidden h-[18px] w-px bg-border sm:block" aria-hidden="true" />
           <DesktopNav navLinks={navLinks} />
-          <div className="ml-auto flex items-center gap-3">
-            <SocialLinks />
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <SocialIconLinks />
+            <ThemeToggle className="h-11 w-11 rounded-sm border-0 bg-transparent text-foreground/70 hover:bg-foreground/8 hover:text-foreground sm:h-9 sm:w-9" />
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card text-foreground transition-[background-color,color,border-color] duration-200 hover:border-foreground/40 hover:bg-foreground/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:hidden motion-reduce:transition-none"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-sm border border-border/70 bg-card text-foreground transition-[background-color,color,border-color] duration-200 hover:border-foreground/40 hover:bg-foreground/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:hidden motion-reduce:transition-none"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-controls={menuId}
               aria-expanded={isMenuOpen}

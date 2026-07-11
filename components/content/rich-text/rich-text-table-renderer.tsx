@@ -17,7 +17,7 @@ export function renderTableNode(node: SanitizedTiptapNode, key: string, context:
               const cellKey = `${rowKey}-cell-${cellIndex}`;
               const CellTag = cell.type === "tableHeader" ? "th" : "td";
               return (
-                <CellTag key={cellKey}>
+                <CellTag key={cellKey} scope={cell.type === "tableHeader" ? "col" : undefined}>
                   {context.renderNodes(cell.content, cellKey)}
                 </CellTag>
               );
@@ -27,14 +27,22 @@ export function renderTableNode(node: SanitizedTiptapNode, key: string, context:
   );
 
   return (
-    <table key={key}>
-      {isHeaderRow ? <thead>{renderRow(firstRow, `${key}-head`)}</thead> : null}
-      <tbody>
-        {rows
-          .slice(isHeaderRow ? 1 : 0)
-          .filter(isRenderableNode)
-          .map((row, index) => renderRow(row, `${key}-row-${index}`))}
-      </tbody>
-    </table>
+    <div
+      key={key}
+      className="tiptap-table-scroll"
+      role="region"
+      aria-label="Scrollable table"
+      tabIndex={0}
+    >
+      <table>
+        {isHeaderRow ? <thead>{renderRow(firstRow, `${key}-head`)}</thead> : null}
+        <tbody>
+          {rows
+            .slice(isHeaderRow ? 1 : 0)
+            .filter(isRenderableNode)
+            .map((row, index) => renderRow(row, `${key}-row-${index}`))}
+        </tbody>
+      </table>
+    </div>
   );
 }

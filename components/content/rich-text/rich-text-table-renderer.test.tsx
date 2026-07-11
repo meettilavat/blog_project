@@ -62,8 +62,13 @@ describe("components/content/rich-text-table-renderer.tsx", () => {
     );
 
     expect(html).toContain("<thead>");
-    expect(html).toContain("<th><span>Topic</span></th>");
+    expect(html).toContain('<th scope="col"><span>Topic</span></th>');
     expect(html).toContain("<tbody>");
     expect(html).toContain("<td><span>Body cell</span></td>");
+    expect(html).toContain('class="tiptap-table-scroll"');
+    expect(html).toContain('role="region"');
+    expect(html).toContain('aria-label="Scrollable table"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('scope="col"');
   });
 });

@@ -94,7 +94,7 @@ export function TableOfContents({
   const list = (
     <ol
       className={cn(
-        "m-0 list-none p-0 text-[13px] leading-snug text-foreground/68",
+        "m-0 min-w-0 list-none p-0 text-[13px] leading-snug text-foreground/70",
         variant === "rail"
           ? "space-y-1 border-l border-border/50 pl-3"
           : "space-y-1.5 pt-3"
@@ -105,7 +105,7 @@ export function TableOfContents({
         return (
           <li
             key={heading.id}
-            className="relative"
+            className="relative min-w-0"
           >
             {variant === "rail" && isActive ? (
               <span
@@ -122,7 +122,7 @@ export function TableOfContents({
                   : undefined
               }
               className={cn(
-                "rounded-r-sm py-1.5 transition-colors duration-200 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground motion-reduce:transition-none",
+                "min-w-0 break-words py-1.5 [overflow-wrap:anywhere] transition-colors duration-200 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground motion-reduce:transition-none",
                 variant === "rail"
                   ? "grid grid-cols-[1.65rem_minmax(0,1fr)] gap-2"
                   : "block",
@@ -132,10 +132,10 @@ export function TableOfContents({
             >
               {variant === "rail" ? (
                 <>
-                  <span className="font-mono text-[10px] leading-5 text-foreground/38 [font-variant-numeric:tabular-nums]">
+                  <span className="font-mono text-[10px] leading-5 text-foreground/65 [font-variant-numeric:tabular-nums]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span style={{ paddingLeft: `${Math.max(heading.level - 1, 0) * 8}px` }}>
+                  <span className="min-w-0 break-words" style={{ paddingLeft: `${Math.max(heading.level - 1, 0) * 8}px` }}>
                     {heading.text}
                   </span>
                 </>
@@ -152,7 +152,7 @@ export function TableOfContents({
   if (variant === "rail") {
     return (
       <aside
-        className={cn("self-start overflow-y-auto pr-1 pt-1", className)}
+        className={cn("min-w-0 self-start overflow-x-hidden overflow-y-auto pr-1 pt-1", className)}
         aria-label="On this page"
         style={{
           top: offsetTop,
@@ -163,11 +163,11 @@ export function TableOfContents({
         }}
       >
         <div className="mb-3 border-b border-border/35 pb-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/48">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70">
             On this page
           </p>
-          <p className="mt-1 text-[12px] leading-snug text-foreground/42">
-            Sticky chapter map
+          <p className="mt-1 text-[12px] leading-snug text-foreground/65">
+            Chapter map
           </p>
         </div>
         {list}
@@ -177,10 +177,10 @@ export function TableOfContents({
 
   return (
     <details
-      className={cn("mb-8 border-y border-border/45 py-3 2xl:hidden", className)}
+      className={cn("mb-8 border-y border-border/55 py-3 marginalia:hidden", className)}
       aria-label="On this page"
     >
-      <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/55 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+      <summary className="cursor-pointer font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground">
         On this page
       </summary>
       {list}

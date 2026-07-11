@@ -113,9 +113,37 @@ describe("lib/tiptap/extensions/figure-extension.ts", () => {
 
     expect(html).toEqual([
       "figure",
-      { class: "tiptap-figure", "data-layout": "wide", "data-align": "right" },
+      { class: "tiptap-figure tiptap-figure-wide", "data-layout": "wide", "data-align": "right" },
       ["img", { loading: "lazy", src: "/cover.png", alt: "Cover" }],
       ["figcaption", {}, "Cover caption"]
+    ]);
+  });
+
+  it("emits the same side-layout classes used by the public renderer", () => {
+    const renderHTML = Figure.renderHTML as (
+      this: { options: { HTMLAttributes: Record<string, unknown> } },
+      args: { HTMLAttributes: Record<string, unknown> }
+    ) => unknown;
+
+    expect(renderHTML.call(
+      { options: { HTMLAttributes: {} } },
+      {
+        HTMLAttributes: {
+          src: "/phone.png",
+          alt: "Phone map",
+          layout: "side",
+          align: "left"
+        }
+      }
+    )).toEqual([
+      "figure",
+      {
+        class: "tiptap-figure tiptap-figure-side tiptap-figure-side-left",
+        "data-layout": "side",
+        "data-align": "left"
+      },
+      ["img", { src: "/phone.png", alt: "Phone map" }],
+      ["figcaption", {}, ""]
     ]);
   });
 });

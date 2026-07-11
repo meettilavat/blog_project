@@ -41,6 +41,37 @@ describe("components/content/table-of-contents.tsx", () => {
     expect(html).toContain("href=\"#intro\"");
   });
 
+  it("contains and wraps long rail labels", () => {
+    const html = renderToStaticMarkup(
+      <TableOfContents
+        headings={[{
+          id: "long-heading",
+          text: "A deliberately long operational heading that must stay inside the marginal rail",
+          level: 2
+        }]}
+        variant="rail"
+      />
+    );
+
+    expect(html).toContain("overflow-x-hidden");
+    expect(html).toContain("min-w-0");
+    expect(html).toContain("break-words");
+  });
+
+  it("allows uninterrupted compact labels to wrap instead of widening the page", () => {
+    const html = renderToStaticMarkup(
+      <TableOfContents
+        headings={[{
+          id: "long-token",
+          text: "ContinuousOperationalHeadingWithoutNaturalBreaksOrSpaces",
+          level: 2
+        }]}
+      />
+    );
+
+    expect(html).toContain("[overflow-wrap:anywhere]");
+  });
+
   it("does not mark headings active when trackActive is disabled", () => {
     const html = renderToStaticMarkup(
       <TableOfContents

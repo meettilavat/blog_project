@@ -3,241 +3,316 @@
   outline: none;
 }
 
+.tiptap-editorial:not(.tiptap-editor-surface) {
+  min-height: 0;
+}
+
 .tiptap:focus-visible {
   outline: none;
+}
+
+.tiptap-editorial {
+  counter-reset: journal-figure;
+}
+
+html[data-app="admin"] .tiptap-editor-surface {
+  --background: #f6f2ea;
+  --foreground: #241e18;
+  --border: #d8c7ad;
+  --muted: #ede4d6;
+  --accent: #a54d2f;
+  --card: #fffaf2;
+  --paper: #fbf5ea;
+  --ink-muted: #665447;
+  min-height: 36rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html[data-app="admin"].dark .tiptap-editor-surface {
+  --background: #15120f;
+  --foreground: #f4ead8;
+  --border: #3e3428;
+  --muted: #2a241d;
+  --accent: #e59a72;
+  --card: #1e1915;
+  --paper: #1b1713;
+  --ink-muted: #c9b59b;
 }
 
 .tiptap h1,
 .tiptap h2,
 .tiptap h3,
-.tiptap h4 {
-  letter-spacing: -0.02em;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  color: var(--foreground);
   font-weight: 600;
-  line-height: 1.25;
   scroll-margin-top: 118px;
   text-wrap: balance;
 }
 
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  letter-spacing: -0.025em;
+}
+
+.tiptap h1 {
+  margin: 3.25rem 0 1rem;
+  font-size: clamp(2rem, 1.6rem + 1.4vw, 3rem);
+  line-height: 1.05;
+}
+
+.tiptap h2 {
+  margin: 3.5rem 0 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  font-size: clamp(1.65rem, 1.4rem + 0.85vw, 2.25rem);
+  line-height: 1.12;
+}
+
+.tiptap h3 {
+  margin: 2.75rem 0 0.65rem;
+  font-size: clamp(1.28rem, 1.12rem + 0.45vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.tiptap h4 {
+  margin: 2.25rem 0 0.55rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.tiptap h5,
+.tiptap h6 {
+  margin: 2rem 0 0.5rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.tiptap h6 {
+  color: var(--ink-muted, var(--foreground));
+}
+
 .tiptap p {
-  margin: 0.8rem 0;
-  line-height: 1.9;
+  margin: 0.9rem 0;
   color: rgb(15 23 42 / 0.9);
+  line-height: 1.86;
   text-wrap: pretty;
 }
 
 .dark .tiptap p {
-  color: rgb(229 231 235 / 0.88);
+  color: rgb(229 231 235 / 0.9);
 }
 
 html[data-app="public"] .tiptap p {
-  color: rgb(36 30 24 / 0.9);
+  color: rgb(36 30 24 / 0.92);
 }
 
 html[data-app="public"].dark .tiptap p {
-  color: rgb(244 234 216 / 0.88);
+  color: rgb(244 234 216 / 0.9);
 }
 
-.tiptap > p:first-of-type {
-  font-size: clamp(1.05rem, 1rem + 0.18vw, 1.16rem);
-  line-height: 1.75;
-  margin-top: 0.25rem;
+html[data-app="admin"] .tiptap-editor-surface p {
+  color: rgb(36 30 24 / 0.92);
 }
 
-html[data-app="public"] .tiptap > p:first-of-type {
-  color: rgb(36 30 24 / 0.95);
+html[data-app="admin"].dark .tiptap-editor-surface p {
+  color: rgb(244 234 216 / 0.9);
 }
 
-.dark .tiptap > p:first-of-type {
-  color: rgb(243 244 246 / 0.94);
+.tiptap-editorial > p:first-of-type {
+  margin-top: 0.2rem;
+  color: var(--foreground);
+  font-size: clamp(1.08rem, 1.02rem + 0.2vw, 1.18rem);
+  line-height: 1.76;
 }
 
-html[data-app="public"].dark .tiptap > p:first-of-type {
-  color: rgb(250 243 232 / 0.94);
+.tiptap ul,
+.tiptap ol {
+  margin: 1rem 0 1.15rem 1.2rem;
+  padding-left: 0.7rem;
 }
 
 .tiptap ul {
   list-style: disc;
-  margin-left: 1.25rem;
-  padding-left: 0.5rem;
-  margin-top: 0.95rem;
-  margin-bottom: 1rem;
 }
 
 .tiptap ol {
   list-style: decimal;
-  margin-left: 1.25rem;
-  padding-left: 0.5rem;
-  margin-top: 0.95rem;
-  margin-bottom: 1rem;
 }
 
 .tiptap li {
-  margin-bottom: 0.38rem;
+  margin-bottom: 0.42rem;
+  padding-left: 0.15rem;
+  line-height: 1.72;
+}
+
+.tiptap li::marker {
+  color: var(--accent);
+}
+
+.tiptap ol li::marker {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .tiptap blockquote {
-  border-left: 3px solid var(--accent);
-  padding-left: 1.25rem;
-  margin: 2rem 0;
-  color: var(--foreground);
-  font-style: italic;
-  background: linear-gradient(90deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.02));
-  max-width: min(70ch, 92vw);
-  margin-left: auto;
-  margin-right: auto;
   position: relative;
-  border-radius: 0 0.75rem 0.75rem 0;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  max-width: 100%;
+  margin: 2.25rem 0;
+  padding: 0.45rem 0 0.45rem 1.35rem;
+  border-left: 2px solid var(--accent);
+  color: var(--foreground);
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.08rem;
+  font-style: italic;
 }
 
 .tiptap blockquote::before {
-  content: "\201C";
+  content: "note";
   position: absolute;
-  top: -0.35rem;
-  left: -0.15rem;
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: 3.5rem;
-  line-height: 1;
-  color: var(--accent);
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-html[data-app="public"] .tiptap blockquote {
-  background: linear-gradient(90deg, rgb(184 92 56 / 0.08), rgb(216 199 173 / 0.04));
+  top: -0.85rem;
+  left: 1.35rem;
+  padding-right: 0.45rem;
+  background: var(--background);
+  color: var(--ink-muted, var(--foreground));
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .tiptap code {
-  background: var(--foreground);
-  color: var(--background);
-  padding: 0.15rem 0.35rem;
-  border-radius: 0.3rem;
-  font-size: 0.95em;
-}
-
-html[data-app="public"] .tiptap code {
-  background: rgb(36 30 24 / 0.9);
-  color: #fffaf2;
-}
-
-html[data-app="public"].dark .tiptap code {
-  background: rgb(244 234 216 / 0.12);
-  color: #f4ead8;
+  padding: 0.12rem 0.32rem;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 78%, transparent);
+  color: var(--foreground);
+  font-size: 0.92em;
 }
 
 .tiptap pre {
-  background: var(--foreground);
-  color: var(--background);
-  padding: 1.25rem;
-  border-radius: 0.75rem;
+  margin: 1.75rem 0;
+  padding: 1.2rem 1.3rem;
   overflow: auto;
-  font-size: 0.92rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgb(36 30 24 / 0.96);
+  color: #fffaf2;
+  font-size: 0.9rem;
   line-height: 1.7;
 }
 
-html[data-app="public"] .tiptap pre {
-  background: rgb(36 30 24 / 0.92);
-  color: #fffaf2;
+html[data-app="public"].dark .tiptap pre {
+  background: #0f0d0b;
 }
 
-html[data-app="public"].dark .tiptap pre {
-  background: rgb(62 52 40 / 0.5);
-  color: #f4ead8;
-  border: 1px solid rgb(244 234 216 / 0.08);
+.tiptap pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .tiptap a {
   color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: rgb(15 23 42 / 0.35);
-  text-underline-offset: 0.22rem;
+  text-decoration-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.26rem;
   overflow-wrap: anywhere;
   word-break: break-word;
-}
-
-html[data-app="public"] .tiptap a {
-  text-decoration-color: rgb(184 92 56 / 0.38);
+  transition: color 180ms ease, text-decoration-color 180ms ease;
 }
 
 .tiptap a:hover {
-  text-decoration-color: currentColor;
+  color: var(--foreground);
+  text-decoration-color: var(--accent);
 }
 
 .tiptap figure,
 .tiptap-figure {
-  margin: 1.5rem auto;
-  text-align: center;
+  counter-increment: journal-figure;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   max-width: 100%;
-  padding: clamp(0.6rem, 1vw, 1rem);
+  margin-top: 2rem;
+  margin-bottom: 2.1rem;
+  padding: clamp(0.4rem, 0.8vw, 0.7rem);
+  flex-direction: column;
+  align-items: stretch;
   border: 1px solid var(--border);
-  border-radius: 1.5rem;
-  background: linear-gradient(145deg, rgb(15 23 42 / 0.05), rgb(15 23 42 / 0.02));
-}
-
-html[data-app="public"] .tiptap figure,
-html[data-app="public"] .tiptap-figure {
-  background: linear-gradient(145deg, rgb(184 92 56 / 0.04), rgb(216 199 173 / 0.05));
-}
-
-html[data-app="public"].dark .tiptap figure,
-html[data-app="public"].dark .tiptap-figure {
-  background: linear-gradient(145deg, rgb(229 154 114 / 0.05), rgb(62 52 40 / 0.16));
+  border-radius: 6px;
+  background: var(--paper, var(--card));
+  text-align: left;
 }
 
 .tiptap figure img,
 .tiptap-figure img {
   display: block;
-  margin: 0 auto;
-  border-radius: 1rem;
-  box-shadow: 0 20px 45px rgb(15 23 42 / 0.12);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-  max-width: 100%;
   width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 3px;
 }
 
 .tiptap figcaption {
-  margin-top: 0.75rem;
-  padding-top: 0.6rem;
-  font-style: italic;
-  font-size: 0.9rem;
-  color: #6b7280;
   position: relative;
+  margin-top: 0.7rem;
+  padding: 0.6rem 0.15rem 0.05rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  color: var(--ink-muted, var(--foreground));
+  font-size: 0.82rem;
+  font-style: normal;
+  line-height: 1.55;
+  text-align: left;
 }
 
 .tiptap figcaption::before {
-  content: "";
-  display: block;
-  width: 2rem;
-  height: 1px;
-  background: var(--accent);
-  opacity: 0.35;
-  margin: 0 auto 0.6rem;
+  content: "Fig. " counter(journal-figure) " / ";
+  color: var(--accent);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-html[data-app="public"] .tiptap figcaption {
-  color: rgb(97 78 61 / 0.95);
+.tiptap-table-scroll,
+.tiptap .tableWrapper {
+  width: 100%;
+  margin: 1.8rem 0;
+  overflow-x: auto;
+  border-block: 1px solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
 }
 
-html[data-app="public"].dark .tiptap figcaption {
-  color: rgb(214 192 165 / 0.86);
+.tiptap-table-scroll:focus-visible,
+.tiptap .tableWrapper:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
 }
 
 .tiptap table {
   width: 100%;
-  max-width: 100%;
+  min-width: 100%;
+  margin: 0;
   border-collapse: collapse;
-  margin: 1.5rem auto;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
+  border: 0;
+  font-size: 0.92rem;
 }
 
 .tiptap thead {
@@ -246,83 +321,49 @@ html[data-app="public"].dark .tiptap figcaption {
 
 .tiptap td,
 .tiptap th {
-  border: 1px solid var(--border);
+  min-width: 8rem;
   padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
   text-align: left;
+  vertical-align: top;
   font-variant-numeric: tabular-nums;
-  transition: background-color 0.2s ease;
+}
+
+.tiptap th {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .tiptap tbody tr:hover td {
-  background: var(--muted);
+  background: color-mix(in srgb, var(--muted) 62%, transparent);
+}
+
+.tiptap .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+  pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.tiptap td,
+.tiptap th {
+  position: relative;
 }
 
 .floating-toolbar {
   backdrop-filter: blur(8px);
 }
 
-/* ── Editorial public-post refinements ───────────────────────────── */
-
-.tiptap-editorial h2 {
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: 1.625rem;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  line-height: 1.25;
-}
-
-.tiptap-editorial h3 {
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(1.2rem, 1rem + 0.5vw, 1.45rem);
-  letter-spacing: -0.01em;
-  font-weight: 600;
-  margin-top: 2.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.tiptap-editorial p {
-  line-height: 1.9;
-  text-wrap: pretty;
-}
-
-.tiptap-editorial a {
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.28rem;
-  transition: text-decoration-color 200ms ease, color 200ms ease;
-}
-
-.tiptap-editorial a:hover {
-  text-decoration-color: var(--accent);
-  color: var(--accent);
-}
-
-.tiptap-editorial ul li::marker {
-  color: var(--accent);
-}
-
-.tiptap-editorial ol li::marker {
-  color: var(--accent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.tiptap figure img:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 25px 50px rgb(15 23 42 / 0.15);
-}
-
-html[data-app="public"] .tiptap figure img:hover {
-  box-shadow: 0 25px 50px rgb(36 30 24 / 0.2);
-}
-
 .tiptap .tiptap-figure-side {
   width: min(34%, 260px);
   max-width: 260px;
-  padding: 0.55rem;
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   margin-bottom: 1rem;
+  padding: 0.4rem;
   clear: none;
 }
 
@@ -339,20 +380,35 @@ html[data-app="public"] .tiptap figure img:hover {
 }
 
 .tiptap .tiptap-figure-side figcaption {
-  font-size: 0.78rem;
-  line-height: 1.55;
+  font-size: 0.75rem;
 }
 
 .tiptap .tiptap-figure-wide {
-  max-width: min(100%, 1060px);
+  --figure-width: min(100%, var(--figure-natural-width, 1060px), 1060px);
+  width: var(--figure-width);
+  max-width: var(--figure-width);
+  margin-right: auto;
+  margin-left: auto;
 }
 
-@media (min-width: 1024px) {
-  html[data-app="public"] .tiptap-editorial .tiptap-figure-wide {
-    width: min(1060px, calc(100vw - 2.5rem));
-    max-width: none;
+@media (min-width: 1200px) and (max-width: 1599px) {
+  html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
+    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 6rem));
+    width: var(--figure-width);
+    max-width: var(--figure-width);
     margin-left: 50%;
     transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 1600px) {
+  html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
+    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 6rem));
+    width: var(--figure-width);
+    max-width: var(--figure-width);
+    margin-right: 0;
+    margin-left: calc(100% - var(--figure-width));
+    transform: none;
   }
 }
 
@@ -365,5 +421,10 @@ html[data-app="public"] .tiptap figure img:hover {
     max-width: 300px;
     margin: 1.5rem auto;
   }
-}
 
+  .tiptap td,
+  .tiptap th {
+    min-width: 7.5rem;
+    padding: 0.65rem 0.7rem;
+  }
+}

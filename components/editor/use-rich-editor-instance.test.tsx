@@ -118,6 +118,8 @@ describe("components/editor/use-rich-editor-instance.ts", () => {
       ]
     });
     expect(editorOptions.editorProps.attributes.class).toContain("tiptap");
+    expect(editorOptions.editorProps.attributes.class).toContain("tiptap-editorial");
+    expect(editorOptions.editorProps.attributes.class).toContain("tiptap-editor-surface");
 
     editorOptions.onUpdate({
       editor: {

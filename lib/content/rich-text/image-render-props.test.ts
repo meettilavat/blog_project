@@ -78,6 +78,38 @@ describe("lib/content/rich-text/image-render-props.ts", () => {
     });
   });
 
+  it("replaces filename alt text with a meaningful caption", () => {
+    const result = resolveImageRenderProps(
+      {
+        type: "image",
+        attrs: {
+          src: "/images/dashboard-final-v2.png",
+          alt: "dashboard-final-v2.png",
+          caption: "Operations dashboard showing service health"
+        }
+      },
+      BASE_IMAGE_HOST_POLICY
+    );
+
+    expect(result?.alt).toBe("Operations dashboard showing service health");
+  });
+
+  it("humanizes filename-only alt text for legacy documents", () => {
+    const result = resolveImageRenderProps(
+      {
+        type: "image",
+        attrs: {
+          src: "/images/dashboard-final-v2.png",
+          alt: "dashboard-final-v2.png"
+        }
+      },
+      BASE_IMAGE_HOST_POLICY
+    );
+
+    expect(result?.alt).toBe("Dashboard final v2");
+    expect(result?.alt).not.toContain(".png");
+  });
+
   it("resolves supported figure layout attributes", () => {
     const result = resolveImageRenderProps(
       {

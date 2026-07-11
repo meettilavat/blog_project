@@ -15,6 +15,8 @@ type PostCoverMediaProps = {
   priority?: boolean;
   fetchPriority?: "high" | "low" | "auto";
   className?: string;
+  fit?: "cover" | "contain";
+  position?: "center" | "top";
 };
 
 export function PostCoverMedia({
@@ -27,20 +29,33 @@ export function PostCoverMedia({
   sizes = "100vw",
   priority = false,
   fetchPriority,
-  className
+  className,
+  fit = "cover",
+  position = "center"
 }: PostCoverMediaProps) {
   const imageHostPolicy = getRuntimeImageHostPolicy();
+  const mediaClassName = cn(
+    "h-full w-full",
+    fit === "contain" ? "object-contain" : "object-cover",
+    position === "top" ? "object-top" : "object-center",
+    className
+  );
 
   if (!src) {
     return (
       <div
         className={cn(
-          "h-full w-full bg-[radial-gradient(circle_at_20%_10%,rgb(184_92_56_/_0.24),transparent_38%),linear-gradient(135deg,rgb(237_228_214_/_0.95),rgb(216_199_173_/_0.86)_58%,rgb(184_92_56_/_0.2))]",
+          "relative h-full w-full overflow-hidden bg-muted",
           className
         )}
+        data-cover-placeholder="true"
         role="img"
         aria-label={emptyLabel}
       >
+        <span className="grid-ruled absolute inset-0 opacity-40" aria-hidden="true" />
+        <span className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70" aria-hidden="true">
+          Image field pending
+        </span>
         <span className="sr-only">{emptyLabel}</span>
       </div>
     );
@@ -54,7 +69,7 @@ export function PostCoverMedia({
           alt={alt}
           fill
           sizes={sizes}
-          className={cn("h-full w-full object-cover", className)}
+          className={mediaClassName}
           priority={priority}
           fetchPriority={fetchPriority}
         />
@@ -68,7 +83,7 @@ export function PostCoverMedia({
         width={width ?? 1600}
         height={height ?? 900}
         sizes={sizes}
-        className={cn("h-full w-full object-cover", className)}
+        className={mediaClassName}
         priority={priority}
         fetchPriority={fetchPriority}
       />
@@ -76,14 +91,14 @@ export function PostCoverMedia({
   }
 
   return fill ? (
-    <img src={src} alt={alt} className={cn("h-full w-full object-cover", className)} />
+    <img src={src} alt={alt} className={mediaClassName} />
   ) : (
     <img
       src={src}
       alt={alt}
       width={width}
       height={height}
-      className={cn("h-full w-full object-cover", className)}
+      className={mediaClassName}
     />
   );
 }

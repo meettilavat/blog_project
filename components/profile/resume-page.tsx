@@ -22,6 +22,8 @@ type Project = {
   name: string;
   stack?: string;
   href?: string;
+  linkLabel?: string;
+  external?: boolean;
   bullets: string[];
 };
 
@@ -60,6 +62,8 @@ const projects: Project[] = [
   {
     name: "Vriksha Ganana / Tree Census Platform",
     stack: "Kotlin, Jetpack Compose, Django REST, PostGIS, Next.js, Google Cloud, Cloud SQL, GCS",
+    href: "/posts/building-tree-census-django-nextjs-gcp",
+    linkLabel: "Read case study",
     bullets: [
       "Built an end-to-end municipal tree-census platform for SNMC across an Android field app, Django/PostGIS APIs, and a Next.js operations dashboard.",
       "Implemented map-based field workflows, photo evidence, offline sync, Google Sign-In/JWT auth, and supervisor review flows.",
@@ -70,6 +74,8 @@ const projects: Project[] = [
     name: "MeetTilavat.com (Blog Platform)",
     stack: "Next.js, Tailwind CSS, Supabase, Tiptap, Docker, Jenkins",
     href: publicLinks.sourceRepository,
+    linkLabel: "View source",
+    external: true,
     bullets: [
       "Split public read-only site and private admin/editor app backed by Supabase.",
       "Built rich-text publishing with images, tables, and Supabase Storage uploads.",
@@ -118,60 +124,54 @@ const skills = {
   other: ["Custom PC building", "Hardware troubleshooting"]
 };
 
-function PillBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs uppercase tracking-[0.18em] text-foreground/70">
-      {children}
-    </span>
-  );
-}
-
 export default function ResumePage() {
   return (
-    <div className="resume-sheet mx-auto max-w-[76rem] space-y-8 sm:space-y-10">
-      <RevealSection>
+    <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4.5rem,9vw,8rem)]">
+      <RevealSection delay={0.02}>
         <ResumeHeroSection />
       </RevealSection>
 
-      <RevealSection>
+      <RevealSection delay={0.08}>
         <ResumeExperienceEducationSection />
       </RevealSection>
 
-      <RevealSection>
+      <RevealSection delay={0.12}>
         <ResumeProjectsSection />
       </RevealSection>
 
-      <RevealSection>
+      <RevealSection delay={0.16}>
         <ResumeSkillsSection />
       </RevealSection>
-    </div>
+    </article>
   );
 }
 
 function ResumeHeroSection() {
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-6 shadow-soft sm:p-8 lg:p-10">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(560px_220px_at_8%_0%,rgb(184_92_56_/_0.12),transparent),radial-gradient(420px_180px_at_94%_4%,rgb(216_199_173_/_0.18),transparent)]"
-      />
-      <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] lg:items-start">
-        <div className="space-y-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">Meet Tilavat</p>
-          <h1 className="max-w-[19ch] font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-[3.65rem]">
+    <header className="border-b border-border/80 pb-[clamp(3.5rem,7vw,7rem)]">
+      <div className="grid gap-10 document:grid-cols-[minmax(0,1fr)_minmax(18rem,0.36fr)] document:items-end document:gap-[clamp(3rem,6vw,7rem)]">
+        <div className="space-y-6">
+          <p className="journal-label">Curriculum vitae / field record</p>
+          <h1 className="max-w-[18ch] text-balance font-serif text-[clamp(2.8rem,6.2vw,6.35rem)] leading-[0.96] tracking-[-0.035em] text-foreground">
             Software engineer building dependable web products and systems.
           </h1>
-          <p className="max-w-[58ch] text-lg leading-relaxed text-foreground/80 dark:text-foreground/88">
+          <p className="max-w-[58ch] text-[clamp(1.05rem,1.5vw,1.25rem)] leading-[1.75] text-foreground/78">
             I enjoy working end-to-end—from feature development to shipping and operations—with a focus on clarity,
             reliability, and automation.
           </p>
-          <div className="flex flex-wrap gap-2">
-            <PillBadge>Based in Gujarat, India</PillBadge>
-            <PillBadge>Open to full-time roles</PillBadge>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          <dl className="grid max-w-[42rem] gap-x-8 gap-y-3 border-y border-border/65 py-4 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="journal-label">Base</dt>
+              <dd className="mt-1 text-foreground/80">Gujarat, India</dd>
+            </div>
+            <div>
+              <dt className="journal-label">Status</dt>
+              <dd className="mt-1 text-foreground/80">Open to full-time roles</dd>
+            </div>
+          </dl>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
             <a
-              className="print:hidden inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-background transition-[transform,background-color] duration-200 hover:-translate-y-[1px] hover:bg-foreground/82 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              className="print:hidden inline-flex min-h-11 items-center gap-2 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
               href="/resume/meet-tilavat-resume.pdf"
               download="Meet_Tilavat_Resume.pdf"
             >
@@ -179,13 +179,13 @@ function ResumeHeroSection() {
               Download PDF
             </a>
             <a
-              className="inline-flex min-h-11 items-center rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              className="inline-flex min-h-11 items-center border-b border-border font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
               href="mailto:tilavatmeet2@gmail.com"
             >
               Email Me
             </a>
             <a
-              className="inline-flex min-h-11 items-center gap-1 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              className="inline-flex min-h-11 items-center gap-1 border-b border-border font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
               href={publicLinks.githubProfile}
               target="_blank"
               rel="noreferrer"
@@ -195,82 +195,37 @@ function ResumeHeroSection() {
             </a>
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(160deg,rgb(255_250_242_/_0.16),rgb(36_30_24_/_0.08))] p-5 shadow-soft backdrop-blur-sm sm:p-6">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(320px_160px_at_12%_-8%,rgb(184_92_56_/_0.2),transparent_62%),radial-gradient(280px_130px_at_100%_0%,rgb(216_199_173_/_0.24),transparent_66%)]"
-          />
-          <div className="relative flex items-center justify-between gap-3">
-            <h2 className="text-[11px] font-medium uppercase tracking-[0.26em] text-foreground/70">Contact</h2>
-            <span className="inline-flex items-center rounded-full border border-border/70 bg-card/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-foreground/70">
-              Open to Work
-            </span>
+        <address className="not-italic document:border-l document:border-border/75 document:pl-7">
+          <div className="flex items-end justify-between gap-4 border-b border-border/75 pb-3">
+            <h2 className="journal-label">Contact index</h2>
+            <span className="font-mono text-[10px] text-foreground/65">UTC+05:30</span>
           </div>
-          <ul className="relative mt-5 space-y-3">
-            <li>
-              <ContactRow
-                label="Email"
-                value="tilavatmeet2@gmail.com"
-                href="mailto:tilavatmeet2@gmail.com"
-                icon={<Mail className="h-4 w-4" aria-hidden="true" />}
-              />
-            </li>
-            <li>
-              <ContactRow
-                label="Phone"
-                value="+91 99133 20031"
-                href="tel:+919913320031"
-                icon={<Phone className="h-4 w-4" aria-hidden="true" />}
-              />
-            </li>
-            <li>
-              <ContactRow
-                label="LinkedIn"
-                value="linkedin.com/in/meettilavat"
-                href={publicLinks.linkedInProfile}
-                external
-                icon={<Linkedin className="h-4 w-4" aria-hidden="true" />}
-              />
-            </li>
-            <li>
-              <ContactRow
-                label="GitHub"
-                value="github.com/meettilavat"
-                href={publicLinks.githubProfile}
-                external
-                icon={<Github className="h-4 w-4" aria-hidden="true" />}
-              />
-            </li>
-            <li>
-              <ContactRow
-                label="Location"
-                value="Gujarat, India"
-                icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
-              />
-            </li>
+          <ul className="divide-y divide-border/60">
+            <li><ContactRow label="Email" value="tilavatmeet2@gmail.com" href="mailto:tilavatmeet2@gmail.com" icon={<Mail className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
+            <li><ContactRow label="Phone" value="+91 99133 20031" href="tel:+919913320031" icon={<Phone className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
+            <li><ContactRow label="LinkedIn" value="linkedin.com/in/meettilavat" href={publicLinks.linkedInProfile} external icon={<Linkedin className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
+            <li><ContactRow label="GitHub" value="github.com/meettilavat" href={publicLinks.githubProfile} external icon={<Github className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
+            <li><ContactRow label="Location" value="Gujarat, India" icon={<MapPin className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
           </ul>
-        </div>
+        </address>
       </div>
-    </section>
+    </header>
   );
 }
 
 function ResumeExperienceEducationSection() {
   return (
-    <section className="grid gap-6 lg:grid-cols-2" role="region" aria-labelledby="resume-experience">
-      <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
-        <SectionHeading title="Experience" subtitle="Hands-on product delivery and cross-functional execution." id="resume-experience" />
-        <div className="space-y-6">
+    <section className="grid gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(19rem,0.85fr)] lg:gap-[clamp(4rem,8vw,9rem)]" role="region" aria-labelledby="resume-experience">
+      <div>
+        <SectionHeading index="01" title="Experience" subtitle="Hands-on product delivery and cross-functional execution." id="resume-experience" />
+        <div className="mt-8 space-y-10 border-l border-border/75 pl-6 sm:pl-8" data-resume-timeline="true">
           {experiences.map((exp) => (
-            <article key={exp.company} className="relative space-y-2 pl-5">
-              <span className="absolute left-0 top-2 h-[calc(100%-0.2rem)] w-px bg-border/80" aria-hidden="true" />
-              <span className="absolute left-[-3px] top-2 inline-block h-2 w-2 rounded-full bg-accent/80" aria-hidden="true" />
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{exp.period}</p>
-                  <p className="text-lg font-semibold text-foreground">{exp.role}</p>
-                  <p className="text-sm text-foreground/70">{exp.company} · {exp.location}</p>
-                </div>
+            <article key={exp.company} className="relative space-y-4">
+              <span className="absolute -left-[calc(1.5rem+3px)] top-1.5 h-[7px] w-[7px] bg-accent sm:-left-[calc(2rem+3px)]" aria-hidden="true" />
+              <p className="journal-label tabular-nums">{exp.period}</p>
+              <div>
+                <h3 className="font-serif text-2xl leading-tight text-foreground">{exp.role}</h3>
+                <p className="mt-1 text-sm text-foreground/70">{exp.company} · {exp.location}</p>
               </div>
               <ResumeBulletList items={exp.bullets} className="mt-3" />
             </article>
@@ -278,18 +233,20 @@ function ResumeExperienceEducationSection() {
         </div>
       </div>
 
-      <div className="space-y-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7">
-        <SectionHeading title="Education" subtitle="Core academics with strong engineering outcomes." id="resume-education" />
-        <div className="space-y-4">
+      <div>
+        <SectionHeading index="02" title="Education" subtitle="Core academics with strong engineering outcomes." id="resume-education" />
+        <div className="mt-8 border-b border-border/70">
           {education.map((edu) => (
             <article
               key={edu.school}
-              className="space-y-1 rounded-2xl border border-border/45 bg-muted/50 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/25 hover:bg-card/70 motion-reduce:transition-none"
+              className="grid gap-2 border-t border-border/70 py-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5"
             >
-              <p className="text-sm uppercase tracking-[0.18em] text-foreground/60">{edu.period}</p>
-              <p className="text-lg font-semibold text-foreground">{edu.school}</p>
-              <p className="text-sm text-foreground/80">{edu.credential}</p>
-              <p className="text-sm text-foreground/60">{edu.location}</p>
+              <p className="journal-label tabular-nums">{edu.period}</p>
+              <div>
+                <h3 className="font-serif text-xl leading-tight text-foreground">{edu.school}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/80">{edu.credential}</p>
+                <p className="mt-1 text-sm text-foreground/70">{edu.location}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -300,38 +257,39 @@ function ResumeExperienceEducationSection() {
 
 function ResumeProjectsSection() {
   return (
-    <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7" role="region" aria-labelledby="resume-projects">
+    <section role="region" aria-labelledby="resume-projects">
       <SectionHeading
+        index="03"
         title="Selected Projects"
         subtitle="Production work and applied ML builds across web, infra, and experimentation."
         id="resume-projects"
       />
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {projects.map((project) => (
+      <div className="mt-8 border-b border-border/75">
+        {projects.map((project, index) => (
           <article
             key={project.name}
-            className="group relative space-y-3 overflow-hidden rounded-2xl border border-border/45 bg-muted/50 p-5 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/25 hover:bg-card/70 motion-reduce:transform-none motion-reduce:transition-none"
+            data-resume-project="true"
+            className="grid gap-5 border-t border-border/75 py-7 project:grid-cols-[3.25rem_minmax(0,1fr)_auto] project:gap-7"
           >
-            <div className="flex items-start justify-between gap-3">
+            <p className="font-mono text-[11px] tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</p>
+            <div className="min-w-0 space-y-4">
               <div>
-                <p className="text-lg font-semibold text-foreground">{project.name}</p>
-                {project.stack && (
-                  <p className="text-xs uppercase tracking-[0.18em] text-foreground/60">{project.stack}</p>
-                )}
+                <h3 className="font-serif text-[clamp(1.45rem,2.4vw,2.15rem)] leading-tight text-foreground">{project.name}</h3>
+                {project.stack ? <p className="mt-2 max-w-[80ch] font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-foreground/70">{project.stack}</p> : null}
               </div>
-              {project.href && (
+              <ResumeBulletList items={project.bullets} />
+            </div>
+            {project.href ? (
                 <a
                   href={project.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/8 px-3 py-1 text-xs uppercase tracking-[0.18em] text-accent transition-[border-color,background-color,color] duration-200 hover:border-accent/50 hover:bg-accent/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
+                  target={project.external ? "_blank" : undefined}
+                  rel={project.external ? "noreferrer" : undefined}
+                  className="inline-flex min-h-11 items-center gap-1 self-start border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
                 >
-                  Source
+                  {project.linkLabel ?? "View project"}
                   <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
-              )}
-            </div>
-            <ResumeBulletList items={project.bullets} className="pt-0.5" itemClassName="text-[0.98rem]" />
+            ) : <span aria-hidden="true" />}
           </article>
         ))}
       </div>
@@ -341,32 +299,28 @@ function ResumeProjectsSection() {
 
 function ResumeSkillsSection() {
   return (
-    <section className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-soft sm:p-7" role="region" aria-labelledby="resume-skills">
-      <SectionHeading title="Skills" subtitle="Current stack and tools used in day-to-day delivery." id="resume-skills" />
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-12">
-        <SkillCard
-          className="xl:col-span-5"
-          title="Languages & Frameworks"
-          items={[...skills.languages, ...skills.frameworks]}
-        />
-        <SkillCard className="xl:col-span-4" title="DevOps & Cloud" items={skills.devops} />
-        <SkillCard className="xl:col-span-3" title="Tools" items={skills.tools} />
-        <SkillCard className="xl:col-span-5" title="Backend & Data" items={skills.backendData} />
-        <SkillCard className="xl:col-span-5" title="Languages (Spoken)" items={skills.languagesSpoken} />
-        <SkillCard className="xl:col-span-7" title="Other" items={skills.other} />
-      </div>
+    <section role="region" aria-labelledby="resume-skills">
+      <SectionHeading index="04" title="Skills" subtitle="Current stack and tools used in day-to-day delivery." id="resume-skills" />
+      <dl className="mt-8 grid border-b border-border/75 ledger:grid-cols-2">
+        <SkillGroup title="Languages & Frameworks" items={[...skills.languages, ...skills.frameworks]} />
+        <SkillGroup title="DevOps & Cloud" items={skills.devops} />
+        <SkillGroup title="Tools" items={skills.tools} />
+        <SkillGroup title="Backend & Data" items={skills.backendData} />
+        <SkillGroup title="Languages (Spoken)" items={skills.languagesSpoken} />
+        <SkillGroup title="Other" items={skills.other} />
+      </dl>
     </section>
   );
 }
 
-function SectionHeading({ title, subtitle, id }: { title: string; subtitle: string; id?: string }) {
+function SectionHeading({ index, title, subtitle, id }: { index: string; title: string; subtitle: string; id?: string }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div className="space-y-1">
-        <h2 id={id} className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
-        <p className="text-sm text-foreground/68 dark:text-foreground/78">{subtitle}</p>
+    <div className="grid gap-3 border-b border-border/75 pb-4 sm:grid-cols-[3rem_minmax(0,1fr)] sm:items-end">
+      <span className="font-mono text-[11px] tabular-nums text-accent">{index}</span>
+      <div>
+        <h2 id={id} className="font-serif text-[clamp(2rem,3.5vw,3rem)] leading-none tracking-[-0.025em] text-foreground">{title}</h2>
+        <p className="mt-2 max-w-[58ch] text-sm leading-relaxed text-foreground/70">{subtitle}</p>
       </div>
-      <span className="h-px w-16 bg-border" aria-hidden="true" />
     </div>
   );
 }
@@ -386,16 +340,16 @@ function ContactRow({
 }) {
   const rowContent = (
     <>
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/65 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.28),rgb(36_30_24_/_0.08))] text-foreground/72 shadow-sm">
+      <span className="inline-flex h-8 w-6 shrink-0 items-center justify-start text-accent">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[10px] uppercase tracking-[0.2em] text-foreground/56">{label}</span>
-        <span className="block break-words text-sm font-medium text-foreground/88">{value}</span>
+        <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-foreground/70">{label}</span>
+        <span className="block break-words text-sm text-foreground/85">{value}</span>
       </span>
       {external ? (
-        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/65">
-          <ArrowUpRight className="h-3.5 w-3.5 text-foreground/56" aria-hidden="true" />
+        <span className="inline-flex h-7 w-5 shrink-0 items-center justify-end">
+          <ArrowUpRight className="h-3.5 w-3.5 text-foreground/70" aria-hidden="true" />
         </span>
       ) : null}
     </>
@@ -403,7 +357,7 @@ function ContactRow({
 
   if (!href) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-border/45 bg-card/50 px-3.5 py-2.5">
+      <div className="flex min-h-14 items-center gap-2 py-2.5">
         {rowContent}
       </div>
     );
@@ -414,7 +368,7 @@ function ContactRow({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className="group flex items-center gap-3 rounded-xl border border-border/45 bg-card/50 px-3.5 py-2.5 transition-[transform,border-color,background-color] duration-200 hover:-translate-y-[1px] hover:border-foreground/35 hover:bg-card/78 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+      className="group flex min-h-14 items-center gap-2 py-2.5 transition-colors duration-200 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
     >
       {rowContent}
     </a>
@@ -431,50 +385,40 @@ function ResumeBulletList({
   itemClassName?: string;
 }) {
   return (
-    <ul className={cn("m-0 list-none space-y-2.5 p-0", className)}>
+    <ul className={cn("m-0 list-none space-y-2 p-0", className)}>
       {items.map((item) => (
         <li
           key={item}
-          className="group grid grid-cols-[0.625rem_minmax(0,1fr)] items-start gap-3 rounded-md px-1 py-0.5 transition-colors duration-200 hover:bg-card/25 motion-reduce:transition-none"
+          className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-3"
         >
           <span
             aria-hidden="true"
-            className="mt-[0.56rem] inline-block h-1.5 w-1.5 rounded-full bg-[#9f6f52] ring-[1.5px] ring-[#9f6f52]/20 transition-transform duration-200 group-hover:scale-110 dark:bg-[#c99778] dark:ring-[#c99778]/28 motion-reduce:transition-none"
+            className="mt-[0.68rem] inline-block h-px w-2 bg-accent"
           />
-          <span className={cn("block text-sm leading-[1.72] text-foreground/88 dark:text-foreground/92", itemClassName)}>{item}</span>
+          <span className={cn("block text-sm leading-[1.75] text-foreground/85", itemClassName)}>{item}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-function SkillCard({
+function SkillGroup({
   title,
   items,
-  className
 }: {
   title: string;
   items: string[];
-  className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border/45 bg-muted/40 p-4 transition-[border-color,background-color] duration-200 hover:border-foreground/25 hover:bg-card/65 motion-reduce:transition-none",
-        className
-      )}
-    >
-      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-foreground/68">{title}</p>
-      <div className="mt-3.5 flex flex-wrap gap-2.5">
+    <div data-resume-skill-group="true" className="border-t border-border/75 py-5 ledger:odd:pr-8 ledger:even:border-l ledger:even:pl-8">
+      <dt className="journal-label">{title}</dt>
+      <dd className="mt-3">
+        <ul className="flex flex-wrap text-sm leading-7 text-foreground/82">
         {items.map((item) => (
-          <span
-            key={item}
-            className="inline-flex items-center rounded-full border border-border/55 bg-[linear-gradient(145deg,rgb(255_250_242_/_0.14),rgb(36_30_24_/_0.14))] px-3.5 py-1.5 text-[0.8rem] font-medium leading-none text-foreground/92 shadow-[inset_0_1px_0_rgb(255_250_242_/_0.16)] transition-[border-color,background-color,color,transform] duration-200 hover:border-foreground/45 hover:text-foreground hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none"
-          >
-            {item}
-          </span>
+          <li key={item} className="after:mx-2 after:text-accent/70 after:content-['/'] last:after:hidden">{item}</li>
         ))}
-      </div>
+        </ul>
+      </dd>
     </div>
   );
 }

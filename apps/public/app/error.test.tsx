@@ -11,6 +11,10 @@ describe("apps/public/app/error.tsx", () => {
     expect(html).toContain("Something interrupted this page");
     expect(html).toContain("Try again");
     expect(html).toContain('href="/"');
+    expect(html).toContain('data-public-status-notice="true"');
+    expect(html).toContain("border-y");
+    expect(html).toContain("my-auto");
+    expect(html).not.toContain("rounded-[2rem]");
   });
 
   it("runs the route reset callback", () => {

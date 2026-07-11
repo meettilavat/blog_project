@@ -45,10 +45,18 @@ const Figure = Image.extend({
   },
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
     const { caption, layout, align, ...attrs } = HTMLAttributes;
+    const resolvedLayout = layout === "side" || layout === "wide" ? layout : "center";
+    const resolvedAlign = align === "left" ? "left" : "right";
+    const figureClasses = [
+      "tiptap-figure",
+      resolvedLayout === "side" ? "tiptap-figure-side" : "",
+      resolvedLayout === "side" ? `tiptap-figure-side-${resolvedAlign}` : "",
+      resolvedLayout === "wide" ? "tiptap-figure-wide" : ""
+    ].filter(Boolean).join(" ");
     const figureAttrs = {
-      class: "tiptap-figure",
-      "data-layout": layout || "center",
-      "data-align": align || "right"
+      class: figureClasses,
+      "data-layout": resolvedLayout,
+      "data-align": resolvedAlign
     };
     return [
       "figure",

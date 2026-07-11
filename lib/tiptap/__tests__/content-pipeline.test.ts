@@ -94,6 +94,40 @@ describe("lib/tiptap/content-pipeline.ts", () => {
     ]);
   });
 
+  it("assigns stable unique ids to repeated headings for renderer and TOC parity", () => {
+    const analysis = analyzeContent({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Field notes" }]
+        },
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Field notes" }]
+        },
+        {
+          type: "heading",
+          attrs: { level: 3, id: "field-notes" },
+          content: [{ type: "text", text: "Explicit duplicate" }]
+        }
+      ]
+    });
+
+    expect(analysis.headings.map((heading) => heading.id)).toEqual([
+      "field-notes",
+      "field-notes-2",
+      "field-notes-3"
+    ]);
+    expect(analysis.content?.content?.map((node) => node.attrs?.id)).toEqual([
+      "field-notes",
+      "field-notes-2",
+      "field-notes-3"
+    ]);
+  });
+
   it("computes plain-text and reading-time metrics", () => {
     const content: TiptapContentValue = {
       type: "doc",
@@ -137,7 +171,7 @@ describe("lib/tiptap/content-pipeline.ts", () => {
         content: [
           {
             type: "heading",
-            attrs: { level: 2 },
+            attrs: { level: 2, id: "intro" },
             content: [{ type: "text", text: "Intro" }]
           },
           {

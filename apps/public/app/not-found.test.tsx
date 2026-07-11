@@ -9,5 +9,10 @@ describe("apps/public/app/not-found.tsx", () => {
     expect(html).toContain("Page not found");
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/resume"');
+    expect(html).toContain('data-public-status-notice="true"');
+    expect(html).toContain("border-y");
+    expect(html).toContain("my-auto");
+    expect(html).not.toContain("rounded-[2rem]");
+    expect(html).not.toContain("shadow-soft");
   });
 });

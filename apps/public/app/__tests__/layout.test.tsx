@@ -86,6 +86,11 @@ describe("apps/public/app/layout.tsx", () => {
     expect(html).toContain("PublicFooterStub");
     expect(html).toContain("ChildContentStub");
     expect(html).toContain("id=\"content\"");
+    expect(html).toContain("min-h-dvh");
+    expect(html).toContain("flex-col");
+    expect(html).toContain("flex-1");
+    expect(html).toContain("journal-canvas");
+    expect(html).toContain("flex flex-1 flex-col");
     expect(html).toContain("localStorage.getItem(\"theme\")");
     expect(html).toContain("name=\"theme-color\"");
   });
