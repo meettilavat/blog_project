@@ -60,4 +60,24 @@ describe("components/content/rich-text-mark-renderer.tsx", () => {
     expect(html).not.toContain("<a");
     expect(html).not.toContain("javascript:alert(1)");
   });
+
+  it("shortens visible raw URLs without changing their destination", () => {
+    const href = "https://github.com/meettilavat/blog_project";
+    const html = renderToStaticMarkup(
+      <>{wrapTextMarks(href, [{ type: "link", attrs: { href } }], "raw-link")}</>
+    );
+
+    expect(html).toContain(`href="${href}"`);
+    expect(html).toContain(`title="${href}"`);
+    expect(html).toContain("GitHub / meettilavat/blog_project");
+    expect(html).not.toContain(`>${href}<`);
+  });
+
+  it("keeps authored link labels unchanged", () => {
+    const html = renderToStaticMarkup(
+      <>{wrapTextMarks("Project source", [{ type: "link", attrs: { href: "https://github.com/meettilavat/blog_project" } }], "authored-link")}</>
+    );
+
+    expect(html).toContain(">Project source<");
+  });
 });

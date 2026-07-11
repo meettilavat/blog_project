@@ -10,6 +10,8 @@ describe("components/posts/post-cover-media.tsx", () => {
     const html = renderToStaticMarkup(<PostCoverMedia src={null} alt="Cover" />);
 
     expect(html).toContain("No cover image");
+    expect(html).toContain("data-cover-placeholder=\"true\"");
+    expect(html).not.toContain("radial-gradient");
   });
 
   it("renders native img for non-whitelisted hosts", () => {
@@ -19,5 +21,14 @@ describe("components/posts/post-cover-media.tsx", () => {
 
     expect(html).toContain("<img");
     expect(html).toContain("untrusted.example.com/cover.png");
+  });
+
+  it("supports intrinsic-fit media without changing host policy", () => {
+    const html = renderToStaticMarkup(
+      <PostCoverMedia src="/cover.png" alt="Dashboard overview" width={640} height={360} fit="contain" />
+    );
+
+    expect(html).toContain("object-contain");
+    expect(html).toContain("Dashboard overview");
   });
 });

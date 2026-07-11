@@ -11,6 +11,10 @@ describe("components/motion/fade-in.tsx", () => {
     );
 
     expect(html).toContain("fade-class");
+    expect(html).toContain("journal-reveal");
+    expect(html).toContain("--reveal-delay:0.2s");
+    expect(html).toContain("--reveal-duration:0.8s");
+    expect(html).toContain("--reveal-y:40px");
     expect(html).toContain(">Child<");
     expect(html).not.toContain("opacity:0");
     expect(html).not.toContain("blur(");

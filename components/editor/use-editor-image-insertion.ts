@@ -3,6 +3,7 @@
 import { useCallback, useRef } from "react";
 import type { JSONContent } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
+import { humanizeImageFilename } from "@/lib/content/rich-text/image-render-props";
 
 type UploadedInlineImage = {
   url: string;
@@ -60,14 +61,16 @@ export function useEditorImageInsertion({
         return;
       }
 
-      const caption = window.prompt("Caption for this image?", "") || "";
+      const caption = window.prompt("Caption for this image?", "")?.trim() || "";
+      const suggestedAlt = caption || humanizeImageFilename(file.name);
+      const alt = window.prompt("Alternative text for this image?", suggestedAlt)?.trim() || suggestedAlt;
       editor
         ?.chain()
         .focus()
         .insertContent(
           buildFigureNode({
             src: result.image.url,
-            alt: file.name,
+            alt,
             caption,
             width: result.image.width,
             height: result.image.height

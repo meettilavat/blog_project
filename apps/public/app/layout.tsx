@@ -127,7 +127,7 @@ export default function RootLayout({
           content={DARK_THEME_COLOR}
         />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased transition-colors">
+      <body className="min-h-dvh bg-background text-foreground antialiased transition-colors">
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         <UiEnvironmentProvider>
           <a
@@ -139,9 +139,9 @@ export default function RootLayout({
           <div className="pointer-events-none fixed inset-0 -z-10 opacity-35 dark:opacity-20" aria-hidden="true">
             <div className="grid-ruled h-full w-full" />
           </div>
-          <div className="relative">
+          <div className="relative flex min-h-dvh flex-col">
             <PublicHeader />
-            <main id="content" className="container pb-20 pt-10">
+            <main id="content" className="journal-canvas flex flex-1 flex-col pb-24 pt-[clamp(2.5rem,5vw,5.5rem)]">
               {children}
             </main>
             <PublicFooter />

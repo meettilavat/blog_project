@@ -11,8 +11,8 @@ const { SITE_URL } = vi.hoisted(() => ({
 }));
 
 const getPublishedPostsMock = vi.fn();
-const postCardRenderMock = vi.fn((props: { href: string; post: { slug: string }; priority?: boolean }) => (
-  <article>{`PostCardStub:${props.post.slug}:${props.href}:${String(props.priority)}`}</article>
+const postCardRenderMock = vi.fn((props: { href: string; post: { slug: string }; priority?: boolean; presentation?: string }) => (
+  <article>{`PostCardStub:${props.post.slug}:${props.href}:${String(props.priority)}:${props.presentation ?? "standard"}`}</article>
 ));
 
 vi.mock("@/lib/posts/repository/public-posts-repository", () => ({
@@ -24,7 +24,7 @@ vi.mock("@/lib/site-url", () => ({
 }));
 
 vi.mock("@/components/posts/post-card", () => ({
-  PostCard: (props: { href: string; post: { slug: string }; priority?: boolean }) => postCardRenderMock(props)
+  PostCard: (props: { href: string; post: { slug: string }; priority?: boolean; presentation?: string }) => postCardRenderMock(props)
 }));
 
 vi.mock("@/components/motion/fade-in", () => ({
@@ -61,9 +61,11 @@ describe("apps/public/app/page.tsx", () => {
     const html = renderToStaticMarkup(await HomePage());
 
     expect(html).toContain("Notes on building software");
+    expect(html).not.toContain("\u00a0");
     expect(html).toContain("Meet Tilavat");
     expect(html).toContain('href="/resume"');
-    expect(html).toContain("No posts yet. Fresh writing is on the way.");
+    expect(html).toContain("No posts yet.");
+    expect(html).toContain("Fresh writing is on the way.");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"WebSite\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}\"`);
@@ -74,22 +76,40 @@ describe("apps/public/app/page.tsx", () => {
     getPublishedPostsMock.mockResolvedValue({
       ok: true,
       data: [
-        { id: "post-1", slug: "first-post" },
-        { id: "post-2", slug: "second-post" }
+        { id: "post-1", slug: "field-note" },
+        { id: "post-2", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" }
       ]
     });
 
     const html = renderToStaticMarkup(await HomePage());
 
     expect(postCardRenderMock).toHaveBeenCalledTimes(2);
-    expect(html).toContain("lg:grid-cols-2");
-    expect(html).toContain("PostCardStub:first-post:/posts/first-post:true");
-    expect(html).toContain("PostCardStub:second-post:/posts/second-post:false");
-    expect(postCardRenderMock).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ priority: true })
-    );
+    expect(html).toContain("Selected work");
+    expect(html).toContain("Field notes");
+    expect(html).toContain("PostCardStub:building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp:/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp:true:featured");
+    expect(html).toContain("PostCardStub:field-note:/posts/field-note:false:note");
+    expect(postCardRenderMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      post: expect.objectContaining({ slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" }),
+      presentation: "featured",
+      priority: true
+    }));
+    expect(html).not.toContain("folio:grid-cols-2");
     expect(html).not.toContain("No posts yet. Fresh writing is on the way.");
+  });
+
+  it("uses two field-note columns only when at least two notes exist", async () => {
+    getPublishedPostsMock.mockResolvedValue({
+      ok: true,
+      data: [
+        { id: "post-1", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" },
+        { id: "post-2", slug: "note-a" },
+        { id: "post-3", slug: "note-b" }
+      ]
+    });
+
+    const html = renderToStaticMarkup(await HomePage());
+
+    expect(html).toContain("folio:grid-cols-2");
   });
 
   it("renders a distinct availability error when posts cannot be loaded", async () => {

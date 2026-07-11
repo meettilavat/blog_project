@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { notFound } from "next/navigation";
 import { POST_DESCRIPTION_FALLBACK } from "@/lib/seo/public-site";
 
@@ -66,6 +68,15 @@ vi.mock("@/components/motion/fade-in", () => ({
 import PostPage, { generateMetadata, generateStaticParams } from "./page";
 
 describe("apps/public/app/posts/[slug]/page.tsx", () => {
+  it("defines a route-local editorial missing-post shell", () => {
+    const routeNotFoundPath = path.join(process.cwd(), "apps/public/app/posts/[slug]/not-found.tsx");
+
+    expect(existsSync(routeNotFoundPath)).toBe(true);
+    const source = readFileSync(routeNotFoundPath, "utf8");
+    expect(source).toContain("PublicStatusNotice");
+    expect(source).toContain("Missing field note");
+  });
+
   beforeEach(() => {
     configuredSiteUrl = SITE_URL;
     getPublishedPostsMock.mockReset();
@@ -225,17 +236,17 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         isSanitized: true
       })
     );
-    expect(html).not.toContain("max-w-[72ch]");
-    expect(html).toContain("max-w-[82ch]");
+    expect(html).toContain("max-w-[72ch]");
+    expect(html).not.toContain("max-w-[82ch]");
     expect(html).toContain(
-      "grid-cols-[minmax(0,1fr)_minmax(0,82ch)_minmax(0,1fr)]"
+      "marginalia:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_14rem]"
     );
-    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(2);
+    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(3);
     expect(tableOfContentsRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "rail",
         className:
-          "hidden 2xl:sticky 2xl:col-start-3 2xl:ml-[calc(566px-41ch)] 2xl:block 2xl:w-52"
+          "hidden marginalia:sticky marginalia:col-start-3 marginalia:block marginalia:w-full"
       })
     );
     expect(html).toContain("max-w-[48rem]");

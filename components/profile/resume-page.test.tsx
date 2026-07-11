@@ -63,5 +63,14 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain('download="Meet_Tilavat_Resume.pdf"');
     expect(html).toContain("Download PDF");
     expect(html).not.toContain("Print resume");
+    expect(html).toContain("<address");
+    expect(html).toContain('data-resume-timeline="true"');
+    expect(html).toContain('data-resume-project="true"');
+    expect(html).toContain('data-resume-skill-group="true"');
+    expect(html).toContain('href="/posts/building-tree-census-django-nextjs-gcp"');
+    expect(html).toContain("Read case study");
+    expect(html).not.toContain("rounded-[2rem]");
+    expect(html).not.toContain("rounded-full");
+    expect(html).not.toContain("radial-gradient");
   });
 });

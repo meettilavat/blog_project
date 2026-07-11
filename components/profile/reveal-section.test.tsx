@@ -11,6 +11,8 @@ describe("components/profile/reveal-section.tsx", () => {
     );
 
     expect(html).toContain("reveal-class");
+    expect(html).toContain("journal-reveal");
+    expect(html).toContain("--reveal-delay:0.3s");
     expect(html).toContain("Reveal content");
     expect(html).not.toContain("opacity:0");
     expect(html).not.toContain("blur(");

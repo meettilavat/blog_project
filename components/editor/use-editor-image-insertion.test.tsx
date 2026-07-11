@@ -68,6 +68,10 @@ describe("components/editor/use-editor-image-insertion.ts", () => {
         height: 360
       }
     });
+    const prompt = vi.fn()
+      .mockReturnValueOnce("Figure caption")
+      .mockReturnValueOnce("Map dashboard with surveyed tree markers");
+    vi.stubGlobal("window", { prompt });
 
     renderToStaticMarkup(
       <EditorImageInsertionHarness editor={editor} uploadInlineImage={uploadInlineImage} />
@@ -90,13 +94,14 @@ describe("components/editor/use-editor-image-insertion.ts", () => {
       type: "image",
       attrs: {
         src: UPLOADED_IMAGE_URL,
-        alt: "cover.png",
+        alt: "Map dashboard with surveyed tree markers",
         caption: "Figure caption",
         width: 640,
         height: 360
       }
     });
     expect(runMock).toHaveBeenCalledTimes(1);
+    expect(prompt).toHaveBeenCalledTimes(2);
   });
 
   it("alerts users when upload fails and skips insertion", async () => {

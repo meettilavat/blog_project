@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FadeIn } from "@/components/motion/fade-in";
 
 type Props = {
   children: ReactNode;
@@ -6,6 +7,10 @@ type Props = {
   delay?: number;
 };
 
-export function RevealSection({ children, className }: Props) {
-  return <div className={className}>{children}</div>;
+export function RevealSection({ children, className, delay = 0 }: Props) {
+  return (
+    <FadeIn className={className} delay={delay} duration={0.44} y={14} whileInView>
+      {children}
+    </FadeIn>
+  );
 }

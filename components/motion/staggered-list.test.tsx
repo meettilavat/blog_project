@@ -12,6 +12,10 @@ describe("components/motion/staggered-list.tsx", () => {
 
     expect(html).toContain("list-class");
     expect(html).toContain("item-class");
+    expect(html).toContain("journal-stagger");
+    expect(html).toContain("journal-stagger-item");
+    expect(html).toContain("--stagger-delay:0.3s");
+    expect(html).toContain("--stagger-step:0.12s");
     expect(html).toContain("Item A");
     expect(html).not.toContain("opacity:0");
     expect(html).not.toContain("blur(");

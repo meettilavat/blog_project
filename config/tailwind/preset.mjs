@@ -13,18 +13,28 @@ const preset = {
       }
     },
     extend: {
+      screens: {
+        micro: "360px",
+        note: "544px",
+        folio: "768px",
+        ledger: "832px",
+        project: "896px",
+        document: "1152px",
+        spread: "1280px",
+        marginalia: "1600px"
+      },
       fontFamily: {
         sans: ["var(--font-grotesk)", ...defaultTheme.fontFamily.sans],
         serif: ["var(--font-serif)", ...defaultTheme.fontFamily.serif],
         mono: ["var(--font-mono)", ...defaultTheme.fontFamily.mono]
       },
       colors: {
-        border: "var(--border)",
-        muted: "var(--muted)",
-        foreground: "var(--foreground)",
-        accent: "var(--accent)",
-        background: "var(--background)",
-        card: "var(--card)"
+        border: "rgb(var(--border-rgb) / <alpha-value>)",
+        muted: "rgb(var(--muted-rgb) / <alpha-value>)",
+        foreground: "rgb(var(--foreground-rgb) / <alpha-value>)",
+        accent: "rgb(var(--accent-rgb) / <alpha-value>)",
+        background: "rgb(var(--background-rgb) / <alpha-value>)",
+        card: "rgb(var(--card-rgb) / <alpha-value>)"
       },
       boxShadow: {
         soft: "0 10px 30px rgba(15, 23, 42, 0.08)"

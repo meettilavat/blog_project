@@ -18,5 +18,9 @@ describe("components/posts/post-meta-row.tsx", () => {
     expect(html).toContain("Last updated");
     expect(html).toContain("4 min read");
     expect(html).toContain("812 words");
+    expect(html).toContain('data-meta-group="publication"');
+    expect(html).toContain('data-meta-group="reading"');
+    expect(html).toContain("whitespace-nowrap");
+    expect(html).not.toContain("text-foreground/35");
   });
 });

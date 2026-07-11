@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import "../../../styles/globals.css";
-import { Space_Grotesk, Literata, IBM_Plex_Mono } from "next/font/google";
+import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import Header from "@/apps/admin/components/shell/header";
 import { cn } from "@/lib/ui/classnames";
 import TypographyToggle from "@/apps/admin/components/shell/typography-toggle";
@@ -17,16 +17,15 @@ const themeBootstrapScript = readFileSync(
   "utf8"
 );
 
-const grotesk = Space_Grotesk({
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-grotesk"
 });
 
-const newsreader = Literata({
+const fraunces = Fraunces({
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "600", "700"],
   variable: "--font-serif"
 });
 
@@ -53,7 +52,7 @@ export default function RootLayout({
       lang="en"
       data-app="admin"
       data-scroll-behavior="smooth"
-      className={cn(grotesk.variable, newsreader.variable, plexMono.variable)}
+      className={cn(sourceSans.variable, fraunces.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <head>

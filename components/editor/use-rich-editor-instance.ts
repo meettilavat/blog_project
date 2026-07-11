@@ -73,7 +73,7 @@ export function useRichEditorInstance({ initialContent, onChange }: UseRichEdito
     content: toRichContentValue(initialContent) ?? DEFAULT_DOC,
     editorProps: {
       attributes: {
-        class: "tiptap text-lg leading-8 max-w-[72ch] mx-auto pb-10"
+        class: "tiptap tiptap-editorial tiptap-editor-surface mx-auto max-w-[72ch] pb-10 text-lg leading-8"
       }
     },
     onUpdate: ({ editor }) => {

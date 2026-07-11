@@ -82,7 +82,7 @@ export function RichEditor({ initialContent, onChange }: Props) {
 
   return (
     <div
-      className="space-y-4 rounded-3xl border border-border/70 bg-card p-4 shadow-soft"
+      className="space-y-4 border-y border-border/70 bg-card/40 py-4"
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >

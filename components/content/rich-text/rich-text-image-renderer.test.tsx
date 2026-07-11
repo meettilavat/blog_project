@@ -140,6 +140,50 @@ describe("components/content/rich-text-image-renderer.tsx", () => {
     expect(html).toContain("tiptap-figure-side-left");
     expect(html).toContain("data-layout=\"side\"");
     expect(html).toContain("data-align=\"left\"");
+    expect(html).toContain("max-width:260px");
+    expect(html).not.toContain("margin-left:auto");
+    expect(html).not.toContain("width:100%");
+  });
+
+  it("caps centered figures at their intrinsic source width", () => {
+    resolveImageRenderPropsMock.mockReturnValue({
+      src: ALLOWED_IMAGE_URL,
+      alt: "Monitoring dashboard",
+      caption: "Production monitoring dashboard",
+      width: 860,
+      height: 640,
+      unoptimized: false,
+      layout: "center",
+      align: "right"
+    });
+
+    const html = renderToStaticMarkup(
+      <>{renderImageNode({ type: "image", attrs: { src: ALLOWED_IMAGE_URL } }, "image-natural", IMAGE_HOST_POLICY)}</>
+    );
+
+    expect(html).toContain('data-source-width="860"');
+    expect(html).toContain("max-width:860px");
+  });
+
+  it("exposes wide-figure intrinsic width to the shared breakout rules", () => {
+    resolveImageRenderPropsMock.mockReturnValue({
+      src: ALLOWED_IMAGE_URL,
+      alt: "Wide architecture diagram",
+      caption: "System architecture",
+      width: 1440,
+      height: 900,
+      unoptimized: false,
+      layout: "wide",
+      align: "right"
+    });
+
+    const html = renderToStaticMarkup(
+      <>{renderImageNode({ type: "image", attrs: { src: ALLOWED_IMAGE_URL } }, "image-wide", IMAGE_HOST_POLICY)}</>
+    );
+
+    expect(html).toContain("tiptap-figure-wide");
+    expect(html).toContain("--figure-natural-width:1060px");
+    expect(html).not.toContain("max-width:1060px");
   });
 
   it("skips rendering disallowed image sources", () => {

@@ -21,10 +21,11 @@ describe("components/posts/post-card.tsx", () => {
       <PostCard post={post} href="/posts/hello-post" variant="public" />
     );
 
-    expect(html).toContain("Read article");
+    expect(html).toContain("Read field note");
     expect(html).toContain("/posts/hello-post");
     expect(html).toContain("Cover pending");
-    expect(html).toContain("text-foreground/60");
+    expect(html).toContain("text-foreground/70");
+    expect(html).not.toContain("text-foreground/55");
     expect(html).not.toContain("text-foreground/45");
   });
 
@@ -34,11 +35,21 @@ describe("components/posts/post-card.tsx", () => {
         post={{ ...post, coverImageUrl: "/cover.png" }}
         href="/posts/hello-post"
         variant="public"
+        presentation="featured"
         priority
       />
     );
 
     expect(html).toContain('<link rel="preload" as="image" href="/cover.png"');
+    expect(html).toContain('data-post-presentation="featured"');
+    expect(html).toContain("aspect-[16/10]");
+    expect(html).toContain("spread:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)]");
+    expect(html).toContain("spread:items-start");
+    expect(html).toContain("spread:self-center");
+    expect(html).not.toContain("project:items-stretch");
+    expect(html).toContain("object-center");
+    expect(html).not.toContain("object-top");
+    expect(html).toContain("(max-width: 1279px) calc(100vw - 2.5rem)");
   });
 
   it("renders admin card call-to-action", () => {
