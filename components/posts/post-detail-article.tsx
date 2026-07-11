@@ -26,11 +26,11 @@ type PostDetailArticleProps = {
   draftBanner?: React.ReactNode;
 };
 
-const READING_WIDTH_CLASS = "mx-auto w-full max-w-[72ch]";
+const READING_WIDTH_CLASS = "mx-auto w-full max-w-[82ch]";
 const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[48rem]";
 const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[68rem]";
 const ARTICLE_SHELL_CLASS =
-  "mx-auto w-full max-w-[72ch] 2xl:relative 2xl:left-1/2 2xl:grid 2xl:w-[calc(100vw-2.5rem)] 2xl:max-w-[calc(100vw-2.5rem)] 2xl:-translate-x-1/2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_minmax(0,1fr)]";
+  "mx-auto w-full max-w-[82ch] 2xl:relative 2xl:left-1/2 2xl:grid 2xl:w-[calc(100vw-2.5rem)] 2xl:max-w-[calc(100vw-2.5rem)] 2xl:-translate-x-1/2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,82ch)_minmax(0,1fr)]";
 
 export function PostDetailArticle({
   title,
@@ -53,7 +53,7 @@ export function PostDetailArticle({
       {draftBanner ? <div className={cn("mb-6", READING_WIDTH_CLASS)}>{draftBanner}</div> : null}
       <article className="space-y-10 lg:space-y-12">
         <FadeIn y={12} duration={0.4}>
-          <div className={READING_WIDTH_CLASS}>
+          <div className={HEADER_WIDTH_CLASS}>
             <Link
               href="/"
               className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/75 transition-[transform,border-color,background-color,color] duration-200 hover:-translate-y-px hover:border-foreground/50 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
@@ -129,7 +129,7 @@ export function PostDetailArticle({
               offsetTop={112}
               trackActive
               variant="rail"
-              className="hidden 2xl:sticky 2xl:col-start-3 2xl:ml-9 2xl:block 2xl:w-52"
+              className="hidden 2xl:sticky 2xl:col-start-3 2xl:ml-[calc(566px-41ch)] 2xl:block 2xl:w-52"
             />
           ) : null}
         </div>

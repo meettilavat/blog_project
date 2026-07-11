@@ -225,7 +225,19 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         isSanitized: true
       })
     );
-    expect(html).toContain("max-w-[72ch]");
+    expect(html).not.toContain("max-w-[72ch]");
+    expect(html).toContain("max-w-[82ch]");
+    expect(html).toContain(
+      "grid-cols-[minmax(0,1fr)_minmax(0,82ch)_minmax(0,1fr)]"
+    );
+    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(2);
+    expect(tableOfContentsRenderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: "rail",
+        className:
+          "hidden 2xl:sticky 2xl:col-start-3 2xl:ml-[calc(566px-41ch)] 2xl:block 2xl:w-52"
+      })
+    );
     expect(html).toContain("max-w-[48rem]");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"BlogPosting\"");
