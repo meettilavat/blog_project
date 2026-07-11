@@ -30,8 +30,5 @@ pnpm-debug.log*
 coverage/
 dist/
 
-# Local Codex review artifacts
-.codex-audit/
-
 # Internal ops notes (keep private)
 OPERATIONS.md
