@@ -391,19 +391,9 @@ html[data-app="public"].dark .tiptap pre {
   margin-left: auto;
 }
 
-@media (min-width: 1200px) and (max-width: 1599px) {
+@media (min-width: 1200px) {
   html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
-    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 6rem));
-    width: var(--figure-width);
-    max-width: var(--figure-width);
-    margin-left: 50%;
-    transform: translateX(-50%);
-  }
-}
-
-@media (min-width: 1600px) {
-  html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
-    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 6rem));
+    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 39rem));
     width: var(--figure-width);
     max-width: var(--figure-width);
     margin-right: 0;

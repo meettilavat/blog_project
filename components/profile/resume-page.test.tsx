@@ -69,6 +69,13 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain('data-resume-skill-group="true"');
     expect(html).toContain('href="/posts/building-tree-census-django-nextjs-gcp"');
     expect(html).toContain("Read case study");
+    expect(html).toContain("space-y-[clamp(4rem,5vw,5.5rem)]");
+    expect(html).not.toContain("space-y-[clamp(4.5rem,9vw,8rem)]");
+    expect(html).not.toContain("mt-8 border-b border-border/70");
+    expect(html).not.toContain("mt-8 border-b border-border/75");
+    expect(html).not.toContain("border-t border-border/70 py-5");
+    expect(html).not.toContain("border-t border-border/75 py-7");
+    expect(html).not.toContain("border-t border-border/75 py-5");
     expect(html).not.toContain("rounded-[2rem]");
     expect(html).not.toContain("rounded-full");
     expect(html).not.toContain("radial-gradient");

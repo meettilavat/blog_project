@@ -126,7 +126,7 @@ const skills = {
 
 export default function ResumePage() {
   return (
-    <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4.5rem,9vw,8rem)]">
+    <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4rem,5vw,5.5rem)]">
       <RevealSection delay={0.02}>
         <ResumeHeroSection />
       </RevealSection>
@@ -148,7 +148,7 @@ export default function ResumePage() {
 
 function ResumeHeroSection() {
   return (
-    <header className="border-b border-border/80 pb-[clamp(3.5rem,7vw,7rem)]">
+    <header className="border-b border-border/80 pb-[clamp(3rem,5vw,4.5rem)]">
       <div className="grid gap-10 document:grid-cols-[minmax(0,1fr)_minmax(18rem,0.36fr)] document:items-end document:gap-[clamp(3rem,6vw,7rem)]">
         <div className="space-y-6">
           <p className="journal-label">Curriculum vitae / field record</p>
@@ -235,11 +235,11 @@ function ResumeExperienceEducationSection() {
 
       <div>
         <SectionHeading index="02" title="Education" subtitle="Core academics with strong engineering outcomes." id="resume-education" />
-        <div className="mt-8 border-b border-border/70">
+        <div className="mt-6">
           {education.map((edu) => (
             <article
               key={edu.school}
-              className="grid gap-2 border-t border-border/70 py-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5"
+              className="grid gap-2 border-b border-border/70 py-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5"
             >
               <p className="journal-label tabular-nums">{edu.period}</p>
               <div>
@@ -264,12 +264,12 @@ function ResumeProjectsSection() {
         subtitle="Production work and applied ML builds across web, infra, and experimentation."
         id="resume-projects"
       />
-      <div className="mt-8 border-b border-border/75">
+      <div className="mt-6">
         {projects.map((project, index) => (
           <article
             key={project.name}
             data-resume-project="true"
-            className="grid gap-5 border-t border-border/75 py-7 project:grid-cols-[3.25rem_minmax(0,1fr)_auto] project:gap-7"
+            className="grid gap-5 border-b border-border/75 py-7 project:grid-cols-[3.25rem_minmax(0,1fr)_auto] project:gap-7"
           >
             <p className="font-mono text-[11px] tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</p>
             <div className="min-w-0 space-y-4">
@@ -301,7 +301,7 @@ function ResumeSkillsSection() {
   return (
     <section role="region" aria-labelledby="resume-skills">
       <SectionHeading index="04" title="Skills" subtitle="Current stack and tools used in day-to-day delivery." id="resume-skills" />
-      <dl className="mt-8 grid border-b border-border/75 ledger:grid-cols-2">
+      <dl className="mt-6 grid ledger:grid-cols-2">
         <SkillGroup title="Languages & Frameworks" items={[...skills.languages, ...skills.frameworks]} />
         <SkillGroup title="DevOps & Cloud" items={skills.devops} />
         <SkillGroup title="Tools" items={skills.tools} />
@@ -410,7 +410,7 @@ function SkillGroup({
   items: string[];
 }) {
   return (
-    <div data-resume-skill-group="true" className="border-t border-border/75 py-5 ledger:odd:pr-8 ledger:even:border-l ledger:even:pl-8">
+    <div data-resume-skill-group="true" className="border-b border-border/75 py-5 ledger:odd:pr-8 ledger:even:border-l ledger:even:pl-8">
       <dt className="journal-label">{title}</dt>
       <dd className="mt-3">
         <ul className="flex flex-wrap text-sm leading-7 text-foreground/82">
