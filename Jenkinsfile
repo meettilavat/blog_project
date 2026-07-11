@@ -34,6 +34,12 @@ pipeline {
       }
     }
 
+    stage('Typecheck Public App') {
+      steps {
+        sh "npm run typecheck:public"
+      }
+    }
+
     stage("Contract Governance") {
       steps {
         sh "npm run test:governance"

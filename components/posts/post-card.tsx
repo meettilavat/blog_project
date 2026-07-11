@@ -7,6 +7,7 @@ type PostCardProps = {
   post: PostListItem;
   href: string;
   variant: "public" | "admin";
+  priority?: boolean;
 };
 
 const CLASSES = {
@@ -14,7 +15,7 @@ const CLASSES = {
     card:
       "group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/95 shadow-[0_8px_30px_-12px_rgba(36,30,24,0.25)] transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1.5 hover:border-accent/30 hover:bg-card hover:shadow-[0_20px_50px_-16px_rgba(36,30,24,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none",
     image:
-      "h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none",
+      "h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transform-none motion-reduce:transition-none",
     content: "flex min-w-0 flex-1 flex-col justify-between gap-4 p-5",
     body: "min-w-0 space-y-2.5",
     meta:
@@ -35,7 +36,7 @@ const CLASSES = {
   }
 } as const;
 
-export function PostCard({ post, href, variant }: PostCardProps) {
+export function PostCard({ post, href, variant, priority = false }: PostCardProps) {
   const classes = CLASSES[variant];
   const isPublic = variant === "public";
 
@@ -48,6 +49,8 @@ export function PostCard({ post, href, variant }: PostCardProps) {
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           className={classes.image}
+          priority={priority}
+          fetchPriority={priority ? "high" : undefined}
           emptyLabel="Cover pending"
         />
       </div>
@@ -69,7 +72,7 @@ export function PostCard({ post, href, variant }: PostCardProps) {
         {/* ── CTA footer ── */}
         {isPublic ? (
           <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-foreground/45">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-foreground/60">
               Read article
             </span>
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-accent transition-[background-color,transform] duration-200 group-hover:bg-accent/20 group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none">

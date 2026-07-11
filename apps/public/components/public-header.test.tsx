@@ -58,6 +58,8 @@ describe("apps/public/components/public-header.tsx", () => {
     expect(html).toContain(GITHUB_PROFILE_URL);
     expect(html).toContain(LINKEDIN_PROFILE_URL);
     expect(html).toContain("aria-current=\"page\" href=\"/\">Read");
+    expect(html).toContain("h-11 w-11");
+    expect(html).toContain("min-h-11");
   });
 
   it("marks resume as active when pathname is /resume", () => {

@@ -11,8 +11,8 @@ const { SITE_URL } = vi.hoisted(() => ({
 }));
 
 const getPublishedPostsMock = vi.fn();
-const postCardRenderMock = vi.fn((props: { href: string; post: { slug: string } }) => (
-  <article>{`PostCardStub:${props.post.slug}:${props.href}`}</article>
+const postCardRenderMock = vi.fn((props: { href: string; post: { slug: string }; priority?: boolean }) => (
+  <article>{`PostCardStub:${props.post.slug}:${props.href}:${String(props.priority)}`}</article>
 ));
 
 vi.mock("@/lib/posts/repository/public-posts-repository", () => ({
@@ -24,7 +24,7 @@ vi.mock("@/lib/site-url", () => ({
 }));
 
 vi.mock("@/components/posts/post-card", () => ({
-  PostCard: (props: { href: string; post: { slug: string } }) => postCardRenderMock(props)
+  PostCard: (props: { href: string; post: { slug: string }; priority?: boolean }) => postCardRenderMock(props)
 }));
 
 vi.mock("@/components/motion/fade-in", () => ({
@@ -32,7 +32,7 @@ vi.mock("@/components/motion/fade-in", () => ({
 }));
 
 vi.mock("@/components/motion/staggered-list", () => ({
-  StaggeredList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  StaggeredList: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
   StaggeredItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
@@ -61,6 +61,8 @@ describe("apps/public/app/page.tsx", () => {
     const html = renderToStaticMarkup(await HomePage());
 
     expect(html).toContain("Notes on building software");
+    expect(html).toContain("Meet Tilavat");
+    expect(html).toContain('href="/resume"');
     expect(html).toContain("No posts yet. Fresh writing is on the way.");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"WebSite\"");
@@ -80,8 +82,26 @@ describe("apps/public/app/page.tsx", () => {
     const html = renderToStaticMarkup(await HomePage());
 
     expect(postCardRenderMock).toHaveBeenCalledTimes(2);
-    expect(html).toContain("PostCardStub:first-post:/posts/first-post");
-    expect(html).toContain("PostCardStub:second-post:/posts/second-post");
+    expect(html).toContain("lg:grid-cols-2");
+    expect(html).toContain("PostCardStub:first-post:/posts/first-post:true");
+    expect(html).toContain("PostCardStub:second-post:/posts/second-post:false");
+    expect(postCardRenderMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ priority: true })
+    );
+    expect(html).not.toContain("No posts yet. Fresh writing is on the way.");
+  });
+
+  it("renders a distinct availability error when posts cannot be loaded", async () => {
+    getPublishedPostsMock.mockResolvedValue({
+      ok: false,
+      error: { message: "database unavailable" }
+    });
+
+    const html = renderToStaticMarkup(await HomePage());
+
+    expect(html).toContain("Writing is temporarily unavailable");
+    expect(html).toContain("Please try again shortly");
     expect(html).not.toContain("No posts yet. Fresh writing is on the way.");
   });
 });

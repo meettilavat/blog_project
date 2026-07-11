@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import preset from "./preset";
+import preset from "./preset.mjs";
 
-describe("config/tailwind/preset.ts", () => {
+describe("config/tailwind/preset.mjs", () => {
   it("defines required semantic color tokens", () => {
     const colors = preset.theme?.extend?.colors as Record<string, string>;
 

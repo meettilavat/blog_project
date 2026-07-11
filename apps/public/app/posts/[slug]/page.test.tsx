@@ -19,7 +19,7 @@ const postCoverMediaRenderMock = vi.fn((props: { src?: string; alt: string }) =>
 const postMetaRowRenderMock = vi.fn((props: { createdAt: string; updatedAt: string }) => (
   <div>{`PostMetaRowStub:${props.createdAt}:${props.updatedAt}`}</div>
 ));
-const richTextViewerRenderMock = vi.fn((props: { content: { type: string }; className?: string }) => (
+const richTextViewerRenderMock = vi.fn((props: { content: { type: string }; className?: string; isSanitized?: boolean }) => (
   <div>{`RichTextViewerStub:${props.content.type}`}</div>
 ));
 const tableOfContentsRenderMock = vi.fn((props: { headings: unknown[] }) => (
@@ -40,7 +40,7 @@ vi.mock("@/lib/site-url", () => ({
 }));
 
 vi.mock("@/components/content/rich-text/rich-text-viewer", () => ({
-  default: (props: { content: { type: string }; className?: string }) => richTextViewerRenderMock(props)
+  default: (props: { content: { type: string }; className?: string; isSanitized?: boolean }) => richTextViewerRenderMock(props)
 }));
 
 vi.mock("@/components/content/chrome/table-of-contents", () => ({
@@ -129,7 +129,7 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(metadata.description).toContain("Generated plain text summary");
     expect(metadata.alternates?.canonical).toBe("/posts/my-post");
     expect(metadata.openGraph?.url).toBe(`${SITE_URL}/posts/my-post`);
-    expect(metadata.twitter?.card).toBe("summary_large_image");
+    expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
   });
 
   it("falls back to the default post description when excerpt and plain text are empty", async () => {
@@ -218,9 +218,15 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(html).toContain("PostMetaRowStub:2024-01-01T00:00:00.000Z:2024-01-02T00:00:00.000Z");
     expect(html).toContain("RichTextViewerStub:doc");
     expect(html).toContain("TableOfContentsStub:1");
+    expect(html.indexOf("<h1")).toBeLessThan(html.indexOf("PostCoverMediaStub"));
     expect(richTextViewerRenderMock).toHaveBeenCalledWith(
-      expect.objectContaining({ className: "tiptap-editorial mx-0 max-w-none" })
+      expect.objectContaining({
+        className: "tiptap-editorial mx-0 max-w-none",
+        isSanitized: true
+      })
     );
+    expect(html).toContain("max-w-[72ch]");
+    expect(html).toContain("max-w-[48rem]");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"BlogPosting\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}/posts/published-post\"`);

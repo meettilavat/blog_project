@@ -29,7 +29,7 @@ html[data-app="public"] {
   --foreground: #241e18;
   --border: #d8c7ad;
   --muted: #ede4d6;
-  --accent: #b85c38;
+  --accent: #a54d2f;
   --card: #fffaf2;
   color-scheme: light;
 }
@@ -137,8 +137,8 @@ a {
 }
 
 html[data-app="public"] .grid-ruled {
-  background-image: linear-gradient(rgb(36 30 24 / 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(36 30 24 / 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(36 30 24 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(36 30 24 / 0.035) 1px, transparent 1px);
 }
 
 .dark .grid-ruled {
@@ -147,8 +147,8 @@ html[data-app="public"] .grid-ruled {
 }
 
 html[data-app="public"].dark .grid-ruled {
-  background-image: linear-gradient(rgb(244 234 216 / 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(244 234 216 / 0.03) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(244 234 216 / 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 234 216 / 0.025) 1px, transparent 1px);
 }
 
 @media (prefers-reduced-motion: reduce) {

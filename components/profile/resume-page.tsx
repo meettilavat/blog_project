@@ -1,7 +1,8 @@
 import { cn } from "@/lib/ui/classnames";
 import { getPublicLinks } from "@/lib/public-links";
-import { ArrowUpRight, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowUpRight, Download, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { RevealSection } from "@/components/profile/reveal-section";
+import { PrintResumeButton } from "@/components/profile/print-resume-button";
 
 type Experience = {
   role: string;
@@ -171,13 +172,22 @@ function ResumeHeroSection() {
           </div>
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <a
-              className="inline-flex items-center rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              className="print:hidden inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-background transition-[transform,background-color] duration-200 hover:-translate-y-[1px] hover:bg-foreground/82 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              href="/resume/meet-tilavat-resume.pdf"
+              download="Meet_Tilavat_Resume.pdf"
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              Download PDF
+            </a>
+            <PrintResumeButton />
+            <a
+              className="inline-flex min-h-11 items-center rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
               href="mailto:tilavatmeet2@gmail.com"
             >
               Email Me
             </a>
             <a
-              className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
+              className="inline-flex min-h-11 items-center gap-1 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 transition-[transform,border-color,color] duration-200 hover:-translate-y-[1px] hover:border-foreground/40 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transform-none motion-reduce:transition-none"
               href={publicLinks.githubProfile}
               target="_blank"
               rel="noreferrer"

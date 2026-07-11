@@ -26,9 +26,11 @@ type PostDetailArticleProps = {
   draftBanner?: React.ReactNode;
 };
 
-const READING_WIDTH_CLASS = "mx-auto w-full max-w-[62rem]";
+const READING_WIDTH_CLASS = "mx-auto w-full max-w-[72ch]";
+const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[48rem]";
+const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[68rem]";
 const ARTICLE_SHELL_CLASS =
-  "mx-auto w-full max-w-[62rem] 2xl:relative 2xl:left-1/2 2xl:grid 2xl:w-[calc(100vw-2.5rem)] 2xl:max-w-[calc(100vw-2.5rem)] 2xl:-translate-x-1/2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,62rem)_minmax(0,1fr)]";
+  "mx-auto w-full max-w-[72ch] 2xl:relative 2xl:left-1/2 2xl:grid 2xl:w-[calc(100vw-2.5rem)] 2xl:max-w-[calc(100vw-2.5rem)] 2xl:-translate-x-1/2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_minmax(0,1fr)]";
 
 export function PostDetailArticle({
   title,
@@ -63,8 +65,34 @@ export function PostDetailArticle({
         </FadeIn>
 
         <FadeIn y={20} duration={0.55} delay={0.05}>
-          <figure className="relative overflow-hidden rounded-[32px] border border-border/80 bg-muted shadow-[0_28px_60px_-30px_rgb(36_30_24_/_0.16)] dark:shadow-[0_28px_60px_-30px_rgb(0_0_0_/_0.5)]">
-            <div className="relative aspect-[16/9] w-full">
+          <header className={cn("space-y-6", HEADER_WIDTH_CLASS)}>
+            <div className="space-y-5">
+              <PostMetaRow
+                createdAt={createdAt}
+                updatedAt={updatedAt}
+                publishedPrefix={publishedPrefix}
+                readStats={reading}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.24em] text-foreground/55 [font-variant-numeric:tabular-nums]"
+              />
+              <h1 className="max-w-[31ch] scroll-mt-28 font-serif text-[2.55rem] leading-[1.04] tracking-[-0.018em] text-foreground sm:text-[3.4rem] lg:text-[4rem]">
+                {title}
+              </h1>
+              {excerpt ? (
+                <p className="max-w-[68ch] text-lg leading-relaxed text-foreground/72 sm:text-xl">
+                  {excerpt}
+                </p>
+              ) : null}
+            </div>
+            <hr className="border-border/50" />
+          </header>
+        </FadeIn>
+
+        <FadeIn y={20} duration={0.55} delay={0.1}>
+          <figure className={cn(
+            "relative overflow-hidden rounded-[32px] border border-border/80 bg-muted shadow-[0_28px_60px_-30px_rgb(36_30_24_/_0.16)] dark:shadow-[0_28px_60px_-30px_rgb(0_0_0_/_0.5)]",
+            COVER_WIDTH_CLASS
+          )}>
+            <div className="relative aspect-[16/9] w-full max-h-[68vh]">
               <PostCoverMedia
                 src={coverImageUrl}
                 alt={title}
@@ -79,29 +107,6 @@ export function PostDetailArticle({
           </figure>
         </FadeIn>
 
-        <FadeIn y={20} duration={0.55} delay={0.1}>
-          <header className={cn("space-y-6", READING_WIDTH_CLASS)}>
-            <div className="space-y-5">
-              <PostMetaRow
-                createdAt={createdAt}
-                updatedAt={updatedAt}
-                publishedPrefix={publishedPrefix}
-                readStats={reading}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.24em] text-foreground/55 [font-variant-numeric:tabular-nums]"
-              />
-              <h1 className="max-w-[31ch] scroll-mt-28 font-serif text-[2.55rem] leading-[1.04] tracking-[-0.018em] text-foreground sm:text-[3.4rem] lg:text-[4rem]">
-                {title}
-              </h1>
-              {excerpt ? (
-                <p className="max-w-[62rem] text-lg leading-relaxed text-foreground/72 sm:text-xl">
-                  {excerpt}
-                </p>
-              ) : null}
-            </div>
-            <hr className="border-border/50" />
-          </header>
-        </FadeIn>
-
         <div className={ARTICLE_SHELL_CLASS}>
           <div className="min-w-0 w-full 2xl:col-start-2">
             {hasHeadings ? (
@@ -114,6 +119,7 @@ export function PostDetailArticle({
             ) : null}
             <RichTextViewer
               content={content}
+              isSanitized
               className="tiptap-editorial mx-0 max-w-none"
             />
           </div>

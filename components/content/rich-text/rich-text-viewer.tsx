@@ -12,6 +12,7 @@ import {
 type Props = {
   content: PostContent;
   className?: string;
+  isSanitized?: boolean;
 };
 
 const EMPTY_DOC: SanitizedTiptapNode = {
@@ -19,9 +20,13 @@ const EMPTY_DOC: SanitizedTiptapNode = {
   content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }]
 } as SanitizedTiptapNode;
 
-export function RichTextViewer({ content, className }: Props) {
-  const contentPipeline = analyzeContent(toRichContentValue(content) ?? EMPTY_DOC);
-  const safeContent = contentPipeline.content;
+export function RichTextViewer({ content, className, isSanitized = false }: Props) {
+  const contentValue = toRichContentValue(content);
+  const safeContent = isSanitized
+    ? isRenderableNode(contentValue)
+      ? contentValue
+      : null
+    : analyzeContent(contentValue ?? EMPTY_DOC).content;
   const imageHostPolicy = getRuntimeImageHostPolicy();
 
   const renderNodes = (nodes: SanitizedTiptapNode[] | undefined, keyPrefix: string) => {

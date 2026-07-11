@@ -24,7 +24,9 @@ vi.mock("lucide-react", () => ({
   Linkedin: ({ className }: { className?: string }) => <svg className={className} data-icon="linkedin" />,
   Mail: ({ className }: { className?: string }) => <svg className={className} data-icon="mail" />,
   MapPin: ({ className }: { className?: string }) => <svg className={className} data-icon="map-pin" />,
-  Phone: ({ className }: { className?: string }) => <svg className={className} data-icon="phone" />
+  Phone: ({ className }: { className?: string }) => <svg className={className} data-icon="phone" />,
+  Download: ({ className }: { className?: string }) => <svg className={className} data-icon="download" />,
+  Printer: ({ className }: { className?: string }) => <svg className={className} data-icon="printer" />
 }));
 
 vi.mock("@/components/profile/reveal-section", () => ({
@@ -58,5 +60,9 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain("github.com/meettilavat");
     expect(html).toContain("tilavatmeet2@gmail.com");
     expect(html).toContain(SOURCE_REPOSITORY_URL);
+    expect(html).toContain('href="/resume/meet-tilavat-resume.pdf"');
+    expect(html).toContain('download="Meet_Tilavat_Resume.pdf"');
+    expect(html).toContain("Download PDF");
+    expect(html).toContain("Print resume");
   });
 });

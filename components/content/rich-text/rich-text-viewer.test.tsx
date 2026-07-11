@@ -69,4 +69,19 @@ describe("components/content/rich-text-viewer.tsx", () => {
     expect(html).toContain("custom-viewer-class");
     expect(html).not.toContain("mx-auto max-w-[80ch]");
   });
+
+  it("renders already-sanitized content without running the pipeline again", () => {
+    const html = renderToStaticMarkup(
+      <RichTextViewer
+        content={{
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Sanitized" }] }]
+        }}
+        isSanitized
+      />
+    );
+
+    expect(html).toContain("Sanitized");
+    expect(analyzeContentMock).not.toHaveBeenCalled();
+  });
 });

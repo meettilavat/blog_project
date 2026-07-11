@@ -68,7 +68,7 @@ describe("apps/public/app/layout.tsx", () => {
         height: 630
       }
     ]);
-    expect(metadata.twitter?.card).toBe("summary_large_image");
+    expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
     expect(metadata.twitter?.images).toEqual([DEFAULT_SOCIAL_IMAGE_PATH]);
   });
 

@@ -5,7 +5,7 @@
     "components/ui/label.tsx",
     "components/ui/textarea.tsx",
     "lib/ui/classnames.ts",
-    "config/tailwind/preset.ts"
+    "config/tailwind/preset.mjs"
   ],
   "contractRules": [
     {
@@ -16,7 +16,7 @@
         "components/ui/label.tsx",
         "components/ui/textarea.tsx",
         "lib/ui/classnames.ts",
-        "config/tailwind/preset.ts"
+        "config/tailwind/preset.mjs"
       ],
       "required": [
         "components/ui/__tests__/button.test.tsx",

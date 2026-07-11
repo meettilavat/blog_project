@@ -7,6 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const allowedSupabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : undefined;
+const allowedSupabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : undefined;
 
 const securityHeaders = [
   {
@@ -31,10 +34,10 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "object-src 'none'",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data: https:",
-      "style-src 'self' 'unsafe-inline' https:",
-      "script-src 'self' 'unsafe-inline' https:",
-      "connect-src 'self' https:",
+      "font-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline'",
+      `connect-src 'self'${allowedSupabaseOrigin ? ` ${allowedSupabaseOrigin}` : ""}`,
       "upgrade-insecure-requests"
     ].join("; ")
   }
@@ -42,6 +45,7 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: process.env.NODE_ENV === "production",
+  poweredByHeader: false,
   turbopack: {
     root: __dirname
   },

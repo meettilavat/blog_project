@@ -24,6 +24,21 @@ describe("components/posts/post-card.tsx", () => {
     expect(html).toContain("Read article");
     expect(html).toContain("/posts/hello-post");
     expect(html).toContain("Cover pending");
+    expect(html).toContain("text-foreground/60");
+    expect(html).not.toContain("text-foreground/45");
+  });
+
+  it("prioritizes the cover image when requested", () => {
+    const html = renderToStaticMarkup(
+      <PostCard
+        post={{ ...post, coverImageUrl: "/cover.png" }}
+        href="/posts/hello-post"
+        variant="public"
+        priority
+      />
+    );
+
+    expect(html).toContain('<link rel="preload" as="image" href="/cover.png"');
   });
 
   it("renders admin card call-to-action", () => {

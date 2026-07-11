@@ -23,5 +23,8 @@ describe("apps/public/components/public-footer.tsx", () => {
     expect(html).toContain(">Source<");
     expect(html).toContain(SOURCE_REPOSITORY);
     expect(html).toContain("Built with Next.js &amp; Tailwind");
+    expect(html).toContain("text-foreground/60");
+    expect(html).toContain("text-foreground/55");
+    expect(html).not.toContain("text-foreground/35");
   });
 });

@@ -48,7 +48,7 @@ const HEADER_SURFACE_CLASS =
 const navLinkClass = (isActive: boolean, isMobile = false) =>
   cn(
     "relative px-3 py-1.5 text-foreground/70 transition-[color] duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none",
-    isMobile && "block rounded-xl px-3 py-2.5 text-[11px]",
+    isMobile && "flex min-h-11 items-center rounded-xl px-3 py-2.5 text-[11px]",
     isActive && "text-foreground font-semibold"
   );
 
@@ -86,12 +86,12 @@ function SocialLinks() {
           target="_blank"
           rel="noreferrer"
           aria-label={label}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground/60 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:h-9 sm:w-9 motion-reduce:transition-none"
         >
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </a>
       ))}
-      <ThemeToggle className="h-8 w-8 border-0 bg-transparent text-foreground/50 hover:bg-foreground/8 hover:text-foreground" />
+      <ThemeToggle className="h-11 w-11 border-0 bg-transparent text-foreground/60 hover:bg-foreground/8 hover:text-foreground sm:h-9 sm:w-9" />
     </div>
   );
 }
@@ -195,7 +195,7 @@ export default function PublicHeader() {
             <SocialLinks />
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card text-foreground transition-[background-color,color,border-color] duration-200 hover:border-foreground/40 hover:bg-foreground/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:hidden motion-reduce:transition-none"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card text-foreground transition-[background-color,color,border-color] duration-200 hover:border-foreground/40 hover:bg-foreground/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:hidden motion-reduce:transition-none"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-controls={menuId}
               aria-expanded={isMenuOpen}

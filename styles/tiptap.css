@@ -347,6 +347,15 @@ html[data-app="public"] .tiptap figure img:hover {
   max-width: min(100%, 1060px);
 }
 
+@media (min-width: 1024px) {
+  html[data-app="public"] .tiptap-editorial .tiptap-figure-wide {
+    width: min(1060px, calc(100vw - 2.5rem));
+    max-width: none;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 @media (max-width: 768px) {
   .tiptap .tiptap-figure-side,
   .tiptap .tiptap-figure-side-left,
