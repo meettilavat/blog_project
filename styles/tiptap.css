@@ -314,10 +314,6 @@ html[data-app="public"].dark .tiptap pre {
   text-align: left;
 }
 
-.tiptap figcaption::before {
-  content: "";
-}
-
 .tiptap-table-scroll,
 .tiptap .tableWrapper {
   width: 100%;

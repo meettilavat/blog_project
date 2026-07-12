@@ -31,8 +31,7 @@ describe("plate figure treatment", () => {
     expect(css).toMatch(/\.tiptap-figure::before[^}]*counter\(journal-figure\)/);
   });
   it("no longer prefixes the caption with the counter", () => {
-    const caption = css.slice(css.indexOf(".tiptap figcaption::before"), css.indexOf(".tiptap figcaption::before") + 200);
-    expect(caption).not.toContain("counter(journal-figure)");
+    expect(css).not.toMatch(/figcaption::before[^}]*counter\(journal-figure\)/);
   });
   it("defines corner registration ticks", () => {
     expect(css).toContain(".tiptap-figure-tick");
