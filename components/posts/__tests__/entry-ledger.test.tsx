@@ -13,11 +13,14 @@ describe("EntryLedger", () => {
         { id: "2", title: "Victorian LLM", slug: "victorian-llm", createdAt: "2025-12-12T00:00:00Z", ...base }
       ]} />
     );
+    expect(html).toContain("Tree Census");
     expect(html).toContain("Victorian LLM");
     expect(html).toContain("Case study");
     expect(html).toContain("Field note");
     expect(html).toContain(`href="/posts/${FEATURED_POST_SLUG}"`);
     expect(html).toContain("01");
     expect(html).toContain("02");
+    expect(html).toMatch(/Tree Census[\s\S]*?Entry 02/);
+    expect(html).toMatch(/Victorian LLM[\s\S]*?Entry 01/);
   });
 });
