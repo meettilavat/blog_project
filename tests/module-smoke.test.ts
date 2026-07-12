@@ -109,7 +109,6 @@ const MODULES = [
   "@/apps/admin/components/shell/header",
   "@/components/motion/fade-in",
   "@/components/profile/reveal-section",
-  "@/components/motion/staggered-list",
   "@/components/posts/post-card",
   "@/components/posts/post-cover-media",
   "@/components/posts/post-meta-row",
