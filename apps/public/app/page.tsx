@@ -67,6 +67,7 @@ export default async function HomePage() {
             title={<>Notes on building software &amp; systems.</>}
             dek="Writing about web engineering, infrastructure, and the occasional experiment."
             note="Production notes, operating lessons, and small experiments recorded close to the work."
+            resumeHref="/resume"
           />
         </FadeIn>
 
