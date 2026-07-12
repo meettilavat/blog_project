@@ -15,6 +15,7 @@ vi.mock("next/font/google", () => {
     Literata: makeFont,
     IBM_Plex_Mono: makeFont,
     Source_Sans_3: makeFont,
+    Newsreader: makeFont,
     Fraunces: makeFont
   };
 });

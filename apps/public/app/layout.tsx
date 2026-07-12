@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import "../../../styles/globals.css";
-import { Source_Sans_3, Fraunces, IBM_Plex_Mono } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { cn } from "@/lib/ui/classnames";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
 import {
@@ -32,10 +32,11 @@ const DARK_THEME_COLOR = "#15120f";
 const configuredSiteUrl = getConfiguredSiteUrl();
 const metadataBase = configuredSiteUrl ? new URL(configuredSiteUrl) : undefined;
 
-const sourceSans = Source_Sans_3({
+const newsreader = Newsreader({
   subsets: ["latin"],
+  style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-grotesk"
+  variable: "--font-body"
 });
 
 const fraunces = Fraunces({
@@ -106,7 +107,7 @@ export default function RootLayout({
       lang="en"
       data-app="public"
       data-scroll-behavior="smooth"
-      className={cn(sourceSans.variable, fraunces.variable, plexMono.variable)}
+      className={cn(newsreader.variable, fraunces.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <head>

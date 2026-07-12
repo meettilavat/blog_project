@@ -19,3 +19,11 @@ describe("public accent tokens (blueprint ink)", () => {
     expect(publicDark).not.toContain("#e59a72");
   });
 });
+
+describe("public reading font", () => {
+  const css = readFileSync(resolve(process.cwd(), "styles/globals.css"), "utf8");
+  it("sets Newsreader as the public body font", () => {
+    expect(css).toContain('html[data-app="public"] body {');
+    expect(css).toMatch(/html\[data-app="public"\] body \{[^}]*font-family:\s*var\(--font-body\)/);
+  });
+});
