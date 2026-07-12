@@ -198,27 +198,8 @@ html[data-app="public"] .grid-ruled {
   border-color: var(--rule-strong);
 }
 
-.journal-reveal,
-.journal-stagger-item {
+.journal-reveal {
   animation: journal-enter var(--reveal-duration, 0.42s) cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0s) both;
-}
-
-.journal-stagger > .journal-stagger-item {
-  --reveal-duration: 0.42s;
-  --reveal-y: 14px;
-  --reveal-delay: var(--stagger-delay, 0s);
-}
-
-.journal-stagger > .journal-stagger-item:nth-child(2) {
-  --reveal-delay: calc(var(--stagger-delay, 0s) + var(--stagger-step, 0.07s));
-}
-
-.journal-stagger > .journal-stagger-item:nth-child(3) {
-  --reveal-delay: calc(var(--stagger-delay, 0s) + var(--stagger-step, 0.07s) + var(--stagger-step, 0.07s));
-}
-
-.journal-stagger > .journal-stagger-item:nth-child(n + 4) {
-  --reveal-delay: calc(var(--stagger-delay, 0s) + var(--stagger-step, 0.07s) + var(--stagger-step, 0.07s) + var(--stagger-step, 0.07s));
 }
 
 @keyframes journal-enter {
@@ -262,8 +243,7 @@ html[data-app="public"].dark .grid-ruled {
     box-shadow: 0 20px 45px rgb(36 30 24 / 0.14);
   }
 
-  .journal-reveal,
-  .journal-stagger-item {
+  .journal-reveal {
     animation: none;
     opacity: 1;
     transform: none;
