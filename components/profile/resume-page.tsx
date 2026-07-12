@@ -1,5 +1,7 @@
 import { cn } from "@/lib/ui/classnames";
 import { getPublicLinks } from "@/lib/public-links";
+import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
+import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
 import { ArrowUpRight, Download, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { RevealSection } from "@/components/profile/reveal-section";
 
@@ -24,6 +26,7 @@ type Project = {
   href?: string;
   linkLabel?: string;
   external?: boolean;
+  caseStudy?: boolean;
   bullets: string[];
 };
 
@@ -62,8 +65,9 @@ const projects: Project[] = [
   {
     name: "Vriksha Ganana / Tree Census Platform",
     stack: "Kotlin, Jetpack Compose, Django REST, PostGIS, Next.js, Google Cloud, Cloud SQL, GCS",
-    href: "/posts/building-tree-census-django-nextjs-gcp",
+    href: `/posts/${FEATURED_POST_SLUG}`,
     linkLabel: "Read case study",
+    caseStudy: true,
     bullets: [
       "Built an end-to-end municipal tree-census platform for SNMC across an Android field app, Django/PostGIS APIs, and a Next.js operations dashboard.",
       "Implemented map-based field workflows, photo evidence, offline sync, Google Sign-In/JWT auth, and supervisor review flows.",
@@ -166,7 +170,7 @@ function ResumeHeroSection() {
             </div>
             <div>
               <dt className="journal-label">Status</dt>
-              <dd className="mt-1 text-foreground/80">Open to full-time roles</dd>
+              <dd className="mt-1 text-foreground/80">{AVAILABILITY_STATUS}</dd>
             </div>
           </dl>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
@@ -287,6 +291,7 @@ function ResumeProjectsSection() {
                   className="inline-flex min-h-11 items-center gap-1 self-start border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
                 >
                   {project.linkLabel ?? "View project"}
+                  {project.caseStudy ? <span className="text-foreground/55">· Fig. 01</span> : null}
                   <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
             ) : <span aria-hidden="true" />}

@@ -67,7 +67,8 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain('data-resume-timeline="true"');
     expect(html).toContain('data-resume-project="true"');
     expect(html).toContain('data-resume-skill-group="true"');
-    expect(html).toContain('href="/posts/building-tree-census-django-nextjs-gcp"');
+    expect(html).toContain('href="/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp"');
+    expect(html).toContain("Fig. 01");
     expect(html).toContain("Read case study");
     expect(html).toContain("space-y-[clamp(4rem,5vw,5.5rem)]");
     expect(html).not.toContain("space-y-[clamp(4.5rem,9vw,8rem)]");
