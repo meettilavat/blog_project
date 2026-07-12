@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
-import { PostCard } from "@/components/posts/post-card";
-import { StaggeredList, StaggeredItem } from "@/components/motion/staggered-list";
+import { Masthead } from "@/components/layout/masthead";
+import { FigurePlate } from "@/components/posts/figure-plate";
+import { EntryLedger } from "@/components/posts/entry-ledger";
+import PostMetaRow from "@/components/posts/post-meta-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import PublicStatusNotice from "../components/public-status-notice";
 import StructuredDataScript from "@/components/seo/structured-data-script";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
+import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
 import {
   DEFAULT_SOCIAL_IMAGE_ALT,
   DEFAULT_SOCIAL_IMAGE_PATH,
@@ -16,7 +19,6 @@ import {
 } from "@/lib/seo/public-site";
 
 const configuredSiteUrl = getConfiguredSiteUrl();
-const FEATURED_POST_SLUG = "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp";
 
 export const metadata: Metadata = {
   title: HOME_PAGE_TITLE,
@@ -51,42 +53,23 @@ export default async function HomePage() {
   const posts = postsResult.ok ? postsResult.data : [];
   const postsUnavailable = !postsResult.ok;
   const featuredPost = posts.find((post) => post.slug === FEATURED_POST_SLUG) ?? posts[0];
-  const fieldNotes = featuredPost ? posts.filter((post) => post.id !== featuredPost.id) : [];
-  const fieldNotesClass = fieldNotes.length > 1
-    ? "grid gap-x-8 gap-y-2 folio:grid-cols-2"
-    : "grid gap-y-2";
+  const ledgerEntries = posts.length > 1 ? posts : [];
 
   return (
     <>
       {configuredSiteUrl ? (
         <StructuredDataScript data={buildWebSiteStructuredData(configuredSiteUrl)} />
       ) : null}
-      <div className="space-y-[clamp(4rem,6vw,5.5rem)]">
-        <FadeIn className="grid gap-10 pt-2 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-end">
-          <div className="max-w-[62rem] space-y-5">
-            <p className="journal-label">Meet Tilavat · Software Engineer</p>
-            <h1 className="max-w-[14ch] text-balance font-serif text-[clamp(2.75rem,7vw,6.8rem)] leading-[0.94] tracking-[-0.035em] text-foreground">
-              Notes on building software &amp; systems.
-            </h1>
-            <p className="max-w-[52ch] text-[clamp(1.05rem,1.5vw,1.3rem)] leading-relaxed text-foreground/75">
-              Writing about web engineering, infrastructure, and the occasional experiment.
-            </p>
-            <Link
-              href="/resume"
-              className="group inline-flex min-h-11 items-center gap-3 border-b border-accent/65 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
-            >
-              View résumé <span className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none" aria-hidden="true">→</span>
-            </Link>
-          </div>
-          <aside className="border-l border-border/75 pl-5 text-sm leading-relaxed text-foreground/70 lg:mb-1" aria-label="Journal index">
-            <p className="journal-label">Field index / 2026</p>
-            <p className="mt-3 max-w-[30ch]">
-              Production notes, operating lessons, and small experiments recorded close to the work.
-            </p>
-          </aside>
+      <div className="space-y-[clamp(4rem,8vw,7rem)]">
+        <FadeIn>
+          <Masthead
+            eyebrow="Meet Tilavat · Software Engineer"
+            title={<>Notes on building software &amp; systems.</>}
+            dek="Writing about web engineering, infrastructure, and the occasional experiment."
+            note="Production notes, operating lessons, and small experiments recorded close to the work."
+          />
         </FadeIn>
 
-        {/* ── Posts grid ── */}
         {postsUnavailable ? (
           <FadeIn>
             <PublicStatusNotice
@@ -106,55 +89,34 @@ export default async function HomePage() {
             />
           </FadeIn>
         ) : (
-          <div className="space-y-[clamp(4rem,8vw,7rem)]">
+          <>
             {featuredPost ? (
-              <section aria-labelledby="selected-work-heading" className="space-y-6">
-                <div className="flex items-end justify-between gap-5 border-b border-border/75 pb-3">
-                  <div>
-                    <p className="journal-label">01 / Principal case study</p>
-                    <h2 id="selected-work-heading" className="mt-2 font-serif text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[-0.025em]">
-                      Selected work
-                    </h2>
+              <FadeIn>
+                <section aria-labelledby="selected-work-heading" className="space-y-6">
+                  <div className="flex items-end justify-between gap-5 border-b border-border/75 pb-3">
+                    <div>
+                      <p className="journal-label">01 / Principal case study</p>
+                      <h2 id="selected-work-heading" className="mt-2 font-serif text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[-0.025em]">Selected work</h2>
+                    </div>
+                    <span className="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/65 sm:block">Field report</span>
                   </div>
-                  <span className="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/65 sm:block">Field report</span>
-                </div>
-                <PostCard
-                  post={featuredPost}
-                  href={`/posts/${featuredPost.slug}`}
-                  variant="public"
-                  presentation="featured"
-                  priority
-                />
-              </section>
+                  <Link href={`/posts/${featuredPost.slug}`} className="group grid min-w-0 gap-6 spread:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)] spread:items-start spread:gap-[clamp(2rem,4vw,4.5rem)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+                    <FigurePlate figureLabel="Fig. 01" src={featuredPost.coverImageUrl} alt={featuredPost.title} sizes="(max-width: 1279px) calc(100vw - 2.5rem), (max-width: 1599px) 58vw, 840px" priority />
+                    <div className="flex min-w-0 flex-col gap-6 py-1">
+                      <PostMetaRow createdAt={featuredPost.createdAt} updatedAt={featuredPost.updatedAt} className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70 [font-variant-numeric:tabular-nums]" />
+                      <h3 className="max-w-[18ch] text-balance font-serif text-[clamp(2rem,4vw,3.4rem)] font-semibold leading-[1.02] tracking-[-0.025em] text-foreground transition-colors group-hover:text-accent">{featuredPost.title}</h3>
+                      {featuredPost.excerpt ? <p className="max-w-[56ch] text-pretty leading-[1.75] text-foreground/75">{featuredPost.excerpt}</p> : null}
+                      <span className="flex items-center gap-3 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75">Read case study<span className="h-px w-10 bg-accent transition-transform group-hover:scale-x-125" aria-hidden="true" /><span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span></span>
+                    </div>
+                  </Link>
+                </section>
+              </FadeIn>
             ) : null}
 
-            {fieldNotes.length > 0 ? (
-              <section aria-labelledby="field-notes-heading" className="space-y-5">
-                <div className="flex items-end justify-between gap-5 border-b border-border/75 pb-3">
-                  <div>
-                    <p className="journal-label">02 / Writing &amp; experiments</p>
-                    <h2 id="field-notes-heading" className="mt-2 font-serif text-[clamp(1.8rem,3.5vw,2.8rem)] leading-none tracking-[-0.02em]">
-                      Field notes
-                    </h2>
-                  </div>
-                  <span className="font-mono text-[10px] tabular-nums text-foreground/65">{String(fieldNotes.length).padStart(2, "0")}</span>
-                </div>
-                <StaggeredList className={fieldNotesClass} delay={0.15} stagger={0.08}>
-                  {fieldNotes.map((post) => (
-                    <StaggeredItem key={post.id}>
-                      <PostCard
-                        post={post}
-                        href={`/posts/${post.slug}`}
-                        variant="public"
-                        presentation="note"
-                        priority={false}
-                      />
-                    </StaggeredItem>
-                  ))}
-                </StaggeredList>
-              </section>
+            {ledgerEntries.length > 0 ? (
+              <FadeIn><EntryLedger entries={ledgerEntries} /></FadeIn>
             ) : null}
-          </div>
+          </>
         )}
       </div>
     </>

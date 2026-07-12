@@ -11,9 +11,6 @@ const { SITE_URL } = vi.hoisted(() => ({
 }));
 
 const getPublishedPostsMock = vi.fn();
-const postCardRenderMock = vi.fn((props: { href: string; post: { slug: string }; priority?: boolean; presentation?: string }) => (
-  <article>{`PostCardStub:${props.post.slug}:${props.href}:${String(props.priority)}:${props.presentation ?? "standard"}`}</article>
-));
 
 vi.mock("@/lib/posts/repository/public-posts-repository", () => ({
   getPublishedPosts: () => getPublishedPostsMock()
@@ -23,17 +20,18 @@ vi.mock("@/lib/site-url", () => ({
   getConfiguredSiteUrl: () => SITE_URL
 }));
 
-vi.mock("@/components/posts/post-card", () => ({
-  PostCard: (props: { href: string; post: { slug: string }; priority?: boolean; presentation?: string }) => postCardRenderMock(props)
+vi.mock("@/components/layout/masthead", () => ({ Masthead: () => <div>MastheadStub</div> }));
+
+vi.mock("@/components/posts/figure-plate", () => ({
+  FigurePlate: (p: { figureLabel: string }) => <div>{`PlateStub:${p.figureLabel}`}</div>
+}));
+
+vi.mock("@/components/posts/entry-ledger", () => ({
+  EntryLedger: (p: { entries: { id: string }[] }) => <div>{`LedgerStub:${p.entries.length}`}</div>
 }));
 
 vi.mock("@/components/motion/fade-in", () => ({
   FadeIn: ({ children }: { children: React.ReactNode }) => <section>{children}</section>
-}));
-
-vi.mock("@/components/motion/staggered-list", () => ({
-  StaggeredList: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
-  StaggeredItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
 import HomePage, { metadata } from "../page";
@@ -41,7 +39,6 @@ import HomePage, { metadata } from "../page";
 describe("apps/public/app/page.tsx", () => {
   beforeEach(() => {
     getPublishedPostsMock.mockReset();
-    postCardRenderMock.mockClear();
   });
 
   it("exports homepage metadata tuned for search and social sharing", () => {
@@ -52,7 +49,7 @@ describe("apps/public/app/page.tsx", () => {
     expect(metadata.twitter?.images).toEqual([DEFAULT_SOCIAL_IMAGE_PATH]);
   });
 
-  it("renders hero and empty-state content when no posts are available", async () => {
+  it("renders masthead and empty-state content when no posts are available", async () => {
     getPublishedPostsMock.mockResolvedValue({
       ok: true,
       data: []
@@ -60,59 +57,34 @@ describe("apps/public/app/page.tsx", () => {
 
     const html = renderToStaticMarkup(await HomePage());
 
-    expect(html).toContain("Notes on building software");
-    expect(html).not.toContain("\u00a0");
-    expect(html).toContain("Meet Tilavat");
-    expect(html).toContain('href="/resume"');
+    expect(html).toContain("MastheadStub");
     expect(html).toContain("No posts yet.");
     expect(html).toContain("Fresh writing is on the way.");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"WebSite\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}\"`);
-    expect(postCardRenderMock).not.toHaveBeenCalled();
+    expect(html).not.toContain("PlateStub");
+    expect(html).not.toContain("LedgerStub");
   });
 
-  it("renders post cards when published posts are returned", async () => {
-    getPublishedPostsMock.mockResolvedValue({
-      ok: true,
-      data: [
-        { id: "post-1", slug: "field-note" },
-        { id: "post-2", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" }
-      ]
-    });
-
+  it("renders masthead, featured plate, and ledger when 2+ posts exist", async () => {
+    getPublishedPostsMock.mockResolvedValue({ ok: true, data: [
+      { id: "1", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp", title: "Tree Census", createdAt: "2026-05-09T00:00:00Z", updatedAt: "2026-05-09T00:00:00Z", excerpt: null, coverImageUrl: null, status: "published" },
+      { id: "2", slug: "note-a", title: "Note A", createdAt: "2025-12-01T00:00:00Z", updatedAt: "2025-12-01T00:00:00Z", excerpt: null, coverImageUrl: null, status: "published" }
+    ]});
     const html = renderToStaticMarkup(await HomePage());
-
-    expect(postCardRenderMock).toHaveBeenCalledTimes(2);
-    expect(html).toContain("Selected work");
-    expect(html).toContain("Field notes");
-    expect(html).toContain("PostCardStub:building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp:/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp:true:featured");
-    expect(html).toContain("PostCardStub:field-note:/posts/field-note:false:note");
-    expect(postCardRenderMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      post: expect.objectContaining({ slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" }),
-      presentation: "featured",
-      priority: true
-    }));
-    expect(html).toContain("space-y-[clamp(4rem,6vw,5.5rem)]");
-    expect(html).not.toContain("space-y-[clamp(4.5rem,9vw,9rem)]");
-    expect(html).not.toContain("gap-10 border-b border-border/75 pb-[clamp(3rem,7vw,7rem)]");
-    expect(html).not.toContain("folio:grid-cols-2");
-    expect(html).not.toContain("No posts yet. Fresh writing is on the way.");
+    expect(html).toContain("MastheadStub");
+    expect(html).toContain("PlateStub:Fig. 01");
+    expect(html).toContain("LedgerStub:2");
   });
 
-  it("uses two field-note columns only when at least two notes exist", async () => {
-    getPublishedPostsMock.mockResolvedValue({
-      ok: true,
-      data: [
-        { id: "post-1", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp" },
-        { id: "post-2", slug: "note-a" },
-        { id: "post-3", slug: "note-b" }
-      ]
-    });
-
+  it("omits the ledger when only the featured post exists", async () => {
+    getPublishedPostsMock.mockResolvedValue({ ok: true, data: [
+      { id: "1", slug: "building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp", title: "Tree Census", createdAt: "2026-05-09T00:00:00Z", updatedAt: "2026-05-09T00:00:00Z", excerpt: null, coverImageUrl: null, status: "published" }
+    ]});
     const html = renderToStaticMarkup(await HomePage());
-
-    expect(html).toContain("folio:grid-cols-2");
+    expect(html).toContain("PlateStub:Fig. 01");
+    expect(html).not.toContain("LedgerStub");
   });
 
   it("renders a distinct availability error when posts cannot be loaded", async () => {
