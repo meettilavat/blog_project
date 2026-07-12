@@ -57,4 +57,24 @@ describe("components/posts/post-detail-article.tsx", () => {
     expect(html).not.toContain("left-1/2");
     expect(html).not.toContain("2xl:");
   });
+
+  it("renders the entry-type eyebrow and end-of-entry colophon", () => {
+    const html = renderToStaticMarkup(
+      <PostDetailArticle
+        title="A field report"
+        excerpt="A concise report from production."
+        coverImageUrl="/cover.png"
+        content={{ type: "doc", content: [] }}
+        headings={[{ id: "intro", text: "Introduction", level: 2 }]}
+        reading={{ minutes: 4, words: 820 }}
+        createdAt="2024-01-01T00:00:00.000Z"
+        updatedAt="2024-01-01T00:00:00.000Z"
+        publishedPrefix="Published"
+        eyebrow="Case study"
+      />
+    );
+
+    expect(html).toContain("Case study");
+    expect(html).toContain("End of entry");
+  });
 });

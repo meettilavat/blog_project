@@ -23,6 +23,7 @@ type PostDetailArticleProps = {
   createdAt: string;
   updatedAt: string;
   publishedPrefix: string;
+  eyebrow?: string;
   draftBanner?: React.ReactNode;
 };
 
@@ -42,6 +43,7 @@ export function PostDetailArticle({
   createdAt,
   updatedAt,
   publishedPrefix,
+  eyebrow,
   draftBanner
 }: PostDetailArticleProps) {
   const hasHeadings = headings.length > 0;
@@ -67,6 +69,7 @@ export function PostDetailArticle({
         <FadeIn y={20} duration={0.55} delay={0.05}>
           <header className={cn("space-y-7", HEADER_WIDTH_CLASS)}>
             <div className="space-y-5">
+              {eyebrow ? <p className="journal-label">{eyebrow}</p> : null}
               <PostMetaRow
                 createdAt={createdAt}
                 updatedAt={updatedAt}
@@ -136,22 +139,25 @@ export function PostDetailArticle({
 
         <FadeIn y={12} duration={0.45} delay={0.05}>
           <footer className="mx-auto grid max-w-[48rem] gap-5 border-t border-border/75 pt-6 sm:grid-cols-[1fr_auto] sm:items-center">
-            <p className="text-sm leading-relaxed text-foreground/70">
-              Written by <span className="font-medium text-foreground">Meet Tilavat</span>
-              {updatedAfterCreated
-                ? ` · Last updated ${new Intl.DateTimeFormat("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric"
-                  }).format(new Date(updatedAt))}`
-                : ""}
-            </p>
+            <div className="space-y-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">End of entry</p>
+              <p className="text-sm leading-relaxed text-foreground/70">
+                Written by <span className="font-medium text-foreground">Meet Tilavat</span>
+                {updatedAfterCreated
+                  ? ` · Last updated ${new Intl.DateTimeFormat("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric"
+                    }).format(new Date(updatedAt))}`
+                  : ""}
+              </p>
+            </div>
             <Link
               href="/"
               className="inline-flex min-h-11 items-center gap-2 border-b border-accent/60 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
             >
               <span aria-hidden="true">←</span>
-              All posts
+              Back to the ledger
             </Link>
           </footer>
         </FadeIn>
