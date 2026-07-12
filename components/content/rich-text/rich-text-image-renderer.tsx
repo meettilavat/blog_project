@@ -66,6 +66,9 @@ export function renderImageNode(
         unoptimized={imageProps.unoptimized}
       />
       {imageProps.caption ? <figcaption>{imageProps.caption}</figcaption> : null}
+      {(["tl", "tr", "bl", "br"] as const).map((corner) => (
+        <span key={corner} className="tiptap-figure-tick" data-corner={corner} aria-hidden="true" />
+      ))}
     </figure>
   );
 }

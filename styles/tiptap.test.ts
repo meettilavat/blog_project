@@ -24,3 +24,17 @@ describe("public editorial figure layout", () => {
     expect(css).toContain("line-height: 1.78");
   });
 });
+
+describe("plate figure treatment", () => {
+  const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
+  it("shows the figure number on the figure, not only in the caption", () => {
+    expect(css).toMatch(/\.tiptap-figure::before[^}]*counter\(journal-figure\)/);
+  });
+  it("no longer prefixes the caption with the counter", () => {
+    const caption = css.slice(css.indexOf(".tiptap figcaption::before"), css.indexOf(".tiptap figcaption::before") + 200);
+    expect(caption).not.toContain("counter(journal-figure)");
+  });
+  it("defines corner registration ticks", () => {
+    expect(css).toContain(".tiptap-figure-tick");
+  });
+});

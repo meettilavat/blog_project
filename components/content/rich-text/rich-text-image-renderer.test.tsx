@@ -204,4 +204,25 @@ describe("components/content/rich-text-image-renderer.tsx", () => {
 
     expect(html).toBe("");
   });
+
+  it("renders corner registration ticks inside the figure", () => {
+    resolveImageRenderPropsMock.mockReturnValue({
+      src: ALLOWED_IMAGE_URL,
+      alt: "Cover caption",
+      caption: "Cover caption",
+      width: 640,
+      height: 360,
+      unoptimized: false,
+      layout: "center",
+      align: "right"
+    });
+
+    const html = renderToStaticMarkup(
+      <>{renderImageNode({ type: "image", attrs: { src: ALLOWED_IMAGE_URL } }, "image-ticks", IMAGE_HOST_POLICY)}</>
+    );
+
+    expect(html).toContain("tiptap-figure-tick");
+    expect(html).toContain('data-corner="tl"');
+    expect(html).toContain('data-corner="br"');
+  });
 });
