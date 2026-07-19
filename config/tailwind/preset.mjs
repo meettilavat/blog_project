@@ -24,7 +24,8 @@ const preset = {
         marginalia: "1600px"
       },
       fontFamily: {
-        sans: ["var(--font-grotesk)", ...defaultTheme.fontFamily.sans],
+        sans: ["var(--font-display)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-display)", ...defaultTheme.fontFamily.sans],
         serif: ["var(--font-serif)", ...defaultTheme.fontFamily.serif],
         mono: ["var(--font-mono)", ...defaultTheme.fontFamily.mono]
       },
