@@ -89,9 +89,15 @@ describe("apps/public/app/layout.tsx", () => {
     expect(html).toContain("min-h-dvh");
     expect(html).toContain("flex-col");
     expect(html).toContain("flex-1");
-    expect(html).toContain("journal-canvas");
+    expect(html).toContain("site-canvas");
     expect(html).toContain("flex flex-1 flex-col");
     expect(html).toContain("localStorage.getItem(\"theme\")");
     expect(html).toContain("name=\"theme-color\"");
+    expect(html).toContain("--font-display");
+    expect(html).not.toContain("--font-serif");
+    expect(html).toContain('content="#F7F7F5"');
+    expect(html).toContain('content="#0B0D10"');
+    expect(html).toContain('type="application/rss+xml"');
+    expect(html).not.toContain("grid-ruled");
   });
 });

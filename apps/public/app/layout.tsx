@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import "../../../styles/globals.css";
-import { Fraunces, IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { IBM_Plex_Mono, Newsreader, Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/ui/classnames";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
 import {
@@ -27,8 +27,8 @@ const themeBootstrapScript = readFileSync(
   "utf8"
 );
 
-const LIGHT_THEME_COLOR = "#f6f2ea";
-const DARK_THEME_COLOR = "#15120f";
+const LIGHT_THEME_COLOR = "#F7F7F5";
+const DARK_THEME_COLOR = "#0B0D10";
 const configuredSiteUrl = getConfiguredSiteUrl();
 const metadataBase = configuredSiteUrl ? new URL(configuredSiteUrl) : undefined;
 
@@ -39,10 +39,11 @@ const newsreader = Newsreader({
   variable: "--font-body"
 });
 
-const fraunces = Fraunces({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
+  weight: ["500", "700"],
   display: "swap",
-  variable: "--font-serif"
+  variable: "--font-display"
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -107,11 +108,12 @@ export default function RootLayout({
       lang="en"
       data-app="public"
       data-scroll-behavior="smooth"
-      className={cn(newsreader.variable, fraunces.variable, plexMono.variable)}
+      className={cn(newsreader.variable, spaceGrotesk.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <head>
         <meta name="color-scheme" content="light dark" />
+        <link rel="alternate" type="application/rss+xml" title="Meet Tilavat" href="/feed.xml" />
         <meta
           name="theme-color"
           data-dynamic-theme
@@ -137,12 +139,9 @@ export default function RootLayout({
           >
             Skip to content
           </a>
-          <div className="pointer-events-none fixed inset-0 -z-10 opacity-35 dark:opacity-20" aria-hidden="true">
-            <div className="grid-ruled h-full w-full" />
-          </div>
           <div className="relative flex min-h-dvh flex-col">
             <PublicHeader />
-            <main id="content" className="journal-canvas flex flex-1 flex-col pb-24 pt-[clamp(2.5rem,5vw,5.5rem)]">
+            <main id="content" className="site-canvas flex flex-1 flex-col pb-24 pt-[clamp(2.5rem,5vw,5.5rem)]">
               {children}
             </main>
             <PublicFooter />
