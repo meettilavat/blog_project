@@ -3,7 +3,6 @@ import { getPublicLinks } from "@/lib/public-links";
 import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
 import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
 import { ArrowUpRight, Download, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
-import { RevealSection } from "@/components/profile/reveal-section";
 
 type Experience = {
   role: string;
@@ -131,21 +130,13 @@ const skills = {
 export default function ResumePage() {
   return (
     <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4rem,5vw,5.5rem)]">
-      <RevealSection delay={0.02}>
-        <ResumeHeroSection />
-      </RevealSection>
+      <ResumeHeroSection />
 
-      <RevealSection delay={0.08}>
-        <ResumeExperienceEducationSection />
-      </RevealSection>
+      <ResumeExperienceEducationSection />
 
-      <RevealSection delay={0.12}>
-        <ResumeProjectsSection />
-      </RevealSection>
+      <ResumeProjectsSection />
 
-      <RevealSection delay={0.16}>
-        <ResumeSkillsSection />
-      </RevealSection>
+      <ResumeSkillsSection />
     </article>
   );
 }

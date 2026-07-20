@@ -109,8 +109,6 @@ const MODULES = [
   "@/components/editor/quick-insert",
   "@/components/editor/rich-editor",
   "@/apps/admin/components/shell/header",
-  "@/components/motion/fade-in",
-  "@/components/profile/reveal-section",
   "@/components/posts/post-card",
   "@/components/posts/post-cover-media",
   "@/components/posts/post-meta-row",

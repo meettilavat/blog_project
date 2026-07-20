@@ -61,10 +61,6 @@ vi.mock("@/components/posts/post-meta-row", () => ({
   default: (props: { createdAt: string; updatedAt: string }) => postMetaRowRenderMock(props)
 }));
 
-vi.mock("@/components/motion/fade-in", () => ({
-  FadeIn: ({ children }: { children: React.ReactNode }) => <section>{children}</section>
-}));
-
 import PostPage, { generateMetadata, generateStaticParams } from "./page";
 
 describe("apps/public/app/posts/[slug]/page.tsx", () => {

@@ -11,10 +11,6 @@ vi.mock("@/components/content/chrome/table-of-contents", () => ({
   )
 }));
 
-vi.mock("@/components/motion/fade-in", () => ({
-  FadeIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
-}));
-
 vi.mock("@/components/posts/post-cover-media", () => ({
   default: ({ alt }: { alt: string }) => <div role="img" aria-label={alt}>PostCoverMediaStub</div>
 }));

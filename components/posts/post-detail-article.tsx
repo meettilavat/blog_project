@@ -1,7 +1,6 @@
 import Link from "next/link";
 import RichTextViewer from "@/components/content/rich-text/rich-text-viewer";
 import TableOfContents from "@/components/content/chrome/table-of-contents";
-import { FadeIn } from "@/components/motion/fade-in";
 import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
 import type { PostContent } from "@/lib/posts/contracts/domain/types";
@@ -54,8 +53,7 @@ export function PostDetailArticle({
     <>
       {draftBanner ? <div className={cn("mb-6", READING_WIDTH_CLASS)}>{draftBanner}</div> : null}
       <article className="space-y-[clamp(2.5rem,4vw,4rem)]">
-        <FadeIn y={12} duration={0.4}>
-          <div className={HEADER_WIDTH_CLASS}>
+        <div className={HEADER_WIDTH_CLASS}>
             <Link
               href="/"
               className="group inline-flex min-h-11 items-center gap-3 border-b border-accent/60 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
@@ -64,10 +62,8 @@ export function PostDetailArticle({
               Back to posts
             </Link>
           </div>
-        </FadeIn>
 
-        <FadeIn y={20} duration={0.55} delay={0.05}>
-          <header className={cn("space-y-7", HEADER_WIDTH_CLASS)}>
+        <header className={cn("space-y-7", HEADER_WIDTH_CLASS)}>
             <div className="space-y-5">
               {eyebrow ? <p className="journal-label">{eyebrow}</p> : null}
               <PostMetaRow
@@ -88,10 +84,8 @@ export function PostDetailArticle({
             </div>
             <hr className="border-border/75" />
           </header>
-        </FadeIn>
 
-        <FadeIn y={20} duration={0.55} delay={0.1}>
-          <figure className={cn(
+        <figure className={cn(
             "relative overflow-hidden rounded-[12px] border border-border/80 bg-muted",
             COVER_WIDTH_CLASS
           )}>
@@ -108,7 +102,6 @@ export function PostDetailArticle({
               />
             </div>
           </figure>
-        </FadeIn>
 
         <div className={ARTICLE_SHELL_CLASS}>
           <div className="mx-auto min-w-0 w-full max-w-[56rem] marginalia:col-start-2">
@@ -137,8 +130,7 @@ export function PostDetailArticle({
           ) : null}
         </div>
 
-        <FadeIn y={12} duration={0.45} delay={0.05}>
-          <footer className="mx-auto grid max-w-[48rem] gap-5 border-t border-border/75 pt-6 sm:grid-cols-[1fr_auto] sm:items-center">
+        <footer className="mx-auto grid max-w-[48rem] gap-5 border-t border-border/75 pt-6 sm:grid-cols-[1fr_auto] sm:items-center">
             <div className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">End of entry</p>
               <p className="text-sm leading-relaxed text-foreground/70">
@@ -160,7 +152,6 @@ export function PostDetailArticle({
               Back to the ledger
             </Link>
           </footer>
-        </FadeIn>
       </article>
     </>
   );

@@ -28,10 +28,6 @@ vi.mock("lucide-react", () => ({
   Download: ({ className }: { className?: string }) => <svg className={className} data-icon="download" />,
 }));
 
-vi.mock("@/components/profile/reveal-section", () => ({
-  RevealSection: ({ children }: { children: React.ReactNode }) => <section>{children}</section>
-}));
-
 import ResumePage from "./resume-page";
 
 describe("components/profile/resume-page.tsx", () => {
