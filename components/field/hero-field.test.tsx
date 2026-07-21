@@ -1,11 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-
-vi.mock("@/lib/field/text-sampler", () => ({
-  sampleTitlePoints: () => new Float32Array([4, 4, 8, 8, 12, 12])
-}));
 
 import HeroField, { __resetPlayedSlugs, __playedSlugs } from "@/components/field/hero-field";
 
