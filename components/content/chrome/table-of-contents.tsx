@@ -177,7 +177,7 @@ export function TableOfContents({
 
   return (
     <details
-      className={cn("mb-8 border-y border-border/55 py-3 marginalia:hidden", className)}
+      className={cn("mb-8 border-y border-border/55 py-3", className)}
       aria-label="On this page"
     >
       <summary className="cursor-pointer font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 transition-colors duration-200 hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-foreground">

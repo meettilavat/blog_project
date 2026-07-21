@@ -3,15 +3,15 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("public editorial figure layout", () => {
-  it("keeps wide figures on one desktop alignment axis across the marginalia breakpoint", () => {
+  it("centres wide figures on the page axis, up to the media band", () => {
     const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
 
+    // Wide figures break out symmetrically from the reading column, centred on
+    // the page axis (no sidebar rail to avoid), up to the media width.
     expect(css).toContain("@media (min-width: 1200px) {");
-    expect(css).toContain("calc(100vw - 19rem)");
-    expect(css).not.toContain("calc(100vw - 31rem)");
-    expect(css).not.toContain("calc(100vw - 39rem)");
-    expect(css).not.toContain("calc(100vw - 6rem)");
-    expect(css).not.toContain("@media (min-width: 1200px) and (max-width: 1599px)");
+    expect(css).toContain("margin-left: calc((100% - var(--figure-width)) / 2)");
+    // Not the old edge-aligned breakout, and never a broken 50% offset.
+    expect(css).not.toContain("margin-left: calc(100% - var(--figure-width))");
     expect(css).not.toContain("margin-left: 50%;");
   });
 

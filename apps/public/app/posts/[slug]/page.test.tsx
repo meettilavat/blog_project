@@ -243,26 +243,19 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         isSanitized: true
       })
     );
-    expect(html).toContain("max-w-[56rem]");
-    expect(html).not.toContain("max-w-[44rem]");
+    expect(html).toContain("max-w-[43rem]");
+    expect(html).toContain("max-w-[60rem]");
+    expect(html).not.toContain("max-w-[56rem]");
+    expect(html).not.toContain("max-w-[64rem]");
     expect(html).not.toContain("max-w-[72ch]");
     expect(html).not.toContain("max-w-[82ch]");
-    expect(html).toContain(
-      "marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem]"
-    );
-    expect(html).toContain("marginalia:justify-center");
-    expect(html).toContain("marginalia:gap-x-6");
-    expect(html).not.toContain("marginalia:gap-x-8");
-    expect(html.match(/max-w-\[64rem\]/g)).toHaveLength(2);
-    expect(html.match(/max-w-\[48rem\]/g)).toHaveLength(1);
+    expect(html).not.toContain("marginalia:grid");
+    expect(html).not.toContain("marginalia:sticky");
     expect(tableOfContentsRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        variant: "rail",
-        className:
-          "hidden marginalia:sticky marginalia:col-start-3 marginalia:block marginalia:w-full"
+        variant: "compact"
       })
     );
-    expect(html).toContain("max-w-[64rem]");
     expect(html).toContain(formatDate("2024-01-01T00:00:00.000Z"));
     expect(html).toContain("Previous");
     expect(html).toContain("An Older Post");

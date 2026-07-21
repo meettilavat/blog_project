@@ -462,13 +462,16 @@ html[data-app="public"].dark .tiptap pre {
 }
 .tiptap-editorial:not(.tiptap-editor-surface) table { font-variant-numeric: tabular-nums; }
 
+/* Wide figures break out symmetrically from the reading column, centred on the
+   page axis, up to the article's media width (60rem) — the same band as the
+   cover — so text, cover, and figures all share one centre line. */
 @media (min-width: 1200px) {
   html[data-app="public"] .tiptap-editorial:not(.tiptap-editor-surface) .tiptap-figure-wide {
-    --figure-width: min(var(--figure-natural-width, 1060px), 1060px, calc(100vw - 19rem));
+    --figure-width: min(var(--figure-natural-width, 1060px), 60rem, calc(100vw - 6rem));
     width: var(--figure-width);
     max-width: var(--figure-width);
     margin-right: 0;
-    margin-left: calc(100% - var(--figure-width));
+    margin-left: calc((100% - var(--figure-width)) / 2);
     transform: none;
   }
 }

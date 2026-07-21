@@ -28,11 +28,15 @@ type PostDetailArticleProps = {
   draftBanner?: React.ReactNode;
 };
 
-const READING_WIDTH_CLASS = "mx-auto w-full max-w-[56rem]";
-const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[64rem]";
-const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[76rem]";
-const ARTICLE_SHELL_CLASS =
-  "mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:relative marginalia:left-1/2 marginalia:w-[92rem] marginalia:max-w-[92rem] marginalia:-translate-x-1/2 marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem] marginalia:justify-center marginalia:gap-x-6";
+// The article rides two centred widths that share one page axis: a text column
+// at the ~68ch reading measure (43rem ≈ 688px, which the body fills exactly, so
+// no trailing gap) that carries every text block — back link, meta, title,
+// subtitle, body, footer — and a wider media band (60rem) for the cover and
+// break-out figures. Everything is centred on the same axis; nothing hangs left
+// or overflows. The chapter map is a top disclosure, not a right rail, so a
+// page-centred column never has to fight a sidebar for the right margin.
+const TEXT_WIDTH_CLASS = "mx-auto w-full max-w-[43rem]";
+const MEDIA_WIDTH_CLASS = "mx-auto w-full max-w-[60rem]";
 
 export function PostDetailArticle({
   title,
@@ -54,9 +58,9 @@ export function PostDetailArticle({
 
   return (
     <>
-      {draftBanner ? <div className={cn("mb-6", READING_WIDTH_CLASS)}>{draftBanner}</div> : null}
+      {draftBanner ? <div className={cn("mb-6", TEXT_WIDTH_CLASS)}>{draftBanner}</div> : null}
       <article className="space-y-[clamp(2.5rem,4vw,4rem)]">
-        <div className={HEADER_WIDTH_CLASS}>
+        <div className={TEXT_WIDTH_CLASS}>
             <Link
               href="/"
               className="group inline-flex min-h-11 items-center gap-3 border-b border-accent/60 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
@@ -66,7 +70,7 @@ export function PostDetailArticle({
             </Link>
           </div>
 
-        <header className={cn("space-y-7", HEADER_WIDTH_CLASS)}>
+        <header className={cn("space-y-7", TEXT_WIDTH_CLASS)}>
             <div className="space-y-5">
               {eyebrow ? <p className="kicker">{eyebrow}</p> : null}
               <PostMetaRow
@@ -76,11 +80,11 @@ export function PostDetailArticle({
                 readStats={reading}
                 className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70 [font-variant-numeric:tabular-nums]"
               />
-              <h1 className="max-w-[24ch] scroll-mt-28 text-balance font-display text-[clamp(2.65rem,6vw,5.15rem)] leading-[0.99] tracking-[-0.03em] text-foreground">
+              <h1 className="scroll-mt-28 text-balance font-display text-[clamp(2.5rem,5vw,4.25rem)] leading-[1.02] tracking-[-0.03em] text-foreground">
                 {title}
               </h1>
               {excerpt ? (
-                <p className="max-w-[62ch] text-pretty text-[clamp(1.08rem,1.8vw,1.3rem)] leading-[1.7] text-foreground/75">
+                <p className="text-pretty text-[clamp(1.08rem,1.8vw,1.3rem)] leading-[1.7] text-foreground/75">
                   {excerpt}
                 </p>
               ) : null}
@@ -90,14 +94,14 @@ export function PostDetailArticle({
 
         <figure className={cn(
             "relative overflow-hidden rounded-[12px] border border-border/80 bg-muted",
-            COVER_WIDTH_CLASS
+            MEDIA_WIDTH_CLASS
           )}>
             <div className="relative aspect-[16/9] w-full">
               <PostCoverMedia
                 src={coverImageUrl}
                 alt={title}
                 fill
-                sizes="(max-width: 767px) calc(100vw - 2.5rem), (max-width: 1399px) calc(100vw - 6rem), 1216px"
+                sizes="(max-width: 767px) calc(100vw - 2.5rem), (max-width: 1023px) calc(100vw - 6rem), 960px"
                 className="h-full w-full object-cover object-center"
                 priority
                 fetchPriority="high"
@@ -106,8 +110,7 @@ export function PostDetailArticle({
             </div>
           </figure>
 
-        <div className={ARTICLE_SHELL_CLASS}>
-          <div className="mx-auto min-w-0 w-full max-w-[56rem] marginalia:col-start-2">
+        <div className={TEXT_WIDTH_CLASS}>
             {hasHeadings ? (
               <TableOfContents
                 headings={headings}
@@ -122,18 +125,8 @@ export function PostDetailArticle({
               className="tiptap-editorial mx-0 max-w-none"
             />
           </div>
-          {hasHeadings ? (
-            <TableOfContents
-              headings={headings}
-              offsetTop={112}
-              trackActive
-              variant="rail"
-              className="hidden marginalia:sticky marginalia:col-start-3 marginalia:block marginalia:w-full"
-            />
-          ) : null}
-        </div>
 
-        <footer className="mx-auto grid max-w-[48rem] gap-5 border-t border-border/75 pt-6 sm:grid-cols-[1fr_auto] sm:items-center">
+        <footer className="mx-auto grid max-w-[43rem] gap-5 border-t border-border/75 pt-6 sm:grid-cols-[1fr_auto] sm:items-center">
             <div className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">End of entry</p>
               <p className="text-sm leading-relaxed text-foreground/70">

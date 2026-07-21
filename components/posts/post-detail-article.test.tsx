@@ -18,7 +18,7 @@ vi.mock("@/components/posts/post-cover-media", () => ({
 import { PostDetailArticle } from "./post-detail-article";
 
 describe("components/posts/post-detail-article.tsx", () => {
-  it("uses a broad editorial measure inside a bounded marginalia canvas", () => {
+  it("places every text block in one centred column with a wider media band", () => {
     const html = renderToStaticMarkup(
       <PostDetailArticle
         title="A field report"
@@ -33,27 +33,22 @@ describe("components/posts/post-detail-article.tsx", () => {
       />
     );
 
-    expect(html).toContain("max-w-[92rem]");
-    expect(html).toContain("max-w-[56rem]");
-    expect(html).not.toContain("max-w-[44rem]");
-    expect(html).toContain("max-w-[64rem]");
-    expect(html).not.toContain("max-w-[72ch]");
+    // One text column (43rem) carries back link, meta, title, subtitle, body,
+    // and footer; a single wider media band (60rem) carries the cover.
+    expect(html).toContain("max-w-[43rem]");
+    expect(html).toContain("max-w-[60rem]");
     expect(html).toContain("space-y-[clamp(2.5rem,4vw,4rem)]");
-    expect(html).toContain("marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem]");
-    expect(html).toContain("marginalia:justify-center");
-    expect(html).toContain("marginalia:gap-x-6");
-    expect(html).not.toContain("marginalia:gap-x-8");
-    expect(html).not.toContain("marginalia:grid-cols-[minmax(0,1fr)_minmax(0,72ch)_14rem]");
-    expect(html).not.toContain("space-y-[clamp(2.75rem,6vw,5.5rem)]");
-    expect(html).toContain("marginalia:grid");
-    expect(html).toContain("marginalia:block");
     expect(html).toContain("aspect-[16/9]");
-    expect(html).not.toContain("max-h-[68vh]");
-    expect(html).not.toContain("calc(100vw");
-    expect(html).toContain("marginalia:relative");
-    expect(html).toContain("marginalia:left-1/2");
-    expect(html).toContain("marginalia:-translate-x-1/2");
-    expect(html).toContain("marginalia:w-[92rem]");
+    // No leftover marginalia grid/rail or the old grab-bag of widths.
+    expect(html).not.toContain("marginalia:");
+    expect(html).not.toContain("max-w-[92rem]");
+    expect(html).not.toContain("max-w-[76rem]");
+    expect(html).not.toContain("max-w-[64rem]");
+    expect(html).not.toContain("max-w-[56rem]");
+    expect(html).not.toContain("max-w-[48rem]");
+    expect(html).not.toContain("max-w-[24ch]");
+    expect(html).not.toContain("max-w-[62ch]");
+    expect(html).not.toContain("max-w-[72ch]");
     expect(html).not.toContain("2xl:");
   });
 
