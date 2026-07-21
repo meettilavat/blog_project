@@ -79,7 +79,7 @@ export default function HeroField({ title }: { title: string }) {
       });
     }
 
-    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
+    let accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
     let raf = 0;
     let start = 0;
     let running = true;
@@ -136,10 +136,20 @@ export default function HeroField({ title }: { title: string }) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
+    // One retint repaint on theme change (spec §5.5): re-read --accent when the
+    // `dark` class flips; repaint once only if the loop has settled.
+    const onThemeChange = () => {
+      accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || accent;
+      if (!running) draw();
+    };
+    const themeObserver = new MutationObserver(onThemeChange);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
     return () => {
       running = false;
       if (raf) cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVisibility);
+      themeObserver.disconnect();
     };
   }, [title]);
 
