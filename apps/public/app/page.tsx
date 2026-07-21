@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getPublishedPosts } from "@/lib/posts/repository/public-posts-repository";
+import { getFeaturedPost } from "@/lib/posts/featured";
 import PublicStatusNotice from "../components/public-status-notice";
 import StructuredDataScript from "@/components/seo/structured-data-script";
+import Hero from "@/components/home/hero";
+import StartHere from "@/components/home/start-here";
+import WritingIndex from "@/components/home/writing-index";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
 import {
   DEFAULT_SOCIAL_IMAGE_ALT,
@@ -46,13 +49,15 @@ export default async function HomePage() {
   const postsResult = await getPublishedPosts();
   const posts = postsResult.ok ? postsResult.data : [];
   const postsUnavailable = !postsResult.ok;
+  const featured = posts.length > 0 ? await getFeaturedPost(posts) : null;
+  const isLatest = featured !== null && posts[0]?.slug === featured.slug;
 
   return (
     <>
       {configuredSiteUrl ? (
         <StructuredDataScript data={buildWebSiteStructuredData(configuredSiteUrl)} />
       ) : null}
-      <div>
+      <div className="space-y-[clamp(4rem,8vw,7rem)]">
         {postsUnavailable ? (
           <PublicStatusNotice
             label="Index unavailable"
@@ -60,21 +65,27 @@ export default async function HomePage() {
             description="Please try again shortly. The résumé and public links remain available."
             headingLevel="h2"
           />
-        ) : posts.length === 0 ? (
-          <PublicStatusNotice
-            label="Index"
-            title="No posts yet."
-            description="Fresh writing is on the way. The résumé remains available in the meantime."
-            headingLevel="h2"
-          />
+        ) : posts.length === 0 || !featured ? (
+          <>
+            <section aria-label="About Meet Tilavat">
+              <p className="kicker">Meet Tilavat</p>
+              <p className="mt-4 max-w-[52ch] text-[clamp(1.05rem,1.5vw,1.25rem)] leading-relaxed text-foreground/75">
+                Production lessons from running my own stack — the failures included.
+              </p>
+            </section>
+            <PublicStatusNotice
+              label="Index"
+              title="No posts yet."
+              description="Fresh writing is on the way. The résumé remains available in the meantime."
+              headingLevel="h2"
+            />
+          </>
         ) : (
-          <ul>
-            {posts.map((post) => (
-              <li key={post.id}>
-                <Link href={`/posts/${post.slug}`}>{post.title}</Link>
-              </li>
-            ))}
-          </ul>
+          <>
+            <Hero featured={featured} isLatest={isLatest} />
+            <StartHere posts={posts} />
+            <WritingIndex posts={posts} />
+          </>
         )}
       </div>
     </>
