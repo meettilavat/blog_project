@@ -41,6 +41,7 @@ describe("config/tailwind/preset.mjs", () => {
     };
 
     expect(fontFamily.sans[0]).toBe("var(--font-display)");
+    expect(fontFamily.sans[1]).toBe("var(--font-grotesk)");
     expect(fontFamily.display[0]).toBe("var(--font-display)");
     expect(fontFamily.serif).toBeUndefined();
     expect(fontFamily.mono[0]).toBe("var(--font-mono)");

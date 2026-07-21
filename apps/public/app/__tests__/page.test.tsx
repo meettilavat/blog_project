@@ -122,18 +122,17 @@ describe("apps/public/app/page.tsx", () => {
     expect(html).toContain(`\"url\":\"${SITE_URL}\"`);
   });
 
-  it("renders the empty state without hero when no featured post resolves", async () => {
-    getPublishedPostsMock.mockResolvedValue({
-      ok: true,
-      data: [post("note-a", "2026-06-01T00:00:00Z")]
-    });
+  it("renders the writing index without a hero when posts exist but no featured post resolves", async () => {
+    const posts = [post("note-a", "2026-06-01T00:00:00Z")];
+    getPublishedPostsMock.mockResolvedValue({ ok: true, data: posts });
     getFeaturedPostMock.mockResolvedValue(null);
 
     const html = renderToStaticMarkup(await HomePage());
 
-    expect(html).toContain("No posts yet.");
+    expect(html).not.toContain("No posts yet.");
     expect(html).not.toContain('data-testid="hero-stub"');
-    expect(html).not.toContain('data-testid="writing-index-stub"');
+    expect(html).toContain('data-testid="start-here-stub"');
+    expect(html).toContain('data-testid="writing-index-stub"');
   });
 
   it("renders a distinct availability error when posts cannot be loaded", async () => {

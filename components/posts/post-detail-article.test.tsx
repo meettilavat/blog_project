@@ -50,7 +50,10 @@ describe("components/posts/post-detail-article.tsx", () => {
     expect(html).toContain("aspect-[16/9]");
     expect(html).not.toContain("max-h-[68vh]");
     expect(html).not.toContain("calc(100vw");
-    expect(html).not.toContain("left-1/2");
+    expect(html).toContain("marginalia:relative");
+    expect(html).toContain("marginalia:left-1/2");
+    expect(html).toContain("marginalia:-translate-x-1/2");
+    expect(html).toContain("marginalia:w-[92rem]");
     expect(html).not.toContain("2xl:");
   });
 

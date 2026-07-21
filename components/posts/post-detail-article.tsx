@@ -32,7 +32,7 @@ const READING_WIDTH_CLASS = "mx-auto w-full max-w-[56rem]";
 const HEADER_WIDTH_CLASS = "mx-auto w-full max-w-[64rem]";
 const COVER_WIDTH_CLASS = "mx-auto w-full max-w-[76rem]";
 const ARTICLE_SHELL_CLASS =
-  "mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem] marginalia:justify-center marginalia:gap-x-6";
+  "mx-auto grid w-full max-w-[92rem] grid-cols-1 marginalia:relative marginalia:left-1/2 marginalia:w-[92rem] marginalia:max-w-[92rem] marginalia:-translate-x-1/2 marginalia:grid-cols-[14rem_minmax(0,56rem)_14rem] marginalia:justify-center marginalia:gap-x-6";
 
 export function PostDetailArticle({
   title,

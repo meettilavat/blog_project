@@ -65,7 +65,7 @@ export default async function HomePage() {
             description="Please try again shortly. The résumé and public links remain available."
             headingLevel="h2"
           />
-        ) : posts.length === 0 || !featured ? (
+        ) : posts.length === 0 ? (
           <>
             <section aria-label="About Meet Tilavat">
               <p className="kicker">Meet Tilavat</p>
@@ -82,7 +82,7 @@ export default async function HomePage() {
           </>
         ) : (
           <>
-            <Hero featured={featured} isLatest={isLatest} />
+            {featured ? <Hero featured={featured} isLatest={isLatest} /> : null}
             <StartHere posts={posts} />
             <WritingIndex posts={posts} />
           </>
