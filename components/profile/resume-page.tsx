@@ -3,7 +3,6 @@ import { getPublicLinks } from "@/lib/public-links";
 import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
 import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
 import { ArrowUpRight, Download, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
-import { RevealSection } from "@/components/profile/reveal-section";
 
 type Experience = {
   role: string;
@@ -131,21 +130,13 @@ const skills = {
 export default function ResumePage() {
   return (
     <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4rem,5vw,5.5rem)]">
-      <RevealSection delay={0.02}>
-        <ResumeHeroSection />
-      </RevealSection>
+      <ResumeHeroSection />
 
-      <RevealSection delay={0.08}>
-        <ResumeExperienceEducationSection />
-      </RevealSection>
+      <ResumeExperienceEducationSection />
 
-      <RevealSection delay={0.12}>
-        <ResumeProjectsSection />
-      </RevealSection>
+      <ResumeProjectsSection />
 
-      <RevealSection delay={0.16}>
-        <ResumeSkillsSection />
-      </RevealSection>
+      <ResumeSkillsSection />
     </article>
   );
 }
@@ -155,8 +146,8 @@ function ResumeHeroSection() {
     <header className="border-b border-border/80 pb-[clamp(3rem,5vw,4.5rem)]">
       <div className="grid gap-10 document:grid-cols-[minmax(0,1fr)_minmax(18rem,0.36fr)] document:items-end document:gap-[clamp(3rem,6vw,7rem)]">
         <div className="space-y-6">
-          <p className="journal-label">Curriculum vitae / field record</p>
-          <h1 className="max-w-[18ch] text-balance font-serif text-[clamp(2.8rem,6.2vw,6.35rem)] leading-[0.96] tracking-[-0.035em] text-foreground">
+          <p className="kicker">Curriculum vitae</p>
+          <h1 className="max-w-[18ch] text-balance font-display text-[clamp(2.8rem,6.2vw,6.35rem)] leading-[0.96] tracking-[-0.035em] text-foreground">
             Software engineer building dependable web products and systems.
           </h1>
           <p className="max-w-[58ch] text-[clamp(1.05rem,1.5vw,1.25rem)] leading-[1.75] text-foreground/78">
@@ -165,11 +156,11 @@ function ResumeHeroSection() {
           </p>
           <dl className="grid max-w-[42rem] gap-x-8 gap-y-3 border-y border-border/65 py-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="journal-label">Base</dt>
+              <dt className="kicker">Base</dt>
               <dd className="mt-1 text-foreground/80">Gujarat, India</dd>
             </div>
             <div>
-              <dt className="journal-label">Status</dt>
+              <dt className="kicker">Status</dt>
               <dd className="mt-1 text-foreground/80">{AVAILABILITY_STATUS}</dd>
             </div>
           </dl>
@@ -201,7 +192,7 @@ function ResumeHeroSection() {
         </div>
         <address className="not-italic document:border-l document:border-border/75 document:pl-7">
           <div className="flex items-end justify-between gap-4 border-b border-border/75 pb-3">
-            <h2 className="journal-label">Contact index</h2>
+            <h2 className="kicker">Contact index</h2>
             <span className="font-mono text-[10px] text-foreground/65">UTC+05:30</span>
           </div>
           <ul className="divide-y divide-border/60">
@@ -226,9 +217,9 @@ function ResumeExperienceEducationSection() {
           {experiences.map((exp) => (
             <article key={exp.company} className="relative space-y-4">
               <span className="absolute -left-[calc(1.5rem+3px)] top-1.5 h-[7px] w-[7px] bg-accent sm:-left-[calc(2rem+3px)]" aria-hidden="true" />
-              <p className="journal-label tabular-nums">{exp.period}</p>
+              <p className="kicker tabular-nums">{exp.period}</p>
               <div>
-                <h3 className="font-serif text-2xl leading-tight text-foreground">{exp.role}</h3>
+                <h3 className="font-display text-2xl leading-tight text-foreground">{exp.role}</h3>
                 <p className="mt-1 text-sm text-foreground/70">{exp.company} · {exp.location}</p>
               </div>
               <ResumeBulletList items={exp.bullets} className="mt-3" />
@@ -245,9 +236,9 @@ function ResumeExperienceEducationSection() {
               key={edu.school}
               className="grid gap-2 border-b border-border/70 py-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5"
             >
-              <p className="journal-label tabular-nums">{edu.period}</p>
+              <p className="kicker tabular-nums">{edu.period}</p>
               <div>
-                <h3 className="font-serif text-xl leading-tight text-foreground">{edu.school}</h3>
+                <h3 className="font-display text-xl leading-tight text-foreground">{edu.school}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-foreground/80">{edu.credential}</p>
                 <p className="mt-1 text-sm text-foreground/70">{edu.location}</p>
               </div>
@@ -278,7 +269,7 @@ function ResumeProjectsSection() {
             <p className="font-mono text-[11px] tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</p>
             <div className="min-w-0 space-y-4">
               <div>
-                <h3 className="font-serif text-[clamp(1.45rem,2.4vw,2.15rem)] leading-tight text-foreground">{project.name}</h3>
+                <h3 className="font-display text-[clamp(1.45rem,2.4vw,2.15rem)] leading-tight text-foreground">{project.name}</h3>
                 {project.stack ? <p className="mt-2 max-w-[80ch] font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-foreground/70">{project.stack}</p> : null}
               </div>
               <ResumeBulletList items={project.bullets} />
@@ -323,7 +314,7 @@ function SectionHeading({ index, title, subtitle, id }: { index: string; title: 
     <div className="grid gap-3 border-b border-border/75 pb-4 sm:grid-cols-[3rem_minmax(0,1fr)] sm:items-end">
       <span className="font-mono text-[11px] tabular-nums text-accent">{index}</span>
       <div>
-        <h2 id={id} className="font-serif text-[clamp(2rem,3.5vw,3rem)] leading-none tracking-[-0.025em] text-foreground">{title}</h2>
+        <h2 id={id} className="font-display text-[clamp(2rem,3.5vw,3rem)] leading-none tracking-[-0.025em] text-foreground">{title}</h2>
         <p className="mt-2 max-w-[58ch] text-sm leading-relaxed text-foreground/70">{subtitle}</p>
       </div>
     </div>
@@ -416,7 +407,7 @@ function SkillGroup({
 }) {
   return (
     <div data-resume-skill-group="true" className="border-b border-border/75 py-5 ledger:odd:pr-8 ledger:even:border-l ledger:even:pl-8">
-      <dt className="journal-label">{title}</dt>
+      <dt className="kicker">{title}</dt>
       <dd className="mt-3">
         <ul className="flex flex-wrap text-sm leading-7 text-foreground/82">
         {items.map((item) => (

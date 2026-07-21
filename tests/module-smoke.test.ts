@@ -31,7 +31,9 @@ function renderAnchorMock({ children, href, ...props }: MockLinkProps) {
 }
 
 vi.mock("next/font/google", () => {
-  const makeFont = () => ({ variable: "--font-mock" });
+  const makeFont = (options?: { variable?: string }) => ({
+    variable: options?.variable ?? "--font-mock"
+  });
   return {
     Space_Grotesk: makeFont,
     Literata: makeFont,
@@ -107,8 +109,6 @@ const MODULES = [
   "@/components/editor/quick-insert",
   "@/components/editor/rich-editor",
   "@/apps/admin/components/shell/header",
-  "@/components/motion/fade-in",
-  "@/components/profile/reveal-section",
   "@/components/posts/post-card",
   "@/components/posts/post-cover-media",
   "@/components/posts/post-meta-row",

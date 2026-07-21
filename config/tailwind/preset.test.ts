@@ -40,8 +40,10 @@ describe("config/tailwind/preset.mjs", () => {
       screens: Record<string, string>;
     };
 
-    expect(fontFamily.sans[0]).toBe("var(--font-grotesk)");
-    expect(fontFamily.serif[0]).toBe("var(--font-serif)");
+    expect(fontFamily.sans[0]).toBe("var(--font-display)");
+    expect(fontFamily.sans[1]).toBe("var(--font-grotesk)");
+    expect(fontFamily.display[0]).toBe("var(--font-display)");
+    expect(fontFamily.serif).toBeUndefined();
     expect(fontFamily.mono[0]).toBe("var(--font-mono)");
     expect(container.center).toBe(true);
     expect(container.padding).toBe("1.25rem");

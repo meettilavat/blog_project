@@ -37,3 +37,52 @@ describe("plate figure treatment", () => {
     expect(css).toContain(".tiptap-figure-tick");
   });
 });
+
+describe("long-form type system + optical craft (spec §7), public-scoped", () => {
+  const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
+
+  it("scopes the body measure to the public reading surface only", () => {
+    expect(css).toContain(".tiptap-editorial:not(.tiptap-editor-surface) p { max-width: 68ch;");
+    expect(css).not.toContain(".tiptap-editorial p { max-width: 68ch");
+  });
+
+  it("scopes hanging punctuation to the public reading surface only", () => {
+    expect(css).toContain(".tiptap-editorial:not(.tiptap-editor-surface) { hanging-punctuation: first last;");
+    expect(css).not.toContain(".tiptap-editorial { hanging-punctuation");
+  });
+
+  it("balances headings and pretties body wrapping", () => {
+    expect(css).toContain("text-wrap: balance");
+    expect(css).toContain("text-wrap: pretty");
+  });
+
+  it("hyphenates body copy with a conservative limit", () => {
+    expect(css).toContain("hyphens: auto");
+    expect(css).toContain("hyphenate-limit-chars: 6 3 3");
+  });
+
+  it("moves headings to the display face on the public surface only", () => {
+    expect(css).toContain(
+      ".tiptap-editorial:not(.tiptap-editor-surface) h1, .tiptap-editorial:not(.tiptap-editor-surface) h2, .tiptap-editorial:not(.tiptap-editor-surface) h3 { font-family: var(--font-display), sans-serif; }"
+    );
+  });
+
+  it("renders public editorial table headers at 0.75rem", () => {
+    expect(css).toContain(".tiptap-editorial:not(.tiptap-editor-surface) table thead th {");
+    expect(css).toContain("font-size: 0.75rem");
+    expect(css).not.toContain(".tiptap-editorial table thead th {");
+  });
+});
+
+describe("size-adjust fallback metrics", () => {
+  const globals = readFileSync(resolve(process.cwd(), "styles/globals.css"), "utf8");
+
+  it("declares a metric-matched Newsreader fallback face", () => {
+    expect(globals).toContain("size-adjust");
+    expect(globals).toContain('"Newsreader-fallback"');
+  });
+
+  it("wires the fallback into the public body font stack", () => {
+    expect(globals).toContain('var(--font-body), "Newsreader-fallback", Georgia, serif');
+  });
+});

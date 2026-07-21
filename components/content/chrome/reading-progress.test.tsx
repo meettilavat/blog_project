@@ -14,5 +14,7 @@ describe("components/content/reading-progress.tsx", () => {
     expect(html).toContain("data-reading-progress");
     expect(html).toContain("data-reading-progress-bar");
     expect(html).toContain("custom-progress");
+    expect(html).toContain("h-[2px]");
+    expect(html).toContain("bg-accent");
   });
 });

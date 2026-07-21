@@ -29,9 +29,9 @@ export function PublicStatusNotice({
       className={cn("mx-auto max-w-[58rem] border-y border-border/80 py-[clamp(2.75rem,7vw,5.5rem)]", className)}
     >
       <div className="grid gap-6 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-10">
-        <p className="journal-label text-accent">{label}</p>
+        <p className="kicker text-accent">{label}</p>
         <div>
-          <Heading className="max-w-[18ch] text-balance font-serif text-[clamp(2.5rem,6vw,5rem)] leading-[0.98] tracking-[-0.03em] text-foreground">
+          <Heading className="max-w-[18ch] text-balance font-display text-[clamp(2.5rem,6vw,5rem)] leading-[0.98] tracking-[-0.03em] text-foreground">
             {title}
           </Heading>
           <p className="mt-5 max-w-[54ch] text-base leading-[1.75] text-foreground/75">

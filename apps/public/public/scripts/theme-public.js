@@ -1,7 +1,7 @@
 (() => {
   try {
     const root = document.documentElement;
-    const THEME_COLORS = { light: "#f6f2ea", dark: "#15120f" };
+    const THEME_COLORS = { light: "#F7F7F5", dark: "#0B0D10" };
     const applyTheme = (theme) => {
       root.classList.toggle("dark", theme === "dark");
       root.dataset.theme = theme;

@@ -44,14 +44,12 @@ describe("apps/public/components/public-header.tsx", () => {
     pathname = "/";
   });
 
-  it("renders brand, nav links, social links, and menu controls", () => {
+  it("renders brand, nav links, theme toggle, and menu controls without socials", () => {
     const html = renderToStaticMarkup(<PublicHeader />);
 
     expect(html).toContain("meettilavat.com");
     expect(html).toContain(">Read<");
     expect(html).toContain(">Resume<");
-    expect(html).toContain("aria-label=\"GitHub\"");
-    expect(html).toContain("aria-label=\"LinkedIn\"");
     expect(html).toContain("ThemeToggleStub");
     expect(html).toContain("Open navigation menu");
     expect(html).not.toContain("hidden=\"\"");
@@ -59,10 +57,14 @@ describe("apps/public/components/public-header.tsx", () => {
     expect(html).toContain("inert=\"\"");
     expect(html).toContain("tabindex=\"-1\"");
     expect(html).toContain("min-w-0");
-    expect(html).toContain("micro:flex");
-    expect(html).toContain("Mobile social links");
-    expect(html).toContain(GITHUB_PROFILE_URL);
-    expect(html).toContain(LINKEDIN_PROFILE_URL);
+    expect(html).toContain("site-canvas");
+    expect(html).not.toContain("journal-canvas");
+    expect(html).not.toContain("aria-label=\"GitHub\"");
+    expect(html).not.toContain("aria-label=\"LinkedIn\"");
+    expect(html).not.toContain("micro:flex");
+    expect(html).not.toContain("Mobile social links");
+    expect(html).not.toContain(GITHUB_PROFILE_URL);
+    expect(html).not.toContain(LINKEDIN_PROFILE_URL);
     expect(html).toContain("aria-current=\"page\" href=\"/\">Read");
     expect(html).toContain("h-11 w-11");
     expect(html).toContain("min-h-11");

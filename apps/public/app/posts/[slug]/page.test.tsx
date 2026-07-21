@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { notFound } from "next/navigation";
 import { POST_DESCRIPTION_FALLBACK } from "@/lib/seo/public-site";
+import { formatDate } from "@/lib/typography/date";
 
 const HTTPS_PROTOCOL = "https://";
 const SITE_DOMAIN = "www.meettilavat.com";
@@ -61,10 +62,6 @@ vi.mock("@/components/posts/post-meta-row", () => ({
   default: (props: { createdAt: string; updatedAt: string }) => postMetaRowRenderMock(props)
 }));
 
-vi.mock("@/components/motion/fade-in", () => ({
-  FadeIn: ({ children }: { children: React.ReactNode }) => <section>{children}</section>
-}));
-
 import PostPage, { generateMetadata, generateStaticParams } from "./page";
 
 describe("apps/public/app/posts/[slug]/page.tsx", () => {
@@ -74,7 +71,10 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
     expect(existsSync(routeNotFoundPath)).toBe(true);
     const source = readFileSync(routeNotFoundPath, "utf8");
     expect(source).toContain("PublicStatusNotice");
-    expect(source).toContain("Missing field note");
+    expect(source).toContain("Post not found.");
+    expect(source).toContain("404");
+    expect(source).not.toContain("field note");
+    expect(source).not.toContain("journal");
   });
 
   beforeEach(() => {
@@ -207,6 +207,13 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
         updatedAt: "2024-01-02T00:00:00.000Z"
       }
     });
+    getPublishedPostsMock.mockResolvedValue({
+      ok: true,
+      data: [
+        { slug: "published-post", title: "Published Post" },
+        { slug: "older-post", title: "An Older Post" }
+      ]
+    });
     analyzeContentMock.mockReturnValue({
       plainText: "Published post plain text",
       headings: [{ id: "intro", level: 2, text: "Intro" }],
@@ -256,6 +263,10 @@ describe("apps/public/app/posts/[slug]/page.tsx", () => {
       })
     );
     expect(html).toContain("max-w-[64rem]");
+    expect(html).toContain(formatDate("2024-01-01T00:00:00.000Z"));
+    expect(html).toContain("Previous");
+    expect(html).toContain("An Older Post");
+    expect(html).toContain("/posts/older-post");
     expect(html).toContain("application/ld+json");
     expect(html).toContain("\"@type\":\"BlogPosting\"");
     expect(html).toContain(`\"url\":\"${SITE_URL}/posts/published-post\"`);

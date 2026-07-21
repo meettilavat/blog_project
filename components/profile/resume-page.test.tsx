@@ -28,10 +28,6 @@ vi.mock("lucide-react", () => ({
   Download: ({ className }: { className?: string }) => <svg className={className} data-icon="download" />,
 }));
 
-vi.mock("@/components/profile/reveal-section", () => ({
-  RevealSection: ({ children }: { children: React.ReactNode }) => <section>{children}</section>
-}));
-
 import ResumePage from "./resume-page";
 
 describe("components/profile/resume-page.tsx", () => {
@@ -80,5 +76,25 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).not.toContain("rounded-[2rem]");
     expect(html).not.toContain("rounded-full");
     expect(html).not.toContain("radial-gradient");
+  });
+
+  it("stays effect-free and drops journal styling", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+
+    // No reveal wrappers or journal-* classes remain (spec §4).
+    expect(html).not.toContain("RevealSection");
+    expect(html).not.toContain("journal-reveal");
+    expect(html).not.toContain("journal-label");
+    expect(html).not.toContain("journal-");
+    // journal-label is replaced by the shared kicker utility.
+    expect(html).toContain("kicker");
+
+    // The hero kicker drops the "field record" journal framing.
+    expect(html).toContain("Curriculum vitae");
+    expect(html).not.toContain("field record");
+
+    // Headings use the display font, not the serif class.
+    expect(html).toContain("font-display");
+    expect(html).not.toContain("font-serif");
   });
 });

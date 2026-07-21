@@ -11,10 +11,6 @@ vi.mock("@/components/content/chrome/table-of-contents", () => ({
   )
 }));
 
-vi.mock("@/components/motion/fade-in", () => ({
-  FadeIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
-}));
-
 vi.mock("@/components/posts/post-cover-media", () => ({
   default: ({ alt }: { alt: string }) => <div role="img" aria-label={alt}>PostCoverMediaStub</div>
 }));
@@ -37,7 +33,7 @@ describe("components/posts/post-detail-article.tsx", () => {
       />
     );
 
-    expect(html).toContain("journal-article-canvas");
+    expect(html).toContain("max-w-[92rem]");
     expect(html).toContain("max-w-[56rem]");
     expect(html).not.toContain("max-w-[44rem]");
     expect(html).toContain("max-w-[64rem]");
@@ -54,11 +50,31 @@ describe("components/posts/post-detail-article.tsx", () => {
     expect(html).toContain("aspect-[16/9]");
     expect(html).not.toContain("max-h-[68vh]");
     expect(html).not.toContain("calc(100vw");
-    expect(html).not.toContain("left-1/2");
+    expect(html).toContain("marginalia:relative");
+    expect(html).toContain("marginalia:left-1/2");
+    expect(html).toContain("marginalia:-translate-x-1/2");
+    expect(html).toContain("marginalia:w-[92rem]");
     expect(html).not.toContain("2xl:");
   });
 
-  it("renders the entry-type eyebrow and end-of-entry colophon", () => {
+  it("renders the title in the display face", () => {
+    const html = renderToStaticMarkup(
+      <PostDetailArticle
+        title="A field report"
+        content={{ type: "doc", content: [] }}
+        headings={[]}
+        reading={{ minutes: 4, words: 820 }}
+        createdAt="2024-01-01T00:00:00.000Z"
+        updatedAt="2024-01-01T00:00:00.000Z"
+        publishedPrefix="Published"
+      />
+    );
+
+    expect(html).toContain("font-display");
+    expect(html).not.toContain("font-serif");
+  });
+
+  it("renders the date eyebrow and end-of-entry colophon with the All writing back link", () => {
     const html = renderToStaticMarkup(
       <PostDetailArticle
         title="A field report"
@@ -70,11 +86,82 @@ describe("components/posts/post-detail-article.tsx", () => {
         createdAt="2024-01-01T00:00:00.000Z"
         updatedAt="2024-01-01T00:00:00.000Z"
         publishedPrefix="Published"
-        eyebrow="Case study"
+        eyebrow="Jan 1, 2024"
       />
     );
 
-    expect(html).toContain("Case study");
+    expect(html).toContain("Jan 1, 2024");
     expect(html).toContain("End of entry");
+    expect(html).toContain("All writing");
+    expect(html).not.toContain("Back to the ledger");
+    expect(html).not.toContain("ledger");
+    expect(html).not.toContain("journal-label");
+  });
+
+  it("renders the read-next footer block with the label, title link, and why when provided", () => {
+    const html = renderToStaticMarkup(
+      <PostDetailArticle
+        title="A field report"
+        content={{ type: "doc", content: [] }}
+        headings={[]}
+        reading={{ minutes: 4, words: 820 }}
+        createdAt="2024-01-01T00:00:00.000Z"
+        updatedAt="2024-01-01T00:00:00.000Z"
+        publishedPrefix="Published"
+        readNext={{
+          label: "Read next",
+          slug: "deeper-dive",
+          title: "A deeper dive",
+          why: "Builds directly on this report."
+        }}
+      />
+    );
+
+    expect(html).toContain("Read next");
+    expect(html).toContain("A deeper dive");
+    expect(html).toContain("Builds directly on this report.");
+    expect(html).toContain("/posts/deeper-dive");
+  });
+
+  it("renders the Previous label without a why when that is the resolved read-next", () => {
+    const html = renderToStaticMarkup(
+      <PostDetailArticle
+        title="A field report"
+        content={{ type: "doc", content: [] }}
+        headings={[]}
+        reading={{ minutes: 4, words: 820 }}
+        createdAt="2024-01-01T00:00:00.000Z"
+        updatedAt="2024-01-01T00:00:00.000Z"
+        publishedPrefix="Published"
+        readNext={{
+          label: "Previous",
+          slug: "older-post",
+          title: "An older post"
+        }}
+      />
+    );
+
+    expect(html).toContain("Previous");
+    expect(html).toContain("An older post");
+    expect(html).toContain("/posts/older-post");
+    expect(html).not.toContain("Read next");
+  });
+
+  it("hides the read-next block when read-next is null", () => {
+    const html = renderToStaticMarkup(
+      <PostDetailArticle
+        title="A field report"
+        content={{ type: "doc", content: [] }}
+        headings={[]}
+        reading={{ minutes: 4, words: 820 }}
+        createdAt="2024-01-01T00:00:00.000Z"
+        updatedAt="2024-01-01T00:00:00.000Z"
+        publishedPrefix="Published"
+        readNext={null}
+      />
+    );
+
+    expect(html).not.toContain("Read next");
+    expect(html).not.toContain("Previous");
   });
 });

@@ -4,10 +4,11 @@ import {
   getPublishedPostBySlug,
   getPublishedPosts
 } from "@/lib/posts/repository/public-posts-repository";
-import { ENTRY_TYPE_LABEL, entryType } from "@/lib/posts/featured";
 import {
   analyzeContent
 } from "@/lib/tiptap/content-pipeline";
+import { resolveReadNext } from "@/lib/posts/read-next";
+import { formatDate } from "@/lib/typography/date";
 import { getConfiguredSiteUrl } from "@/lib/site-url";
 import { ReadingProgress } from "@/components/content/chrome/reading-progress";
 import PostDetailArticle from "@/components/posts/post-detail-article";
@@ -91,6 +92,10 @@ export default async function PostPage({ params }: Props) {
   }
   const post = postResult.data;
 
+  const postsResult = await getPublishedPosts();
+  const allPosts = postsResult.ok ? postsResult.data : [];
+  const readNext = resolveReadNext(post.slug, allPosts);
+
   const contentPipeline = analyzeContent(post.content);
   const configuredSiteUrl = getConfiguredSiteUrl();
   const description = buildPostDescription({
@@ -124,7 +129,8 @@ export default async function PostPage({ params }: Props) {
         createdAt={post.createdAt}
         updatedAt={post.updatedAt}
         publishedPrefix="Published"
-        eyebrow={ENTRY_TYPE_LABEL[entryType(post.slug)]}
+        eyebrow={formatDate(post.createdAt)}
+        readNext={readNext}
       />
     </>
   );
