@@ -61,13 +61,13 @@ export function ReadingProgress({ className, offset }: Props) {
   return (
     <div
       ref={containerRef}
-      className={cn("fixed left-0 right-0 z-50 h-[3px]", className)}
+      className={cn("fixed left-0 right-0 z-50 h-[2px]", className)}
       aria-hidden
       data-reading-progress
     >
       <div
         ref={barRef}
-        className="h-full origin-left rounded-r-full bg-accent will-change-transform"
+        className="h-full origin-left bg-accent will-change-transform"
         style={{ transform: "scaleX(0)" }}
         data-reading-progress-bar
       />
