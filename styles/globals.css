@@ -102,6 +102,14 @@ html[data-app="admin"].dark {
   color-scheme: dark;
 }
 
+/* Fallback metrics tuned so the swap to Newsreader doesn't shift lines */
+@font-face {
+  font-family: "Newsreader-fallback";
+  src: local("Georgia");
+  size-adjust: 105%;
+  ascent-override: 95%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -111,7 +119,7 @@ body {
 }
 
 html[data-app="public"] body {
-  font-family: var(--font-body), Georgia, serif;
+  font-family: var(--font-body), "Newsreader-fallback", Georgia, serif;
   background-color: var(--background);
 }
 
@@ -228,10 +236,6 @@ a {
     max-width: none;
     margin: 0;
     display: block;
-  }
-
-  .resume-sheet > .journal-reveal {
-    margin-bottom: 1.1rem;
   }
 
   .resume-sheet h2,
