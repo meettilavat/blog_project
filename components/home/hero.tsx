@@ -1,12 +1,12 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { formatDate } from "@/lib/typography/date";
 import type { FeaturedPost } from "@/lib/posts/featured";
-
-// The dynamic() call points at the loader (a client component), not the field
-// itself: the loader returns null for prefers-reduced-motion / Save-Data users
-// before the field chunk is ever requested (spec §5.1).
-const HeroFieldLoader = dynamic(() => import("@/components/home/hero-field-loader"), { ssr: false });
+// HeroFieldLoader is a client component ("use client"); it owns the gated,
+// ssr:false dynamic import of the field chunk (returning null for
+// prefers-reduced-motion / Save-Data before the chunk is ever requested,
+// spec §5.1). A Server Component cannot pass ssr:false to next/dynamic, so the
+// loader is imported directly here rather than via dynamic().
+import HeroFieldLoader from "@/components/home/hero-field-loader";
 
 type HeroProps = {
   featured: FeaturedPost;
