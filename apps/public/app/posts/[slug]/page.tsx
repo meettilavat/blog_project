@@ -4,7 +4,6 @@ import {
   getPublishedPostBySlug,
   getPublishedPosts
 } from "@/lib/posts/repository/public-posts-repository";
-import { ENTRY_TYPE_LABEL, entryType } from "@/lib/posts/featured";
 import {
   analyzeContent
 } from "@/lib/tiptap/content-pipeline";
@@ -124,7 +123,6 @@ export default async function PostPage({ params }: Props) {
         createdAt={post.createdAt}
         updatedAt={post.updatedAt}
         publishedPrefix="Published"
-        eyebrow={ENTRY_TYPE_LABEL[entryType(post.slug)]}
       />
     </>
   );
