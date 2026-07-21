@@ -31,6 +31,11 @@ export default async function OpenGraphImage() {
     mono ? { name: "IBM Plex Mono", data: mono, style: "normal" as const, weight: 400 as const } : null
   ].filter((f): f is NonNullable<typeof f> => f !== null);
 
+  // next/og (satori) requires at least one font: passing `fonts: []` throws
+  // "No fonts are loaded". When the branded TTFs aren't vendored, omit the
+  // option entirely so next/og falls back to its bundled default font.
+  const imageOptions = fonts.length > 0 ? { ...size, fonts } : size;
+
   return new ImageResponse(
     (
       <div style={{ display: "flex", width: "100%", height: "100%", padding: "56px 60px", backgroundColor: "#0B0D10", color: "#E8EAEE", fontFamily: grotesk ? "Space Grotesk" : "sans-serif" }}>
@@ -47,6 +52,6 @@ export default async function OpenGraphImage() {
         </div>
       </div>
     ),
-    { ...size, fonts }
+    imageOptions
   );
 }
