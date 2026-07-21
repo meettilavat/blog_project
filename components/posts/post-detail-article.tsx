@@ -5,6 +5,7 @@ import PostCoverMedia from "@/components/posts/post-cover-media";
 import PostMetaRow from "@/components/posts/post-meta-row";
 import type { PostContent } from "@/lib/posts/contracts/domain/types";
 import type { HeadingItem } from "@/lib/tiptap/metadata/content-metadata";
+import type { ResolvedReadNext } from "@/lib/posts/read-next";
 import { cn } from "@/lib/ui/classnames";
 
 type ReadingStats = {
@@ -23,6 +24,7 @@ type PostDetailArticleProps = {
   updatedAt: string;
   publishedPrefix: string;
   eyebrow?: string;
+  readNext?: ResolvedReadNext | null;
   draftBanner?: React.ReactNode;
 };
 
@@ -43,6 +45,7 @@ export function PostDetailArticle({
   updatedAt,
   publishedPrefix,
   eyebrow,
+  readNext,
   draftBanner
 }: PostDetailArticleProps) {
   const hasHeadings = headings.length > 0;
@@ -65,7 +68,7 @@ export function PostDetailArticle({
 
         <header className={cn("space-y-7", HEADER_WIDTH_CLASS)}>
             <div className="space-y-5">
-              {eyebrow ? <p className="journal-label">{eyebrow}</p> : null}
+              {eyebrow ? <p className="kicker">{eyebrow}</p> : null}
               <PostMetaRow
                 createdAt={createdAt}
                 updatedAt={updatedAt}
@@ -73,7 +76,7 @@ export function PostDetailArticle({
                 readStats={reading}
                 className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70 [font-variant-numeric:tabular-nums]"
               />
-              <h1 className="max-w-[24ch] scroll-mt-28 text-balance font-serif text-[clamp(2.65rem,6vw,5.15rem)] leading-[0.99] tracking-[-0.03em] text-foreground">
+              <h1 className="max-w-[24ch] scroll-mt-28 text-balance font-display text-[clamp(2.65rem,6vw,5.15rem)] leading-[0.99] tracking-[-0.03em] text-foreground">
                 {title}
               </h1>
               {excerpt ? (
@@ -149,8 +152,20 @@ export function PostDetailArticle({
               className="inline-flex min-h-11 items-center gap-2 border-b border-accent/60 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
             >
               <span aria-hidden="true">←</span>
-              Back to the ledger
+              All writing
             </Link>
+            {readNext ? (
+              <div className="border-t border-border/60 pt-5 sm:col-span-2">
+                <p className="kicker">{readNext.label}</p>
+                <Link
+                  href={`/posts/${readNext.slug}`}
+                  className="group mt-2 inline-block font-display text-[clamp(1.25rem,2vw,1.6rem)] font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+                >
+                  {readNext.title}
+                </Link>
+                {readNext.why ? <p className="mt-1 text-sm leading-relaxed text-foreground/70">{readNext.why}</p> : null}
+              </div>
+            ) : null}
           </footer>
       </article>
     </>
