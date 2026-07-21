@@ -18,7 +18,7 @@ export default function WritingIndex({ posts }: { posts: PostListItem[] }) {
               href={`/posts/${post.slug}`}
               className="group grid gap-x-6 gap-y-1 border-b border-border/60 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground note:grid-cols-[8rem_minmax(0,1fr)_auto] note:items-baseline"
             >
-              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/70 [font-variant-numeric:tabular-nums]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/70 [font-variant-numeric:tabular-nums] group-[:visited]:text-[var(--ink-muted)]">
                 {formatDate(post.createdAt)}
               </span>
               <span className="min-w-0">
@@ -26,7 +26,7 @@ export default function WritingIndex({ posts }: { posts: PostListItem[] }) {
                   {post.title}
                 </span>
                 {post.excerpt ? (
-                  <span className="mt-1 block text-sm leading-relaxed text-foreground/70">{post.excerpt}</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-foreground/70 group-[:visited]:text-[var(--ink-muted)]">{post.excerpt}</span>
                 ) : null}
               </span>
               <span className="flex items-center text-accent" aria-hidden="true">

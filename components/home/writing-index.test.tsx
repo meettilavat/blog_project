@@ -21,6 +21,7 @@ describe("components/home/writing-index.tsx", () => {
     expect(html).toContain('href="/posts/b"');
     expect(html).toContain('href="/posts/a"');
     expect(html).toContain("Title b");
+    expect(html).toContain("group-[:visited]:");
   });
 
   it("renders the dek only when an excerpt exists", () => {
