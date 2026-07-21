@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Linkedin, Menu, type LucideIcon, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import ThemeToggle from "@/components/layout/theme-toggle";
-import { getPublicLinks } from "@/lib/public-links";
 import { cn } from "@/lib/ui/classnames";
 
 type NavLink = {
@@ -26,21 +25,6 @@ const NAV_ITEMS = [
     matches: (pathname: string) => pathname === "/resume"
   }
 ] as const;
-
-const publicLinks = getPublicLinks();
-
-const SOCIAL_LINKS: Array<{ href: string; label: string; Icon: LucideIcon }> = [
-  {
-    href: publicLinks.githubProfile,
-    label: "GitHub",
-    Icon: Github
-  },
-  {
-    href: publicLinks.linkedInProfile,
-    label: "LinkedIn",
-    Icon: Linkedin
-  }
-];
 
 const HEADER_SURFACE_CLASS =
   "sticky top-0 z-30 overflow-hidden border-b bg-background/[0.97] text-foreground transition-[background-color,border-color,box-shadow] duration-300 dark:bg-background/[0.98]";
@@ -73,25 +57,6 @@ function DesktopNav({ navLinks }: { navLinks: NavLink[] }) {
         </Link>
       ))}
     </nav>
-  );
-}
-
-function SocialIconLinks() {
-  return (
-    <div className="hidden items-center gap-0.5 micro:flex">
-      {SOCIAL_LINKS.map(({ href, label, Icon }) => (
-        <a
-          key={href}
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={label}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-foreground/70 transition-[color,background-color] duration-200 hover:bg-foreground/8 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:h-9 sm:w-9 motion-reduce:transition-none"
-        >
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </a>
-      ))}
-    </div>
   );
 }
 
@@ -131,21 +96,6 @@ function MobileNav({
           >
             {item.label}
           </Link>
-        ))}
-      </nav>
-      <nav aria-label="Mobile social links" className="grid grid-cols-2 gap-x-5">
-        {SOCIAL_LINKS.map(({ href, label }) => (
-          <a
-            key={`mobile-social-${href}`}
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            tabIndex={isMenuOpen ? undefined : -1}
-            className="inline-flex min-h-11 items-center justify-between border-b border-border/55 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/70 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-          >
-            {label}
-            <span aria-hidden="true">↗</span>
-          </a>
         ))}
       </nav>
       </div>
@@ -199,7 +149,7 @@ export default function PublicHeader() {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-foreground/10"
         aria-hidden="true"
       />
-      <div className="journal-canvas relative z-10 py-2.5 sm:py-3">
+      <div className="site-canvas relative z-10 py-2.5 sm:py-3">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link href="/" className="min-w-0 truncate font-mono text-[13px] font-semibold tracking-[-0.02em] sm:text-sm">
             meettilavat.com
@@ -207,7 +157,6 @@ export default function PublicHeader() {
           <div className="hidden h-[18px] w-px bg-border sm:block" aria-hidden="true" />
           <DesktopNav navLinks={navLinks} />
           <div className="ml-auto flex shrink-0 items-center gap-1">
-            <SocialIconLinks />
             <ThemeToggle className="h-11 w-11 rounded-sm border-0 bg-transparent text-foreground/70 hover:bg-foreground/8 hover:text-foreground sm:h-9 sm:w-9" />
             <button
               type="button"
