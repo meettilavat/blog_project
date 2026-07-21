@@ -33,7 +33,7 @@ describe("components/posts/post-detail-article.tsx", () => {
       />
     );
 
-    expect(html).toContain("journal-article-canvas");
+    expect(html).toContain("max-w-[92rem]");
     expect(html).toContain("max-w-[56rem]");
     expect(html).not.toContain("max-w-[44rem]");
     expect(html).toContain("max-w-[64rem]");

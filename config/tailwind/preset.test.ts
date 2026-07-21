@@ -42,7 +42,7 @@ describe("config/tailwind/preset.mjs", () => {
 
     expect(fontFamily.sans[0]).toBe("var(--font-display)");
     expect(fontFamily.display[0]).toBe("var(--font-display)");
-    expect(fontFamily.serif[0]).toBe("var(--font-serif)");
+    expect(fontFamily.serif).toBeUndefined();
     expect(fontFamily.mono[0]).toBe("var(--font-mono)");
     expect(container.center).toBe(true);
     expect(container.padding).toBe("1.25rem");
