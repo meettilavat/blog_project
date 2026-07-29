@@ -475,6 +475,9 @@ describe("HeroField", () => {
   // describe. As a sibling block these tests would leave `setTimeout` stubbed
   // for whatever runs next.
   describe("field harness platform", () => {
+    // Armed through `window.setTimeout` rather than the bare global, so the
+    // `windowStub` timer members stay pinned as well: both paths are reachable
+    // from production code and each needs a test that fails without it.
     it("fires timers in due order when the clock advances", () => {
       const harness = createFieldHarness();
       const order: string[] = [];
@@ -491,13 +494,50 @@ describe("HeroField", () => {
       expect(harness.pendingTimers()).toBe(0);
     });
 
+    it("picks the earliest-due timer, not the first-armed, within one window", () => {
+      const harness = createFieldHarness();
+      const order: string[] = [];
+      // Both due inside the single window below, and armed in the opposite order
+      // to their due times — so array order and due order genuinely disagree.
+      // The test above cannot catch a comparator that just takes the first entry
+      // in range, because there `late` is alone in its window.
+      window.setTimeout(() => order.push("late"), 200);
+      window.setTimeout(() => order.push("early"), 50);
+
+      harness.advanceClock(300);
+      expect(order).toEqual(["early", "late"]);
+      expect(harness.pendingTimers()).toBe(0);
+    });
+
+    it("breaks a due-time tie in arming order", () => {
+      const harness = createFieldHarness();
+      const order: string[] = [];
+      window.setTimeout(() => order.push("first"), 50);
+      window.setTimeout(() => order.push("second"), 50);
+
+      harness.advanceClock(50);
+      // The FIFO half of the documented ordering, and the reason the comparator
+      // uses a strict `<`: `<=` would take the later array entry on a tie and
+      // fire equal-due timers backwards.
+      expect(order).toEqual(["first", "second"]);
+      expect(harness.pendingTimers()).toBe(0);
+    });
+
+    // The bare globals, not `window.`-prefixed: that is how the field already
+    // reaches for `requestAnimationFrame`, so a transit timer would plausibly be
+    // armed the same way. Unstubbed, `setTimeout` here would be Node's — the
+    // callback would sit on the real event loop instead of this queue, and
+    // `clearTimeout` would be handed an id it knows nothing about.
     it("does not fire a cleared timer", () => {
       const harness = createFieldHarness();
       let fired = false;
-      const id = window.setTimeout(() => {
+      const id = setTimeout(() => {
         fired = true;
       }, 50);
-      window.clearTimeout(id);
+      expect(harness.pendingTimers()).toBe(1);
+
+      clearTimeout(id);
+      expect(harness.pendingTimers()).toBe(0);
       harness.advanceClock(500);
       expect(fired).toBe(false);
     });
@@ -513,10 +553,44 @@ describe("HeroField", () => {
       expect(order).toEqual(["first", "second"]);
     });
 
+    it("does not rewind the clock for an overdue timer", () => {
+      const harness = createFieldHarness();
+      const order: string[] = [];
+      // Due at +100, but a live frame chain carries the clock well past that
+      // before any advanceClock reaches it. Every test that flushes a long
+      // entrance and then waits on a timer lands in exactly this state.
+      window.setTimeout(() => {
+        order.push("outer");
+        window.setTimeout(() => order.push("inner"), 200);
+      }, 100);
+      requestAnimationFrame(function spin() {
+        requestAnimationFrame(spin);
+      });
+      harness.flush(20); // clock 1000 -> 1320, past the timer's due time of 1100
+
+      harness.advanceClock(1);
+      // The overdue callback runs at "now" (1320) the way a browser runs it, not
+      // retroactively at the 1100 it missed — so the timer it arms is due 1520
+      // and stays pending. Rewinding to 1100 would make that inner timer due
+      // 1300, inside this very 1321 window, and fire it here.
+      expect(order).toEqual(["outer"]);
+      expect(harness.pendingTimers()).toBe(1);
+    });
+
     it("advancing the clock queues no animation frames on its own", () => {
       const harness = createFieldHarness();
+      let ran = 0;
+      requestAnimationFrame(() => {
+        ran++;
+      });
       harness.advanceClock(60_000);
-      expect(harness.pending()).toBe(0);
+      // Still queued AND still unrun. Asserting only that nothing is pending
+      // would pass trivially when no frame was ever requested, which is what
+      // made the first version of this test unable to fail — and it is the test
+      // carrying the guarantee every "zero frames while idle" assertion rests
+      // on, so it has to observe a frame surviving unexecuted.
+      expect(harness.pending()).toBe(1);
+      expect(ran).toBe(0);
     });
 
     it("shares one clock between timers and frame timestamps", () => {
@@ -528,24 +602,30 @@ describe("HeroField", () => {
       // timer members.
       requestAnimationFrame((now) => stamps.push(now));
       harness.flush(1);
-      // The frame ran after 5s of virtual time, so its timestamp reflects it.
-      expect(stamps[0]).toBeGreaterThanOrEqual(5_000);
+      // The clock starts at 1000, so 5s of timer time plus one 16ms frame puts
+      // this at 6016. The threshold has to clear 6000, not 5000: timers running
+      // on a clock of their own would leave the frame stamped ~1016, and a 5000
+      // floor would not have caught the 1000ms start offset either way.
+      expect(stamps[0]).toBeGreaterThanOrEqual(6_000);
     });
 
     it("reports a changed rect through setSize without notifying the observer", () => {
       const harness = createFieldHarness({ width: 800, height: 400 });
-      let notified = 0;
-      new ResizeObserver(() => {
-        notified++;
+      const seen: Array<{ width: number; height: number }> = [];
+      new ResizeObserver((entries) => {
+        for (const entry of entries) seen.push({ ...entry.contentRect });
       }).observe(harness.canvas);
 
       harness.setSize(400, 200);
       expect(harness.canvas.getBoundingClientRect().width).toBe(400);
       expect(harness.canvas.getBoundingClientRect().height).toBe(200);
-      expect(notified).toBe(0);
+      expect(seen).toHaveLength(0);
 
       harness.triggerResize();
-      expect(notified).toBe(1);
+      // The delivered entry has to carry the new size, not just arrive: the
+      // coordinate-fix task could read `contentRect` instead of re-measuring,
+      // and asserting only the notification count would let it read zeroes.
+      expect(seen).toEqual([{ width: 400, height: 200 }]);
     });
 
     it("delivers nothing through a disconnected ResizeObserver", () => {

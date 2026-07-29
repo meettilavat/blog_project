@@ -55,6 +55,13 @@ export type FieldHarnessOptions = {
 
 type Listener = (event: unknown) => void;
 
+/**
+ * How many timers one `advanceClock` call will fire before it gives up. Named so
+ * the throw below can quote the real limit instead of a hand-copied literal that
+ * drifts the first time the guard is retuned.
+ */
+const MAX_TIMERS_PER_ADVANCE = 10_000;
+
 function createListenerTarget() {
   const listeners = new Map<string, Listener[]>();
   return {
@@ -302,6 +309,12 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   vi.stubGlobal("getComputedStyle", getComputedStyleStub);
   vi.stubGlobal("window", windowStub);
   vi.stubGlobal("document", documentStub);
+  // Both access paths, on purpose. `windowStub` carries the timer members for
+  // `window.setTimeout(...)` callers, and these two cover the bare globals —
+  // which is the idiom the field already uses for frames (`requestAnimationFrame`
+  // in `schedule()`). Without them, production code arming a bare `setTimeout`
+  // would get Node's real timer: it would fire on the real event loop, i.e.
+  // never inside a synchronous test, while `pendingTimers()` reported 0.
   vi.stubGlobal("setTimeout", setTimeoutStub);
   vi.stubGlobal("clearTimeout", clearTimeoutStub);
   vi.stubGlobal("ResizeObserver", ResizeObserverStub);
@@ -332,6 +345,14 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
      * Runs up to `maxFrames` batches, advancing a virtual clock. Stops early
      * when the queue drains, and returns how many frames actually ran — so
      * `ran < maxFrames` proves the loop halted on its own.
+     *
+     * Mirroring `advanceClock`, this moves the clock but fires **no timers**: a
+     * timer that comes due inside the span these frames cover stays pending
+     * until an `advanceClock` reaches it. Only `advanceClock` fires timers. That
+     * keeps frames and time-driven work independently drivable, at the cost that
+     * the clock can end up past a pending timer's due time — `flush(1000)` is
+     * 16s of virtual time — which is why `advanceClock` fires an overdue timer
+     * at the current clock rather than rewinding to the due time it missed.
      */
     flush(maxFrames = 1, deltaMs = 16) {
       let ran = 0;
@@ -367,31 +388,49 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
 
     /**
      * Advances the shared clock, firing timers whose due time falls inside the
-     * window, oldest first. Deliberately does NOT run animation frames: a test
-     * that advances 30s and then asserts `pending() === 0` is what proves the
-     * transit schedule uses timers rather than a live rAF chain.
+     * window, **earliest-due first** — not arming order: a timer armed second
+     * but due sooner fires first. Timers sharing a due time fire in arming
+     * order, the FIFO guarantee a browser gives; that follows from the strict
+     * `<` in the comparator below, so `<=` would silently reverse it.
+     *
+     * Deliberately does NOT run animation frames: a test that advances 30s and
+     * then asserts `pending() === 0` is what proves the transit schedule uses
+     * timers rather than a live rAF chain.
      *
      * A timer armed from inside a callback and due within the same window still
      * fires, matching the browser. A callback that re-arms itself at zero delay
      * would otherwise spin forever, so the cap throws rather than returning: a
-     * silent bail at 10,000 iterations would surface as an inexplicable
-     * assertion failure somewhere downstream, with nothing pointing back here.
+     * silent bail would surface as an inexplicable assertion failure somewhere
+     * downstream, with nothing pointing back here.
      */
     advanceClock(ms: number) {
       const target = clock + ms;
       for (let guard = 0; ; guard++) {
-        if (guard >= 10_000) {
-          throw new Error(
-            `advanceClock(${ms}) fired 10000 timers without draining — a timer callback is re-arming itself inside the window`
-          );
-        }
         let next: { id: number; due: number; callback: () => void } | null = null;
         for (const entry of timers) {
           if (entry.due <= target && (!next || entry.due < next.due)) next = entry;
         }
         if (!next) break;
+        // Checked here rather than at the top of the loop so the evidence below
+        // is real: after the last timer drains there is nothing to report on.
+        if (guard >= MAX_TIMERS_PER_ADVANCE) {
+          throw new Error(
+            `advanceClock(${ms}) fired ${MAX_TIMERS_PER_ADVANCE} timers without draining — ` +
+              `most likely a timer callback re-arming itself inside the window, though ` +
+              `${MAX_TIMERS_PER_ADVANCE} independent timers due in the same span look identical ` +
+              `from here. Still pending: ${timers.length}, earliest due ${next.due}; ` +
+              `clock ${clock}, window ends ${target}.`
+          );
+        }
         timers = timers.filter((entry) => entry !== next);
-        clock = next.due;
+        // `max`, not assignment: `flush()` can already have carried the clock
+        // past this timer's due time, and an overdue timer fires at *now* — a
+        // browser does not rewind time to the deadline it missed. Assigning
+        // would run the callback at a stale clock, so a timer it arms would be
+        // dated from that stale value and could come due inside this very
+        // window: a transit chained off a timer would start thousands of ms
+        // early, with nothing pointing at the harness.
+        clock = Math.max(clock, next.due);
         next.callback();
       }
       clock = target;
