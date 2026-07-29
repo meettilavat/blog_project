@@ -372,12 +372,19 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
      * transit schedule uses timers rather than a live rAF chain.
      *
      * A timer armed from inside a callback and due within the same window still
-     * fires, matching the browser. The iteration cap catches a callback that
-     * re-arms itself at zero delay, which would otherwise hang the suite.
+     * fires, matching the browser. A callback that re-arms itself at zero delay
+     * would otherwise spin forever, so the cap throws rather than returning: a
+     * silent bail at 10,000 iterations would surface as an inexplicable
+     * assertion failure somewhere downstream, with nothing pointing back here.
      */
     advanceClock(ms: number) {
       const target = clock + ms;
-      for (let guard = 0; guard < 10_000; guard++) {
+      for (let guard = 0; ; guard++) {
+        if (guard >= 10_000) {
+          throw new Error(
+            `advanceClock(${ms}) fired 10000 timers without draining — a timer callback is re-arming itself inside the window`
+          );
+        }
         let next: { id: number; due: number; callback: () => void } | null = null;
         for (const entry of timers) {
           if (entry.due <= target && (!next || entry.due < next.due)) next = entry;
