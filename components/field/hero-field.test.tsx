@@ -9,6 +9,7 @@ import HeroField, {
   __playedSlugs,
   __resetPlayedSlugs
 } from "@/components/field/hero-field";
+import { LENS_RADIUS_PX } from "@/lib/field/field-motion";
 import { createFieldHarness, maxDrift } from "@/tests/support/field-harness";
 
 const source = readFileSync(resolve(process.cwd(), "components/field/hero-field.tsx"), "utf8");
@@ -468,6 +469,216 @@ describe("HeroField", () => {
   it("uses the shared motion math rather than inlining the arithmetic", () => {
     expect(source).toContain('from "@/lib/field/field-motion"');
     expect(source).toContain("lensInfluence(p.tx, p.ty,");
+  });
+
+  // Nested inside `HeroField` for the same reason as the block below: the
+  // `afterEach` above is what unstubs the globals each harness installs.
+  describe("startField coordinate space", () => {
+    it("maps the pointer into field space when the element has been relaid out", () => {
+      // The Safari case: the hero measured 800x400 at mount, then a webfont swap
+      // relaid the headline and the box became 400x200 with no notification. The
+      // canvas is CSS-sized to fill, so the browser stretches the old bitmap over
+      // the new box — and the pointer must be mapped into field space rather than
+      // compared raw against particle coordinates that live in the old one.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "coordinate space");
+      harness.flush(400);
+      expect(harness.pending()).toBe(0);
+
+      const settled = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+      harness.setSize(400, 200); // no triggerResize: the field does not know
+
+      // Mapped into the 800x400 field space this is (760, 360). Off-centre on
+      // purpose: both axes are then displaced by more than the lens radius, so a
+      // mapping applied to only one of them is caught too. At the element's
+      // centre the vertical error would be 100px — inside the radius, invisible.
+      harness.movePointer(380, 180);
+      harness.flush(1);
+
+      const after = harness.lastFrame().dots;
+      const brightened = after
+        .map((dot, index) => ({
+          x: settled[index].x,
+          y: settled[index].y,
+          gain: dot.alpha - settled[index].alpha
+        }))
+        .filter((dot) => dot.gain > 1e-6);
+
+      // Unmapped, the raw (380, 180) lands where the headline sits and the field
+      // is empty, so nothing brightens at all — which is why this assertion, not
+      // the loop below, is the one that fails without the fix.
+      expect(brightened.length).toBeGreaterThan(0);
+      // And every dot that did brighten sits within the lens radius of the mapped
+      // point rather than somewhere else dense.
+      for (const dot of brightened) {
+        expect(Math.hypot(dot.x - 760, dot.y - 360)).toBeLessThan(LENS_RADIUS_PX + 1);
+      }
+
+      // `nx`/`ny` are field-space too. Normalising the mapped `x` by `bounds.width`
+      // instead would put them at 1.9 and 1.8 — `parallaxOffset` has no clamp, so
+      // the field would slide ~45px instead of the ~14 the 12px parallax and 6px
+      // lens cap allow at this pointer. Nothing above notices: the lens reads
+      // `p.tx`/`p.ty`, so only displacement can catch it.
+      harness.flush(1000);
+      expect(maxDrift(settled, harness.positions())).toBeLessThan(24);
+      stop();
+    });
+
+    it("rebuilds on a debounced resize and repaints exactly once", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize rebuild");
+      harness.flush(400);
+      // The observer has to be watching the canvas, not merely constructed: the
+      // harness hands `triggerResize()` the callback from the constructor, so an
+      // observer that never called `observe` would satisfy everything below.
+      expect(harness.resizeObserver.targets).toContain(harness.canvas);
+      const paintsAtRest = harness.paintCount();
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      // Nothing happens until the debounce elapses.
+      expect(harness.paintCount()).toBe(paintsAtRest);
+
+      harness.advanceClock(120);
+      expect(harness.paintCount()).toBe(paintsAtRest + 1);
+      // A rebuild is a snap, not an animation: no frames are left queued.
+      expect(harness.pending()).toBe(0);
+      stop();
+    });
+
+    it("coalesces a burst of resize notifications into one rebuild", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize coalesce");
+      harness.flush(400);
+      const paintsAtRest = harness.paintCount();
+
+      for (const size of [700, 600, 500, 400]) {
+        harness.setSize(size, 300);
+        harness.triggerResize();
+        harness.advanceClock(50); // each inside the 120ms window
+      }
+      harness.advanceClock(120);
+
+      expect(harness.paintCount()).toBe(paintsAtRest + 1);
+      stop();
+    });
+
+    it("ignores a resize that does not change the integer size", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize subpixel");
+      harness.flush(400);
+      const paintsAtRest = harness.paintCount();
+
+      harness.setSize(800.4, 400.2); // sub-pixel churn from a scrollbar settling
+      harness.triggerResize();
+      harness.advanceClock(200);
+
+      expect(harness.paintCount()).toBe(paintsAtRest);
+      stop();
+    });
+
+    it("resizes the backing buffer and reapplies the dpr transform", () => {
+      const harness = createFieldHarness({ width: 800, height: 400, devicePixelRatio: 2 });
+      const stop = startField(harness.canvas, "resize buffer");
+      harness.flush(400);
+      expect(harness.canvas.width).toBe(1600);
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      expect(harness.canvas.width).toBe(1200);
+      expect(harness.canvas.height).toBe(600);
+      // The dpr itself, not a value derived from it: the field draws in CSS
+      // pixels and the transform is what stretches that over the buffer. The
+      // harness records the latest `scale()` call verbatim, and the mount already
+      // recorded this pair — that the rebuild applies it at all is pinned by the
+      // test below, where the dpr changes.
+      expect(harness.scaleApplied()).toEqual({ x: 2, y: 2 });
+      stop();
+    });
+
+    it("re-reads the device pixel ratio when it rebuilds", () => {
+      // Dragging the window onto a non-Retina display changes `devicePixelRatio`
+      // and reflows the hero, so the rebuild has to take the ratio from the
+      // platform again. A `dpr` captured once at mount would size the buffer 1200
+      // and keep scaling by 2, painting the field at double size.
+      const harness = createFieldHarness({ width: 800, height: 400, devicePixelRatio: 2 });
+      const stop = startField(harness.canvas, "resize dpr");
+      harness.flush(400);
+
+      Object.assign(window, { devicePixelRatio: 1 });
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      expect(harness.canvas.width).toBe(600);
+      expect(harness.canvas.height).toBe(300);
+      expect(harness.scaleApplied()).toEqual({ x: 1, y: 1 });
+      stop();
+    });
+
+    it("produces an identical field when rebuilt at the same size", () => {
+      // A rebuild derives the field from the box and the title seed alone, so
+      // returning to a size returns to that size's exact field. Anything that
+      // accumulated across rebuilds — appending to `particles` rather than
+      // replacing it, or a seed advanced once per call — shows up here.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize determinism");
+      harness.flush(400);
+      const first = harness.positions();
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      harness.setSize(800, 400);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      expect(harness.positions()).toEqual(first);
+      stop();
+    });
+
+    it("ends the entrance when a resize lands mid-condense", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize during entrance");
+      harness.flush(10); // still condensing
+      expect(harness.pending()).toBe(1);
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      // The entrance is over: the field is snapped and no stale tick chain
+      // survives to repaint over the rebuild on its next frame.
+      expect(harness.pending()).toBe(0);
+      const snapped = harness.positions();
+      harness.flush(5);
+      expect(harness.positions()).toEqual(snapped);
+      stop();
+    });
+
+    it("disconnects the ResizeObserver on teardown", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize teardown");
+      harness.flush(400);
+      expect(harness.resizeObserver.disconnected).toBe(false);
+      stop();
+      expect(harness.resizeObserver.disconnected).toBe(true);
+    });
+
+    it("cancels a pending resize debounce on teardown", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize teardown timer");
+      harness.flush(400);
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      stop();
+      const paintsAfterStop = harness.paintCount();
+      harness.advanceClock(500);
+      expect(harness.paintCount()).toBe(paintsAfterStop);
+    });
   });
 
   // Nested inside `HeroField` on purpose: the `afterEach` above is what unstubs

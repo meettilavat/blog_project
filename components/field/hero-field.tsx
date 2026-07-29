@@ -138,49 +138,91 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   if (!ctx) return () => {};
 
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.max(1, Math.floor(rect.width));
-  const height = Math.max(1, Math.floor(rect.height));
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-  ctx.scale(dpr, dpr);
-
   // If this title already played, skip the condense and go straight to
   // settled — the field is then interactive without replaying its entrance.
   const alreadyPlayed = playedSlugs.has(title);
 
   const seed = hashString(title || "field");
-  const targets = buildFieldTargets(width, height, seed);
-  const rand = makeSeededRandom(seed ^ 0x9e3779b9);
 
-  let minAlpha = Number.POSITIVE_INFINITY;
-  let maxAlpha = Number.NEGATIVE_INFINITY;
-  for (const t of targets) {
-    if (t.a < minAlpha) minAlpha = t.a;
-    if (t.a > maxAlpha) maxAlpha = t.a;
-  }
+  // Mutable because a resize rebuilds all of it. `width`/`height` *define* the
+  // field's coordinate space, and every particle coordinate lives in that space.
+  let width = 1;
+  let height = 1;
+  let particles: Particle[] = [];
 
-  const particles: Particle[] = targets.map((t) => {
-    const hx = rand() * width;
-    const hy = rand() * height;
-    return {
-      hx,
-      hy,
-      tx: t.x,
-      ty: t.y,
-      x: hx,
-      y: hy,
-      a: t.a,
-      ra: t.a,
-      depth: particleDepth(t.a, minAlpha, maxAlpha)
-    };
-  });
+  /**
+   * Reads the element's box and rebuilds everything derived from it: the backing
+   * buffer, the dpr transform, and the particle set.
+   *
+   * Called at mount and on every debounced resize. Before this existed the field
+   * measured once and never again, so a later change to the element's box left
+   * the browser stretching a stale bitmap over a new one while the pointer
+   * handler compared live coordinates against the stale particle positions.
+   */
+  const measure = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    width = Math.max(1, Math.floor(rect.width));
+    height = Math.max(1, Math.floor(rect.height));
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    // Reset before scaling rather than trusting the bitmap resize to have done
+    // it. `ctx.scale` multiplies into the existing transform, so on the second
+    // call this is the difference between 2x and 4x — a field drawn at double
+    // size with three quarters of it off-canvas. The spec says assigning
+    // `canvas.width` clears the transform, but engines have been seen skipping
+    // that when the value is unchanged, and one reachable case assigns the same
+    // value on a rebuild: a window moved between displays so that dpr and the
+    // CSS box change by reciprocal factors.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+
+    const targets = buildFieldTargets(width, height, seed);
+    // Seeded here rather than once per field, which is what keeps `measure()` a
+    // pure function of the box: it feeds the entrance home positions, and a
+    // stream shared across calls would hand two rebuilds at one size different
+    // ones. Only the mount's call is ever read, since a rebuild ends the
+    // entrance — so this is reproducibility, not a bug being held off.
+    const layoutRand = makeSeededRandom(seed ^ 0x9e3779b9);
+
+    let minAlpha = Number.POSITIVE_INFINITY;
+    let maxAlpha = Number.NEGATIVE_INFINITY;
+    for (const t of targets) {
+      if (t.a < minAlpha) minAlpha = t.a;
+      if (t.a > maxAlpha) maxAlpha = t.a;
+    }
+
+    particles = targets.map((t) => {
+      const hx = layoutRand() * width;
+      const hy = layoutRand() * height;
+      return {
+        hx,
+        hy,
+        tx: t.x,
+        ty: t.y,
+        // Built at rest rather than at `hx`/`hy`: a rebuild has to leave the
+        // field settled, and `tick` assigns `p.x = p.hx` on its first drift
+        // frame before anything is drawn, so the entrance is unaffected.
+        x: t.x,
+        y: t.y,
+        a: t.a,
+        ra: t.a,
+        depth: particleDepth(t.a, minAlpha, maxAlpha)
+      };
+    });
+  };
+
+  measure();
 
   // A zero-size hero — `display: none`, a collapsed flex parent, a measurement
   // taken before layout — clamps to 1x1 and yields no targets. There is nothing
   // to animate, so bail before wiring anything up rather than spending a full
   // entrance painting an empty canvas.
+  //
+  // This bail also means such a hero never gets a ResizeObserver, so it cannot
+  // recover when it later gains a box. That matches the behaviour before the
+  // observer existed and is left alone deliberately: fixing it means
+  // restructuring the teardown contract, which belongs in its own change.
   if (!particles.length) return () => {};
 
   let accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
@@ -354,9 +396,15 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   const onPointerMove = (event: PointerEvent) => {
     const bounds = canvas.getBoundingClientRect();
     if (bounds.width === 0 || bounds.height === 0) return;
-    const x = event.clientX - bounds.left;
-    const y = event.clientY - bounds.top;
-    pointer = { x, y, nx: x / bounds.width, ny: y / bounds.height };
+    // Scale into field space. Particle coordinates live in the space `measure()`
+    // captured; `bounds` is live. The two agree in the common case, and this makes
+    // them agree in every case — including a box that changed without notifying
+    // the observer, which is exactly how the Safari offset arose.
+    const x = (event.clientX - bounds.left) * (width / bounds.width);
+    const y = (event.clientY - bounds.top) * (height / bounds.height);
+    // Normalised against `width`, not `bounds.width`: `x` is already in field
+    // space, and mixing the two spaces in one object is what caused the bug.
+    pointer = { x, y, nx: x / width, ny: y / height };
     // With a cursor present the field tracks it rather than heading home.
     returnPending = false;
     wake();
@@ -427,6 +475,44 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   const themeObserver = new MutationObserver(onThemeChange);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
+  // ---- resize: re-measure rather than stretch a stale bitmap ----
+  const RESIZE_DEBOUNCE_MS = 120;
+  let resizeTimer = 0;
+
+  const applyResize = () => {
+    resizeTimer = 0;
+    const rect = canvas.getBoundingClientRect();
+    // Only act on a real change. Sub-pixel churn — a scrollbar appearing, a font
+    // swap settling — must not throw the field away for a fractional difference.
+    if (Math.floor(rect.width) === width && Math.floor(rect.height) === height) return;
+
+    // A resize during the entrance ends the entrance: `measure()` regenerates
+    // the very home positions the condense is interpolating from, so continuing
+    // would jump. Clear `condensing` and kill the chain BEFORE the repaint below,
+    // or the stale tick would paint over the rebuilt field on its next frame.
+    if (condensing) {
+      condensing = false;
+      playedSlugs.add(title);
+      cancel();
+    }
+
+    measure();
+    // The stored pointer is in the *old* field space, which is the whole bug this
+    // path exists to fix. Drop it; the next pointermove re-establishes it in the
+    // new space. Particles are rebuilt at rest, so nothing is outstanding.
+    pointer = null;
+    returnPending = false;
+    // Resizing the bitmap cleared it, so this repaint is what keeps the hero from
+    // sitting blank: with nothing outstanding, no gate would schedule a frame.
+    if (!raf) draw();
+  };
+
+  const fieldResizeObserver = new ResizeObserver(() => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(applyResize, RESIZE_DEBOUNCE_MS);
+  });
+  fieldResizeObserver.observe(canvas);
+
   return () => {
     condensing = false;
     pointer = null;
@@ -437,6 +523,8 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       host.removeEventListener("pointerleave", onPointerLeave);
     }
     document.removeEventListener("visibilitychange", onVisibility);
+    if (resizeTimer) clearTimeout(resizeTimer);
+    fieldResizeObserver.disconnect();
     fieldObserver.disconnect();
     themeObserver.disconnect();
   };

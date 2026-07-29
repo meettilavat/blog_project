@@ -148,6 +148,18 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   const frames: FieldFrame[] = [];
   let fillStyle = "";
   let globalAlpha = 1;
+  // The effective scale, tracked the way the real API composes it rather than as
+  // "whatever was passed last". Two reasons this matters:
+  //
+  //   `scale()` multiplies into the current transform, so a caller that rescales
+  //   without resetting first ends up at 4x, not 2x. Recording absolutely would
+  //   report a tidy 2x either way, which made the dpr assertion unfalsifiable.
+  //
+  //   Assigning `canvas.width` resets the transform per spec, but engines have
+  //   been observed skipping that when the assigned value is unchanged. This stub
+  //   deliberately models the pessimistic engine and never resets on its own, so
+  //   production code is forced to reset explicitly and a missing reset shows up
+  //   here as a compounded scale instead of passing on a friendlier browser.
   let scale: { x: number; y: number } | null = null;
 
   const context = {
@@ -164,7 +176,15 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
       globalAlpha = value;
     },
     scale(x: number, y: number) {
-      scale = { x, y };
+      scale = scale ? { x: scale.x * x, y: scale.y * y } : { x, y };
+    },
+    /**
+     * Only the two scale components are modelled — the field never rotates,
+     * skews, or translates, and a stub that pretended to carry a full matrix
+     * would invite a caller to rely on something untested.
+     */
+    setTransform(a: number, _b: number, _c: number, d: number) {
+      scale = { x: a, y: d };
     },
     // `draw()` clears first, so a clear opens a new recorded frame.
     clearRect() {
