@@ -263,7 +263,19 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       raf = 0; // SETTLED: this chain ends here
       // A cursor that arrived during the entrance is already inside the hero,
       // so hand it the lens now rather than making it move again to be noticed.
-      if (pointer) wake();
+      if (pointer) {
+        wake();
+      } else {
+        // Every particle was just snapped to base, so a return armed by a cursor
+        // that left *during* the entrance has nothing left to run: `wake()`
+        // declined it at the time (condensing), and the entrance finished the
+        // job. Clearing it here is the same statement `interactiveTick` makes on
+        // its own settle path — both terminal paths agree that at base with no
+        // cursor means nothing is outstanding — and it is what keeps the next
+        // visibility or intersection resume from spending a frame to rediscover
+        // that and repaint an identical field.
+        returnPending = false;
+      }
     }
   };
 

@@ -1,7 +1,14 @@
 /**
- * Pure motion arithmetic for the hero particle field. Kept free of DOM and
- * canvas references so it is unit-testable under Vitest's `node` environment —
- * hero-field.tsx keeps only the wiring.
+ * Per-frame motion arithmetic for the hero particle field: parallax, the cursor
+ * lens, damping, and the settle test. Kept free of DOM and canvas references so
+ * it is unit-testable under Vitest's `node` environment.
+ *
+ * Not *all* of the field's pure arithmetic, though. hero-field.tsx still owns its
+ * own seeding and layout helpers — `makeSeededRandom`, `hashString`,
+ * `buildFieldTargets`, and a local `smoothstep` — which are equally pure and
+ * would belong here; moving them is deferred to separate follow-up work. What
+ * lives here is the arithmetic the frame loop runs, and hero-field.tsx keeps the
+ * canvas, the listeners, the observers, and the frame scheduling.
  */
 
 /** Largest parallax displacement, in CSS px, applied to the nearest layer. */

@@ -284,9 +284,16 @@ a {
     display: block;
   }
 
+  /*
+   * Rows and headings only — deliberately *not* [data-resume-section]. A section
+   * wrapper holds every row it owns, and "Selected work" is taller than a page:
+   * asking the UA not to break inside it only makes it push the whole section to
+   * a fresh page and then break inside it anyway, trading a page of trailing
+   * whitespace for nothing. The guarantee worth keeping is per-row — a single
+   * entry, its bullets, and its link stay together.
+   */
   .resume-sheet h1,
   .resume-sheet h2,
-  .resume-sheet [data-resume-section],
   .resume-sheet [data-resume-row] {
     break-inside: avoid;
     page-break-inside: avoid;

@@ -1,5 +1,10 @@
 import { ArrowUpRight, Download } from "lucide-react";
-import { LedgerNote, LedgerRow, LedgerSection } from "@/components/profile/resume-ledger";
+import {
+  LedgerNote,
+  LedgerRow,
+  LedgerRowShell,
+  LedgerSection
+} from "@/components/profile/resume-ledger";
 import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
 import {
   RESUME_NAME,
@@ -13,6 +18,7 @@ import {
   selectedWork,
   skillGroups
 } from "@/lib/profile/resume-data";
+import { cn } from "@/lib/ui/classnames";
 
 export default function ResumePage() {
   return (
@@ -55,7 +61,12 @@ function ResumeMasthead() {
       </h1>
       <div className="text-left sm:text-right">
         <p className="kicker">{RESUME_ROLE}</p>
-        <p className="kicker mt-1 text-accent">{AVAILABILITY_STATUS}</p>
+        {/* `!text-accent`, not `text-accent`: .kicker declares its own
+            `color: var(--ink-muted)` and lives in author CSS *after*
+            `@tailwind utilities`, so at equal specificity the later rule wins and
+            a plain utility here is inert — the line renders muted grey. The
+            important modifier is what actually recolours it. */}
+        <p className="kicker mt-1 !text-accent">{AVAILABILITY_STATUS}</p>
       </div>
     </header>
   );
@@ -85,7 +96,14 @@ function ResumeStandfirstBand() {
             download={link.download}
             target={link.external ? "_blank" : undefined}
             rel={link.external ? "noreferrer" : undefined}
-            className="inline-flex min-h-11 items-center gap-1.5 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground print:hidden"
+            className={cn(
+              "inline-flex min-h-11 items-center gap-1.5 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground",
+              // Only the download hides on paper: a printed resume should not
+              // advertise a download link, but LinkedIn and GitHub now live
+              // *only* here — `contactRows` no longer carries them — so hiding
+              // the whole set would print a resume with no profiles on it.
+              link.download && "print:hidden"
+            )}
           >
             {link.download ? <Download className="h-3.5 w-3.5" aria-hidden="true" /> : null}
             {link.label}
@@ -108,7 +126,7 @@ function ResumeSkills() {
   return (
     <dl className="m-0">
       {skillGroups.map((group) => (
-        <div key={group.label} className="resume-row border-b border-border/60 py-3.5" data-resume-row="true">
+        <LedgerRowShell key={group.label} className="py-3.5">
           <dt className="kicker pt-1">{group.label}</dt>
           <dd className="m-0">
             <ul className="m-0 flex list-none flex-wrap p-0 text-sm leading-7 text-foreground/85">
@@ -119,7 +137,7 @@ function ResumeSkills() {
               ))}
             </ul>
           </dd>
-        </div>
+        </LedgerRowShell>
       ))}
     </dl>
   );
@@ -129,13 +147,25 @@ function ResumeContact() {
   return (
     <dl className="m-0">
       {contactRows.map((row) => (
-        <div key={row.label} className="resume-row border-b border-border/60 py-2.5" data-resume-row="true">
-          <dt className="kicker pt-0.5">{row.label}</dt>
-          <dd className="m-0 text-sm text-foreground/85">
+        <LedgerRowShell key={row.label} className="py-2.5">
+          {/* `self-center`, not `pt-0.5`: the value cell below is a 44px box with
+              its text centred, and a top-padded label in a stretched grid cell
+              would sit ~12px above the value it names. Both cells centre, so the
+              label and its value share a line at every width. */}
+          <dt className="kicker self-center">{row.label}</dt>
+          {/* The 44px floor lives on the cell *and* on the anchor, for two
+              different reasons. On the cell it keeps all three contact rows the
+              same height — Base carries plain text, so without it that row would
+              be 24px shorter than the two beside it. On the anchor it is the tap
+              target itself: `items-center` centres rather than stretches, so a
+              bare text-sm anchor would be a 20px hit area, which is the wrong
+              thing to aim a thumb at for a `tel:` link. 44px matches the floor
+              every other link on this page keeps. */}
+          <dd className="m-0 flex min-h-11 items-center text-sm text-foreground/85">
             {row.href ? (
               <a
                 href={row.href}
-                className="transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                className="inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
               >
                 {row.value}
               </a>
@@ -143,7 +173,7 @@ function ResumeContact() {
               row.value
             )}
           </dd>
-        </div>
+        </LedgerRowShell>
       ))}
     </dl>
   );

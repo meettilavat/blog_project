@@ -3,6 +3,34 @@ import type { LedgerEntry } from "@/lib/profile/resume-data";
 import { cn } from "@/lib/ui/classnames";
 
 /**
+ * The shell every ledger row rides: the two-track grid class (defined once, in
+ * globals.css), the hairline that separates rows, and the `data-resume-row` hook
+ * the print `break-inside: avoid` rule keys on.
+ *
+ * A component rather than a bare class constant because the class and the
+ * attribute are a *pair* — a row that takes the grid without the hook looks
+ * right on screen and silently loses its print rule — and only a shared wrapper
+ * makes forgetting one of them impossible. Vertical rhythm still differs per row
+ * type (a contact line is not a project entry), so padding stays the caller's,
+ * merged over the base so a caller can also override the border weight.
+ */
+export function LedgerRowShell({
+  as: Tag = "div",
+  className,
+  children
+}: {
+  as?: "article" | "div";
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tag className={cn("resume-row border-b border-border/60", className)} data-resume-row="true">
+      {children}
+    </Tag>
+  );
+}
+
+/**
  * A section break. The heading sits in the content track so it shares the
  * body's left edge; the label track repeats the section name so a row is never
  * orphaned from its section on a long scroll.
@@ -19,20 +47,20 @@ import { cn } from "@/lib/ui/classnames";
 export function LedgerSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-[clamp(2.75rem,4.5vw,4rem)]" data-resume-section="true">
-      <div className="resume-row border-b border-border pb-3">
+      <LedgerRowShell className="border-border pb-3">
         <span aria-hidden="true" className="kicker hidden self-end ledger:block">
           {title}
         </span>
         <h2 className="m-0 font-display text-[clamp(1.35rem,2.4vw,1.75rem)] font-bold leading-none tracking-[-0.025em] text-foreground">
           {title}
         </h2>
-      </div>
+      </LedgerRowShell>
       {children}
     </section>
   );
 }
 
-export function LedgerBullets({ items }: { items: string[] }) {
+function LedgerBullets({ items }: { items: string[] }) {
   return (
     <ul className="m-0 mt-2.5 grid list-none gap-1.5 p-0">
       {items.map((item) => (
@@ -45,9 +73,9 @@ export function LedgerBullets({ items }: { items: string[] }) {
   );
 }
 
-export function LedgerRow({ entry, muted = false }: { entry: LedgerEntry; muted?: boolean }) {
+export function LedgerRow({ entry }: { entry: LedgerEntry }) {
   return (
-    <article className="resume-row border-b border-border/60 py-4" data-resume-row="true">
+    <LedgerRowShell as="article" className="py-4">
       <p className="kicker tabular-nums pt-0.5">
         {entry.label}
         {entry.labelDetail ? (
@@ -58,12 +86,7 @@ export function LedgerRow({ entry, muted = false }: { entry: LedgerEntry; muted?
         ) : null}
       </p>
       <div className="min-w-0">
-        <h3
-          className={cn(
-            "m-0 font-display text-[0.975rem] leading-snug tracking-[-0.01em] text-foreground",
-            muted ? "font-normal" : "font-medium"
-          )}
-        >
+        <h3 className="m-0 font-display text-[0.975rem] font-medium leading-snug tracking-[-0.01em] text-foreground">
           {entry.title}
         </h3>
         {entry.meta ? <p className="mt-0.5 text-sm text-foreground/70">{entry.meta}</p> : null}
@@ -88,7 +111,7 @@ export function LedgerRow({ entry, muted = false }: { entry: LedgerEntry; muted?
           </a>
         ) : null}
       </div>
-    </article>
+    </LedgerRowShell>
   );
 }
 
@@ -98,7 +121,7 @@ export function LedgerRow({ entry, muted = false }: { entry: LedgerEntry; muted?
  */
 export function LedgerNote({ label, items }: { label: string; items: string[] }) {
   return (
-    <div className="resume-row border-b border-border/60 py-4" data-resume-row="true">
+    <LedgerRowShell className="py-4">
       <p className="kicker pt-0.5">{label}</p>
       <ul className="m-0 grid list-none gap-1.5 p-0">
         {items.map((item) => (
@@ -107,6 +130,6 @@ export function LedgerNote({ label, items }: { label: string; items: string[] })
           </li>
         ))}
       </ul>
-    </div>
+    </LedgerRowShell>
   );
 }

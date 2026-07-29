@@ -319,6 +319,43 @@ describe("HeroField", () => {
     stop();
   });
 
+  it("arms no return for a cursor that left during the entrance", () => {
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Left mid-entrance");
+    h.flush(3); // entrance under way
+
+    // The cursor arrives and leaves again before the entrance finishes, so the
+    // return it asks for is declined — `wake()` refuses while condensing — and
+    // the entrance then snaps every particle to base on its own.
+    h.movePointer(POINTER_X, POINTER_Y);
+    h.leavePointer();
+    expect(h.flush(ENTRANCE_BUDGET)).toBeLessThan(ENTRANCE_BUDGET);
+    expect(h.pending()).toBe(0);
+
+    const base = h.positions();
+    const painted = h.paintCount();
+
+    // Nothing is outstanding: the field is at base with no cursor. A resume must
+    // therefore cost nothing, rather than spend a frame rediscovering that and
+    // repainting an identical field.
+    h.setHidden(true);
+    h.emitVisibilityChange();
+    h.setHidden(false);
+    h.emitVisibilityChange();
+    expect(h.pending()).toBe(0);
+
+    // Same for the other gate, which reads the same flag.
+    h.setIntersecting(false);
+    h.setIntersecting(true);
+    expect(h.pending()).toBe(0);
+
+    // Neither gate painted, and the field is still exactly where it settled — so
+    // the zero above is "nothing to do", not "the field was left part-lensed".
+    expect(h.paintCount()).toBe(painted);
+    expect(maxDrift(base, h.positions())).toBe(0);
+    stop();
+  });
+
   it("attaches no pointer listeners on a coarse pointer, and behaves as it did before", () => {
     const h = createFieldHarness({ interactive: false });
     const stop = startField(h.canvas, "Coarse");
