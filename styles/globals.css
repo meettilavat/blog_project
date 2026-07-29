@@ -175,6 +175,35 @@ a {
   padding-inline: clamp(1.25rem, 3.6vw, 4.5rem);
 }
 
+/*
+ * The resume ledger: one mono label track and one content track. The content
+ * track is 43rem — the same reading measure the post page uses — so resume
+ * bullets wrap identically to article body text. Defining the tracks here
+ * rather than per-row is what keeps the page to two left edges.
+ */
+.resume-ledger {
+  width: min(100%, 52rem);
+  margin-inline: auto;
+}
+
+.resume-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  column-gap: 2rem;
+}
+
+/*
+ * Screen-only: Letter (816px) and A4 (794px) are both narrower than 831px, and
+ * paged media resolves this against the page box — so an unscoped query would
+ * print the stacked mobile layout. On paper .resume-row keeps its base tracks.
+ */
+@media screen and (max-width: 831px) {
+  .resume-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.375rem;
+  }
+}
+
 .kicker {
   font-family: var(--font-mono), monospace;
   font-size: 0.6875rem;
@@ -245,16 +274,12 @@ a {
     display: block;
   }
 
+  .resume-sheet h1,
   .resume-sheet h2,
-  .resume-sheet h3,
-  .resume-sheet address,
-  .resume-sheet [data-resume-skill-group="true"] {
+  .resume-sheet [data-resume-section],
+  .resume-sheet [data-resume-row] {
     break-inside: avoid;
     page-break-inside: avoid;
-  }
-
-  .resume-sheet [data-resume-project="true"] {
-    break-inside: auto;
   }
 
   .resume-sheet a {
