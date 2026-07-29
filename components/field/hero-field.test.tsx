@@ -640,7 +640,11 @@ describe("HeroField", () => {
       stop();
     });
 
-    it("ends the entrance when a resize lands mid-condense", () => {
+    it("lets the entrance finish, then rebuilds, when a resize lands mid-condense", () => {
+      // Every font in the public app loads `display: "swap"`, so a cold load
+      // relayouts the text-balance headline a few hundred ms in and this fires
+      // inside the 2.5s entrance. Rebuilding on the spot would truncate the
+      // condense for most first-time visitors, so it is deferred to the end.
       const harness = createFieldHarness({ width: 800, height: 400 });
       const stop = startField(harness.canvas, "resize during entrance");
       harness.flush(10); // still condensing
@@ -650,12 +654,63 @@ describe("HeroField", () => {
       harness.triggerResize();
       harness.advanceClock(120);
 
-      // The entrance is over: the field is snapped and no stale tick chain
-      // survives to repaint over the rebuild on its next frame.
+      // The entrance is untouched: still animating, and the buffer still carries
+      // the size it was measured at. Snapping here is what this must not do.
+      expect(harness.pending()).toBe(1);
+      expect(harness.canvas.width).toBe(1600);
+
+      const ran = harness.flush(ENTRANCE_BUDGET);
+      expect(ran).toBeLessThan(ENTRANCE_BUDGET); // it halted on its own
       expect(harness.pending()).toBe(0);
-      const snapped = harness.positions();
-      harness.flush(5);
-      expect(harness.positions()).toEqual(snapped);
+
+      // Landing rebuilt the field in the new space: 600x300 at dpr 2.
+      expect(harness.canvas.width).toBe(1200);
+      expect(harness.canvas.height).toBe(600);
+      // And no dot sits outside the smaller box, which a stretched stale field
+      // would — the old buffer's dots ran to 800 wide.
+      for (const dot of harness.lastFrame().dots) {
+        expect(dot.x).toBeLessThanOrEqual(600);
+        expect(dot.y).toBeLessThanOrEqual(300);
+      }
+      stop();
+    });
+
+    it("keeps a cursor that arrived mid-entrance when the box ends up unchanged", () => {
+      // The re-check on landing is not observable through the buffer — measuring
+      // an unchanged box produces an identical one — but it is observable through
+      // the cursor. A rebuild drops the stored pointer because its coordinates
+      // belong to the old space; when the box ends up where it started, those
+      // coordinates are still valid and discarding them costs the visitor the
+      // lens until they move the mouse again.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize reverted during entrance");
+      harness.flush(10);
+
+      // Arrives during the entrance, so `wake()` declines and it is merely stored.
+      harness.movePointer(POINTER_X, POINTER_Y);
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(120);
+      // Dragged back to where it started before the entrance finished.
+      harness.setSize(800, 400);
+      harness.triggerResize();
+      harness.advanceClock(120);
+
+      harness.flush(ENTRANCE_BUDGET);
+      expect(harness.canvas.width).toBe(1600);
+      expect(harness.canvas.height).toBe(800);
+
+      // The entrance hands the waiting cursor its lens rather than making it move
+      // again to be noticed, so the field settles brighter than it would at rest.
+      // Asserting on `pending()` here would not work: this flush has budget left
+      // over and drains the lens animation too, ending at zero either way.
+      const lensed = harness.maxAlpha();
+      harness.leavePointer();
+      harness.flush(1000);
+      // An unconditional rebuild would have dropped the pointer, so `lensed`
+      // would already have been the resting peak and these would be equal.
+      expect(lensed).toBeGreaterThan(harness.maxAlpha());
       stop();
     });
 

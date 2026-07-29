@@ -237,6 +237,9 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   // false whenever the field is at rest, a resume with nothing outstanding still
   // schedules nothing.
   let returnPending = false;
+  // True only while a resize has been observed but deliberately withheld because
+  // the entrance is still running. `tick`'s terminal branch is the sole consumer.
+  let resizePending = false;
 
   const interactive = window.matchMedia(INTERACTIVE_QUERY).matches;
 
@@ -295,6 +298,20 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       draw();
       schedule(tick);
     } else {
+      // A resize that arrived mid-entrance was deferred to here, so the condense
+      // could finish undisturbed. Rebuild before the snap and paint below — the
+      // snap has to write the rebuilt particles, not the ones being replaced —
+      // and re-check the box, which may have changed again, or back, while the
+      // entrance played out.
+      if (resizePending) {
+        resizePending = false;
+        const rect = canvas.getBoundingClientRect();
+        if (Math.floor(rect.width) !== width || Math.floor(rect.height) !== height) {
+          measure();
+          // Old-space coordinates, same as on the immediate path.
+          pointer = null;
+        }
+      }
       for (const p of particles) {
         p.x = p.tx;
         p.y = p.ty;
@@ -486,14 +503,20 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // swap settling — must not throw the field away for a fractional difference.
     if (Math.floor(rect.width) === width && Math.floor(rect.height) === height) return;
 
-    // A resize during the entrance ends the entrance: `measure()` regenerates
-    // the very home positions the condense is interpolating from, so continuing
-    // would jump. Clear `condensing` and kill the chain BEFORE the repaint below,
-    // or the stale tick would paint over the rebuilt field on its next frame.
+    // A resize during the entrance is deferred, not applied: `measure()`
+    // regenerates the very home positions the condense is interpolating from, so
+    // rebuilding mid-flight would either jump or cut the entrance short. And this
+    // is not the rare case the rest of this path is written for — every font in
+    // the public app loads `display: "swap"`, so on a cold load the fallback lays
+    // out the `text-balance` headline, the real face arrives a few hundred ms in,
+    // the hero's height changes, and this fires well inside the 2.5s entrance.
+    // Truncating the condense there would mean most first-time visitors never see
+    // it. The entrance runs to completion on slightly stale geometry — dots in
+    // motion cannot betray that their targets were computed for a hero ten pixels
+    // shorter — and `tick`'s terminal branch rebuilds the moment it lands.
     if (condensing) {
-      condensing = false;
-      playedSlugs.add(title);
-      cancel();
+      resizePending = true;
+      return;
     }
 
     measure();
@@ -517,6 +540,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     condensing = false;
     pointer = null;
     returnPending = false;
+    resizePending = false;
     cancel();
     if (host) {
       host.removeEventListener("pointermove", onPointerMove);
