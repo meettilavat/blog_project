@@ -469,4 +469,96 @@ describe("HeroField", () => {
     expect(source).toContain('from "@/lib/field/field-motion"');
     expect(source).toContain("lensInfluence(p.tx, p.ty,");
   });
+
+  // Nested inside `HeroField` on purpose: the `afterEach` above is what unstubs
+  // the globals each harness installs, and an afterEach only covers its own
+  // describe. As a sibling block these tests would leave `setTimeout` stubbed
+  // for whatever runs next.
+  describe("field harness platform", () => {
+    it("fires timers in due order when the clock advances", () => {
+      const harness = createFieldHarness();
+      const order: string[] = [];
+      window.setTimeout(() => order.push("late"), 200);
+      window.setTimeout(() => order.push("early"), 50);
+      expect(harness.pendingTimers()).toBe(2);
+
+      harness.advanceClock(100);
+      expect(order).toEqual(["early"]);
+      expect(harness.pendingTimers()).toBe(1);
+
+      harness.advanceClock(100);
+      expect(order).toEqual(["early", "late"]);
+      expect(harness.pendingTimers()).toBe(0);
+    });
+
+    it("does not fire a cleared timer", () => {
+      const harness = createFieldHarness();
+      let fired = false;
+      const id = window.setTimeout(() => {
+        fired = true;
+      }, 50);
+      window.clearTimeout(id);
+      harness.advanceClock(500);
+      expect(fired).toBe(false);
+    });
+
+    it("fires a timer armed from inside a timer callback", () => {
+      const harness = createFieldHarness();
+      const order: string[] = [];
+      window.setTimeout(() => {
+        order.push("first");
+        window.setTimeout(() => order.push("second"), 10);
+      }, 10);
+      harness.advanceClock(100);
+      expect(order).toEqual(["first", "second"]);
+    });
+
+    it("advancing the clock queues no animation frames on its own", () => {
+      const harness = createFieldHarness();
+      harness.advanceClock(60_000);
+      expect(harness.pending()).toBe(0);
+    });
+
+    it("shares one clock between timers and frame timestamps", () => {
+      const harness = createFieldHarness();
+      const stamps: number[] = [];
+      harness.advanceClock(5_000);
+      // The bare global, not `window.requestAnimationFrame`: that is how the
+      // field asks for frames, and `windowStub` deliberately carries only the
+      // timer members.
+      requestAnimationFrame((now) => stamps.push(now));
+      harness.flush(1);
+      // The frame ran after 5s of virtual time, so its timestamp reflects it.
+      expect(stamps[0]).toBeGreaterThanOrEqual(5_000);
+    });
+
+    it("reports a changed rect through setSize without notifying the observer", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      let notified = 0;
+      new ResizeObserver(() => {
+        notified++;
+      }).observe(harness.canvas);
+
+      harness.setSize(400, 200);
+      expect(harness.canvas.getBoundingClientRect().width).toBe(400);
+      expect(harness.canvas.getBoundingClientRect().height).toBe(200);
+      expect(notified).toBe(0);
+
+      harness.triggerResize();
+      expect(notified).toBe(1);
+    });
+
+    it("delivers nothing through a disconnected ResizeObserver", () => {
+      const harness = createFieldHarness();
+      let notified = 0;
+      const observer = new ResizeObserver(() => {
+        notified++;
+      });
+      observer.observe(harness.canvas);
+      observer.disconnect();
+      harness.triggerResize();
+      expect(notified).toBe(0);
+      expect(harness.resizeObserver.disconnected).toBe(true);
+    });
+  });
 });

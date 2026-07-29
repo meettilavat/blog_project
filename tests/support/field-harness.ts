@@ -17,11 +17,11 @@ import { vi } from "vitest";
  * component actually uses are implemented: if it starts calling something else,
  * the tests fail loudly rather than passing vacuously.
  *
- * Constructing a harness **stubs seven globals as a side effect**
+ * Constructing a harness **stubs ten globals as a side effect**
  * (`requestAnimationFrame`, `cancelAnimationFrame`, `IntersectionObserver`,
- * `MutationObserver`, `getComputedStyle`, `window`, `document`), because the
- * code under test reaches for them the way it does in a browser. Two
- * consequences worth knowing:
+ * `MutationObserver`, `getComputedStyle`, `window`, `document`, `setTimeout`,
+ * `clearTimeout`, `ResizeObserver`), because the code under test reaches for
+ * them the way it does in a browser. Two consequences worth knowing:
  *
  * - **One live harness at a time.** The stubs are process-global, so a second
  *   harness replaces the first one's globals; an already-started field would
@@ -97,8 +97,8 @@ export function maxDrift(
 }
 
 export function createFieldHarness(options: FieldHarnessOptions = {}) {
-  const width = options.width ?? 800;
-  const height = options.height ?? 400;
+  let width = options.width ?? 800;
+  let height = options.height ?? 400;
   const devicePixelRatio = options.devicePixelRatio ?? 2;
   const interactive = options.interactive ?? true;
   let accent = options.accent ?? "#F2A93B";
@@ -117,6 +117,24 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   };
   const cancelAnimationFrameStub = (id: number) => {
     queue = queue.filter((entry) => entry.id !== id);
+  };
+
+  // ---- virtual timers, on the SAME clock as animation frames ----
+  // The transit schedule is time-driven (setTimeout between events, never a live
+  // rAF chain), so proving "no frames across an idle gap" requires advancing time
+  // without running frames. One clock for both, because the production code
+  // stamps a transit's start from an rAF timestamp after a timer raised a flag —
+  // two clocks would make that offset untestable.
+  let nextTimerId = 0;
+  let timers: Array<{ id: number; due: number; callback: () => void }> = [];
+
+  const setTimeoutStub = (callback: () => void, delay = 0) => {
+    const id = ++nextTimerId;
+    timers.push({ id, due: clock + Math.max(0, delay), callback });
+    return id;
+  };
+  const clearTimeoutStub = (id: number) => {
+    timers = timers.filter((entry) => entry.id !== id);
   };
 
   // ---- recording 2d context ----
@@ -220,6 +238,29 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
     }
   }
 
+  type ResizeCallback = (
+    entries: Array<{ target: unknown; contentRect: { width: number; height: number } }>
+  ) => void;
+  const resize = {
+    callback: null as ResizeCallback | null,
+    targets: [] as unknown[],
+    disconnected: false
+  };
+  class ResizeObserverStub {
+    constructor(callback: ResizeCallback) {
+      resize.callback = callback;
+    }
+    observe(target: unknown) {
+      resize.targets.push(target);
+    }
+    unobserve(target: unknown) {
+      resize.targets = resize.targets.filter((entry) => entry !== target);
+    }
+    disconnect() {
+      resize.disconnected = true;
+    }
+  }
+
   // ---- document / window ----
   const documentElement = { nodeName: "HTML" };
   const documentTarget = createListenerTarget();
@@ -235,6 +276,8 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   const mediaQueries: string[] = [];
   const windowStub = {
     devicePixelRatio,
+    setTimeout: setTimeoutStub,
+    clearTimeout: clearTimeoutStub,
     matchMedia: (query: string) => {
       mediaQueries.push(query);
       // Every query answers with the configured capability: tests assert on
@@ -259,6 +302,9 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   vi.stubGlobal("getComputedStyle", getComputedStyleStub);
   vi.stubGlobal("window", windowStub);
   vi.stubGlobal("document", documentStub);
+  vi.stubGlobal("setTimeout", setTimeoutStub);
+  vi.stubGlobal("clearTimeout", clearTimeoutStub);
+  vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 
   return {
     /** Pass to `startField()`. */
@@ -318,6 +364,52 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
     scaleApplied() {
       return scale;
     },
+
+    /**
+     * Advances the shared clock, firing timers whose due time falls inside the
+     * window, oldest first. Deliberately does NOT run animation frames: a test
+     * that advances 30s and then asserts `pending() === 0` is what proves the
+     * transit schedule uses timers rather than a live rAF chain.
+     *
+     * A timer armed from inside a callback and due within the same window still
+     * fires, matching the browser. The iteration cap catches a callback that
+     * re-arms itself at zero delay, which would otherwise hang the suite.
+     */
+    advanceClock(ms: number) {
+      const target = clock + ms;
+      for (let guard = 0; guard < 10_000; guard++) {
+        let next: { id: number; due: number; callback: () => void } | null = null;
+        for (const entry of timers) {
+          if (entry.due <= target && (!next || entry.due < next.due)) next = entry;
+        }
+        if (!next) break;
+        timers = timers.filter((entry) => entry !== next);
+        clock = next.due;
+        next.callback();
+      }
+      clock = target;
+    },
+    pendingTimers() {
+      return timers.length;
+    },
+
+    /**
+     * Changes what `getBoundingClientRect()` reports *without* notifying the
+     * ResizeObserver — which is precisely the Safari scenario: the element's box
+     * changed (a webfont swap relaid the headline) while the field still holds
+     * the size it measured at mount.
+     */
+    setSize(nextWidth: number, nextHeight: number) {
+      width = nextWidth;
+      height = nextHeight;
+    },
+    /** Invokes the ResizeObserver callback, as the browser would. */
+    triggerResize() {
+      if (!resize.callback) throw new Error("no ResizeObserver was created");
+      if (resize.disconnected) return;
+      resize.callback([{ target: canvasStub, contentRect: { width, height } }]);
+    },
+    resizeObserver: resize,
 
     movePointer(x: number, y: number) {
       host.emit("pointermove", { clientX: x, clientY: y });
