@@ -1,9 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import {
+  fieldIsSettled,
+  lensInfluence,
+  parallaxOffset,
+  particleDepth,
+  stepToward
+} from "@/lib/field/field-motion";
 
 const DRIFT_MS = 1000;
 const CONDENSE_MS = 1500;
+
+// Interaction is for cursors only. Touch devices keep exactly today's behaviour:
+// condense once, then hold a static settled frame.
+const INTERACTIVE_QUERY = "(hover: hover) and (pointer: fine)";
 
 // Module-level play-once registry, keyed by title (spec §5.3): the field
 // condenses once per featured essay, then holds a static settled frame.
@@ -16,10 +27,23 @@ export function __resetPlayedSlugs() {
   playedSlugs.clear();
 }
 
-// Dev-only frame counter for the §10 zero-frames-after-settle budget.
+// Dev-only frame counter for the §10 frame budget: no frames while idle with no
+// pointer, and none while the hero is offscreen.
 export const __frameCount = { value: 0 };
 
-type Particle = { hx: number; hy: number; tx: number; ty: number; x: number; y: number; a: number };
+type Particle = {
+  hx: number;
+  hy: number;
+  tx: number;
+  ty: number;
+  x: number;
+  y: number;
+  a: number;
+  /** Render alpha for the current frame; lensing raises it above `a`. */
+  ra: number;
+  /** 0 (far) .. 1 (near), derived from `a`. Drives parallax magnitude. */
+  depth: number;
+};
 
 function makeSeededRandom(seed: number) {
   let s = seed >>> 0;
@@ -92,107 +116,271 @@ function buildFieldTargets(
   return targets;
 }
 
+/**
+ * Imperative core of the field, split out of the effect so its frame budget can
+ * be driven directly under test. Vitest runs `environment: "node"`, so there is
+ * no DOM to mount into and no real `requestAnimationFrame` to observe — the
+ * guarantees this code exists to provide (zero frames when idle, offscreen, or
+ * hidden) are only observable by stepping the loop by hand. The component below
+ * is the only production caller; `tests/support/field-harness.ts` supplies the
+ * platform for the other.
+ *
+ * Returns the teardown for every listener, observer, and frame it owns.
+ */
+export function startField(canvas: HTMLCanvasElement, title: string): () => void {
+  const ctx = canvas.getContext("2d");
+  // Context failure: nothing starts, so nothing needs tearing down. The
+  // headline is SSR'd beneath, so the hero degrades to plain type.
+  if (!ctx) return () => {};
+
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.floor(rect.width));
+  const height = Math.max(1, Math.floor(rect.height));
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  ctx.scale(dpr, dpr);
+
+  // If this title already played, skip the condense and go straight to
+  // settled — the field is then interactive without replaying its entrance.
+  const alreadyPlayed = playedSlugs.has(title);
+
+  const seed = hashString(title || "field");
+  const targets = buildFieldTargets(width, height, seed);
+  const rand = makeSeededRandom(seed ^ 0x9e3779b9);
+
+  let minAlpha = Number.POSITIVE_INFINITY;
+  let maxAlpha = Number.NEGATIVE_INFINITY;
+  for (const t of targets) {
+    if (t.a < minAlpha) minAlpha = t.a;
+    if (t.a > maxAlpha) maxAlpha = t.a;
+  }
+
+  const particles: Particle[] = targets.map((t) => {
+    const hx = rand() * width;
+    const hy = rand() * height;
+    return {
+      hx,
+      hy,
+      tx: t.x,
+      ty: t.y,
+      x: hx,
+      y: hy,
+      a: t.a,
+      ra: t.a,
+      depth: particleDepth(t.a, minAlpha, maxAlpha)
+    };
+  });
+
+  let accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
+  let raf = 0;
+  let start = 0;
+  let condensing = !alreadyPlayed;
+  let onscreen = true;
+  let pointer: { x: number; y: number; nx: number; ny: number } | null = null;
+
+  const interactive = window.matchMedia(INTERACTIVE_QUERY).matches;
+
+  const draw = () => {
+    __frameCount.value++;
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = accent;
+    for (const p of particles) {
+      ctx.globalAlpha = p.ra;
+      ctx.fillRect(p.x, p.y, 1.6, 1.6);
+    }
+    ctx.globalAlpha = 1;
+  };
+
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  // ---- condense (unchanged entrance) ----
+  const tick = (now: number) => {
+    if (!condensing || !onscreen) return;
+    if (!start) start = now;
+    const elapsed = now - start;
+    if (elapsed < DRIFT_MS) {
+      for (const p of particles) {
+        p.x = p.hx;
+        p.y = p.hy + Math.sin((now + p.hx) * 0.001) * 2;
+      }
+      draw();
+      raf = requestAnimationFrame(tick);
+    } else if (elapsed < DRIFT_MS + CONDENSE_MS) {
+      const t = ease((elapsed - DRIFT_MS) / CONDENSE_MS);
+      for (const p of particles) {
+        p.x = p.hx + (p.tx - p.hx) * t;
+        p.y = p.hy + (p.ty - p.hy) * t;
+      }
+      draw();
+      raf = requestAnimationFrame(tick);
+    } else {
+      for (const p of particles) {
+        p.x = p.tx;
+        p.y = p.ty;
+      }
+      draw();
+      playedSlugs.add(title);
+      condensing = false;
+      raf = 0; // SETTLED: zero frames until a pointer arrives
+    }
+  };
+
+  // ---- engaged (parallax + lensing, damped) ----
+  const interactiveTick = () => {
+    if (!interactive || !onscreen || condensing) {
+      raf = 0;
+      return;
+    }
+
+    let maxDelta = 0;
+    for (const p of particles) {
+      let targetX = p.tx;
+      let targetY = p.ty;
+      let alpha = p.a;
+
+      if (pointer) {
+        targetX += parallaxOffset(pointer.nx, p.depth);
+        targetY += parallaxOffset(pointer.ny, p.depth);
+        const lens = lensInfluence(p.tx, p.ty, pointer.x, pointer.y, p.a);
+        targetX += lens.pullX;
+        targetY += lens.pullY;
+        alpha = lens.alpha;
+      }
+
+      const nextX = stepToward(p.x, targetX);
+      const nextY = stepToward(p.y, targetY);
+      const delta = Math.max(Math.abs(nextX - p.x), Math.abs(nextY - p.y));
+      if (delta > maxDelta) maxDelta = delta;
+      p.x = nextX;
+      p.y = nextY;
+      p.ra = alpha;
+    }
+
+    draw();
+
+    // Halt as soon as the field stops moving, pointer or not. A motionless
+    // cursor means the field has reached its lensed target and further paints
+    // are identical, so the next `pointermove` re-arms the loop through
+    // `wake()` — `raf` is 0 by then, so that guard cannot swallow it.
+    if (fieldIsSettled(maxDelta)) {
+      raf = 0;
+      return;
+    }
+    raf = requestAnimationFrame(interactiveTick);
+  };
+
+  const wake = () => {
+    if (!interactive || !onscreen || condensing || raf) return;
+    raf = requestAnimationFrame(interactiveTick);
+  };
+
+  if (condensing) {
+    raf = requestAnimationFrame(tick);
+  } else {
+    for (const p of particles) {
+      p.x = p.tx;
+      p.y = p.ty;
+    }
+    draw();
+  }
+
+  // Listeners go on the host, not the canvas: the canvas stays
+  // pointer-events-none so the headline link keeps its own hover and focus.
+  const host = canvas.parentElement;
+
+  const onPointerMove = (event: PointerEvent) => {
+    const bounds = canvas.getBoundingClientRect();
+    if (bounds.width === 0 || bounds.height === 0) return;
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+    pointer = { x, y, nx: x / bounds.width, ny: y / bounds.height };
+    wake();
+  };
+
+  const onPointerLeave = () => {
+    pointer = null;
+    wake(); // wake to run the damped return, which then halts itself
+  };
+
+  if (interactive && host) {
+    host.addEventListener("pointermove", onPointerMove);
+    host.addEventListener("pointerleave", onPointerLeave);
+  }
+
+  // Zero frames while the hero is offscreen (spec §5.1).
+  const fieldObserver = new IntersectionObserver(
+    (entries) => {
+      const visible = entries.some((entry) => entry.isIntersecting);
+      if (visible === onscreen) return;
+      onscreen = visible;
+      if (!onscreen) {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+        return;
+      }
+      if (condensing) {
+        raf = requestAnimationFrame(tick);
+      } else if (pointer) {
+        wake();
+      }
+    },
+    { rootMargin: "0px" }
+  );
+  fieldObserver.observe(canvas);
+
+  const onVisibility = () => {
+    if (document.hidden) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      return;
+    }
+    // A hero that mounted in a background tab still has its first frame
+    // queued — a hidden document suspends rAF rather than dropping it, and no
+    // visibilitychange fired on the way in to cancel it. Clear whatever is
+    // queued before resuming, so exactly one chain is ever in flight.
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    if (condensing) {
+      raf = requestAnimationFrame(tick);
+    } else if (pointer) {
+      wake();
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+
+  // One retint repaint on theme change (spec §5.5): re-read --accent when the
+  // `dark` class flips; repaint once only if the loop is idle.
+  const onThemeChange = () => {
+    accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || accent;
+    if (!raf) draw();
+  };
+  const themeObserver = new MutationObserver(onThemeChange);
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+  return () => {
+    condensing = false;
+    pointer = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    if (host) {
+      host.removeEventListener("pointermove", onPointerMove);
+      host.removeEventListener("pointerleave", onPointerLeave);
+    }
+    document.removeEventListener("visibilitychange", onVisibility);
+    fieldObserver.disconnect();
+    themeObserver.disconnect();
+  };
+}
+
 export default function HeroField({ title }: { title: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return; // context failure: render nothing, headline is SSR'd beneath
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    const width = Math.max(1, Math.floor(rect.width));
-    const height = Math.max(1, Math.floor(rect.height));
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
-
-    // If this title already played, render the settled frame once and stop.
-    const alreadyPlayed = playedSlugs.has(title);
-
-    const seed = hashString(title || "field");
-    const targets = buildFieldTargets(width, height, seed);
-    const rand = makeSeededRandom(seed ^ 0x9e3779b9);
-    const particles: Particle[] = targets.map((t) => {
-      const hx = rand() * width;
-      const hy = rand() * height;
-      return { hx, hy, tx: t.x, ty: t.y, x: hx, y: hy, a: t.a };
-    });
-
-    let accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
-    let raf = 0;
-    let start = 0;
-    let running = true;
-
-    const draw = () => {
-      __frameCount.value++;
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = accent;
-      for (const p of particles) {
-        ctx.globalAlpha = p.a;
-        ctx.fillRect(p.x, p.y, 1.6, 1.6);
-      }
-      ctx.globalAlpha = 1;
-    };
-
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const tick = (now: number) => {
-      if (!running) return;
-      if (!start) start = now;
-      const elapsed = now - start;
-      if (elapsed < DRIFT_MS) {
-        for (const p of particles) { p.x = p.hx; p.y = p.hy + Math.sin((now + p.hx) * 0.001) * 2; }
-        draw();
-        raf = requestAnimationFrame(tick);
-      } else if (elapsed < DRIFT_MS + CONDENSE_MS) {
-        const t = ease((elapsed - DRIFT_MS) / CONDENSE_MS);
-        for (const p of particles) { p.x = p.hx + (p.tx - p.hx) * t; p.y = p.hy + (p.ty - p.hy) * t; }
-        draw();
-        raf = requestAnimationFrame(tick);
-      } else {
-        for (const p of particles) { p.x = p.tx; p.y = p.ty; }
-        draw();
-        playedSlugs.add(title);
-        running = false; // loop halts on SETTLED
-      }
-    };
-
-    if (alreadyPlayed) {
-      for (const p of particles) { p.x = p.tx; p.y = p.ty; }
-      draw();
-      running = false;
-    } else {
-      raf = requestAnimationFrame(tick);
-    }
-
-    const onVisibility = () => {
-      if (document.hidden) {
-        if (raf) cancelAnimationFrame(raf);
-        raf = 0;
-      } else if (running) {
-        raf = requestAnimationFrame(tick);
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    // One retint repaint on theme change (spec §5.5): re-read --accent when the
-    // `dark` class flips; repaint once only if the loop has settled.
-    const onThemeChange = () => {
-      accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || accent;
-      if (!running) draw();
-    };
-    const themeObserver = new MutationObserver(onThemeChange);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-
-    return () => {
-      running = false;
-      if (raf) cancelAnimationFrame(raf);
-      document.removeEventListener("visibilitychange", onVisibility);
-      themeObserver.disconnect();
-    };
+    return startField(canvas, title);
   }, [title]);
 
   return (
