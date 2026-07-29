@@ -1,17 +1,25 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMBINED_PULL_CAP_PX,
   DAMPING,
   LENS_ALPHA_CAP,
   LENS_PULL_CAP_PX,
   LENS_RADIUS_PX,
   PARALLAX_MAX_PX,
   SETTLE_EPSILON_PX,
+  TRANSIT_AXIS_RADIANS,
+  TRANSIT_DRIFT_PX,
+  TRANSIT_FIRST_DELAY_MS,
+  TRANSIT_MAX_GAP_MS,
+  TRANSIT_MIN_GAP_MS,
+  TRANSIT_MS,
   fieldIsSettled,
   lensInfluence,
   parallaxOffset,
   particleDepth,
-  stepToward
+  stepToward,
+  transitInfluence
 } from "./field-motion";
 
 describe("particleDepth", () => {
@@ -156,5 +164,136 @@ describe("fieldIsSettled", () => {
     // The boundary itself, not just either side of it: without this, swapping
     // the comparison for <= keeps every other case in this suite passing.
     expect(fieldIsSettled(SETTLE_EPSILON_PX)).toBe(false);
+  });
+});
+
+describe("transitInfluence", () => {
+  // A horizontal axis with spanLo 0 and span 100 makes the arithmetic legible:
+  // band = 9, and the front travels from -9 to 109 across progress 0 -> 1.
+  const AXIS_X = 1;
+  const AXIS_Y = 0;
+  const SPAN_LO = 0;
+  const SPAN = 100;
+
+  const at = (baseX: number, progress: number) =>
+    transitInfluence(baseX, 0, AXIS_X, AXIS_Y, SPAN_LO, SPAN, progress);
+
+  it("touches nothing at either end of the sweep", () => {
+    // The front starts one full band before the field and ends one past it, so
+    // the first and last frames of a transit are guaranteed to be no-ops.
+    expect(at(0, 0)).toBeNull();
+    expect(at(SPAN, 1)).toBeNull();
+  });
+
+  it("reaches full weight when the front is exactly on a particle", () => {
+    // front = -9 + 118 * 0.5 = 50, which is where this particle sits.
+    const result = at(50, 0.5);
+    expect(result).not.toBeNull();
+    expect(result!.weight).toBeCloseTo(1, 10);
+  });
+
+  it("returns the axis vector as the push direction", () => {
+    // (30, -40) is 50 units along the unit axis (0.6, -0.8), so it projects onto
+    // the front at progress 0.5 exactly as baseX 50 does on the horizontal axis.
+    // Passing (50, 0) here instead would project to 30 — 20px off a 9px band —
+    // and get the correct null, testing nothing about the returned direction.
+    const result = transitInfluence(30, -40, 0.6, -0.8, SPAN_LO, SPAN, 0.5);
+    expect(result).not.toBeNull();
+    expect(result!.ux).toBe(0.6);
+    expect(result!.uy).toBe(-0.8);
+  });
+
+  it("falls off smoothly behind and ahead of the front", () => {
+    const onFront = at(50, 0.5)!.weight;
+    const nearBehind = at(50, 0.48)!.weight;
+    const farBehind = at(50, 0.45)!.weight;
+    expect(onFront).toBeGreaterThan(nearBehind);
+    expect(nearBehind).toBeGreaterThan(farBehind);
+  });
+
+  it("returns null rather than a zero-weight object outside the band", () => {
+    // The frame loop skips ~72% of particles at peak on this null, so it must be
+    // a null and not a { weight: 0 } that still costs an allocation.
+    expect(at(50, 0.1)).toBeNull();
+    expect(at(50, 0.9)).toBeNull();
+  });
+
+  it("projects onto the axis rather than using raw coordinates", () => {
+    // On a vertical axis the same baseX is irrelevant and baseY decides.
+    const vertical = transitInfluence(999, 50, 0, 1, SPAN_LO, SPAN, 0.5);
+    expect(vertical).not.toBeNull();
+    expect(vertical!.weight).toBeCloseTo(1, 10);
+  });
+
+  it("scales the band with the span so the profile is viewport-invariant", () => {
+    // This is the property that makes the event look the same shape on a laptop
+    // and an ultrawide: band is a fraction of the field's own extent, so a
+    // particle at the same relative position sees the same weight at the same
+    // progress regardless of absolute size. A fixed-pixel band breaks this.
+    for (const progress of [0.42, 0.45, 0.5, 0.55, 0.58]) {
+      const small = transitInfluence(50, 0, 1, 0, 0, 100, progress);
+      const large = transitInfluence(500, 0, 1, 0, 0, 1000, progress);
+      if (small === null) {
+        expect(large).toBeNull();
+      } else {
+        expect(large).not.toBeNull();
+        expect(large!.weight).toBeCloseTo(small.weight, 10);
+      }
+    }
+  });
+
+  it("is offset-invariant along the axis", () => {
+    // Shifting the whole field along the axis shifts spanLo with it, so the same
+    // relative particle sees the same weight.
+    const atOrigin = transitInfluence(50, 0, 1, 0, 0, 100, 0.47);
+    const shifted = transitInfluence(1050, 0, 1, 0, 1000, 100, 0.47);
+    expect(shifted!.weight).toBeCloseTo(atOrigin!.weight, 10);
+  });
+
+  it("treats a degenerate span as no transit at all", () => {
+    // A one-particle field has no axis to sweep. Unguarded, band would be 0 and
+    // smoothstep's own guard returns 1, making weight 0 everywhere — correct
+    // today, but only by accident, and a negative span would invert the band.
+    expect(transitInfluence(50, 0, 1, 0, 0, 0, 0.5)).toBeNull();
+    expect(transitInfluence(50, 0, 1, 0, 0, -100, 0.5)).toBeNull();
+  });
+
+  it("treats a degenerate band fraction as no transit at all", () => {
+    expect(transitInfluence(50, 0, 1, 0, 0, 100, 0.5, 0)).toBeNull();
+    expect(transitInfluence(50, 0, 1, 0, 0, 100, 0.5, -0.09)).toBeNull();
+  });
+
+  it("refuses a progress outside the sweep", () => {
+    // -1 is the caller's no-transit sentinel; it must never wrap around to a
+    // position inside the field.
+    expect(at(50, -1)).toBeNull();
+    expect(at(50, -0.01)).toBeNull();
+    expect(at(50, 1.01)).toBeNull();
+  });
+
+  it("keeps drift under the combined cap at full weight", () => {
+    // The worst case the frame loop can construct: a lens pull already at its own
+    // 6px cap plus a full-weight transit drift of 5.5px sums to 11.5px, which the
+    // single combined cap must clip to 8px.
+    const full = at(50, 0.5)!;
+    expect(full.weight * TRANSIT_DRIFT_PX).toBeCloseTo(TRANSIT_DRIFT_PX, 10);
+    expect(LENS_PULL_CAP_PX + TRANSIT_DRIFT_PX).toBeGreaterThan(COMBINED_PULL_CAP_PX);
+  });
+});
+
+describe("transit constants", () => {
+  it("points the sweep up and to the right, matching the field's mass bias", () => {
+    // buildFieldTargets biases density toward the upper right, so a transit that
+    // travels along that diagonal stays in the dense region longest.
+    expect(Math.cos(TRANSIT_AXIS_RADIANS)).toBeGreaterThan(0); // rightward
+    expect(Math.sin(TRANSIT_AXIS_RADIANS)).toBeLessThan(0);    // upward (canvas y grows down)
+  });
+
+  it("keeps the cadence window ordered and rare", () => {
+    expect(TRANSIT_MIN_GAP_MS).toBeLessThan(TRANSIT_MAX_GAP_MS);
+    // The first transit lands well inside a short visit; later ones are rare
+    // enough that a lingering visitor reads them as occasional, not cyclic.
+    expect(TRANSIT_FIRST_DELAY_MS).toBeLessThan(TRANSIT_MIN_GAP_MS);
+    expect(TRANSIT_MS).toBeLessThan(TRANSIT_FIRST_DELAY_MS);
   });
 });

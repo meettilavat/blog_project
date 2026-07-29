@@ -35,6 +35,47 @@ export const DAMPING = 0.14;
 /** Below this per-frame delta the field counts as settled and the loop halts. */
 export const SETTLE_EPSILON_PX = 0.05;
 
+/**
+ * Half-width of the transit's band, as a fraction of the field's extent along
+ * the travel axis — not a pixel count. A proportional band makes the sweep
+ * profile viewport-invariant: measured peak engagement is 28% at 700x250 and 29%
+ * at 1440x560, with matching curves. A fixed pixel band would be a thin blade on
+ * an ultrawide and a flood on a laptop.
+ */
+export const TRANSIT_BAND_FRACTION = 0.09;
+
+/** How long one transit takes to cross the field, in ms. ~90 frames at 60fps. */
+export const TRANSIT_MS = 1500;
+
+/** Peak displacement a transit applies, along its direction of travel, in CSS px. */
+export const TRANSIT_DRIFT_PX = 5.5;
+
+/** Peak proportional alpha gain at the centre of the transit's band. */
+export const TRANSIT_ALPHA_GAIN = 0.95;
+
+/**
+ * Cap on the *sum* of every displacement acting on a particle. Capping each
+ * influence separately would let a cursor parked where a transit crosses shift a
+ * dot by LENS_PULL_CAP_PX + TRANSIT_DRIFT_PX = 11.5px, further than either is
+ * allowed alone.
+ */
+export const COMBINED_PULL_CAP_PX = 8;
+
+/** Delay from the field settling to its first transit, in ms. */
+export const TRANSIT_FIRST_DELAY_MS = 4000;
+
+/** Shortest gap between transits, in ms. */
+export const TRANSIT_MIN_GAP_MS = 40_000;
+
+/** Longest gap between transits, in ms. */
+export const TRANSIT_MAX_GAP_MS = 70_000;
+
+/**
+ * Direction of travel, in radians. Roughly (+0.588, -0.809) — right and up,
+ * echoing the upper-right mass bias buildFieldTargets already applies.
+ */
+export const TRANSIT_AXIS_RADIANS = -0.30 * Math.PI;
+
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
@@ -56,8 +97,9 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   //   full weight at every distance — the whole field dragged to the cursor.
   //
   // Fully past the band is the right answer for both, and 1 covers the whole
-  // reachable domain: the sole call site passes edge0 = 0 and Math.hypot() for
-  // x, so x >= edge0 always. Returning `x < edge0 ? 0 : 1` instead would read as
+  // reachable domain: both call sites pass edge0 = 0 and an already-positive
+  // magnitude for x — Math.hypot() for the lens, Math.abs() for the transit — so
+  // x >= edge0 always. Returning `x < edge0 ? 0 : 1` instead would read as
   // more general while adding a branch no caller can reach and no test can
   // distinguish — a future caller with a non-zero edge0 should revisit this line
   // rather than inherit dead generality.
@@ -126,4 +168,58 @@ export function stepToward(current: number, target: number, damping = DAMPING): 
 
 export function fieldIsSettled(maxDelta: number, epsilon = SETTLE_EPSILON_PX): boolean {
   return maxDelta < epsilon;
+}
+
+export type TransitInfluence = {
+  weight: number;
+  /** Unit push direction — the travel axis, handed back so callers need no trig. */
+  ux: number;
+  uy: number;
+};
+
+/**
+ * A wavefront crossing the field on its own, independent of the cursor: dots
+ * within a band of the moving front brighten and drift along the direction of
+ * travel, then relax behind it.
+ *
+ * `spanLo` and `span` describe the field's extent along the axis and MUST be
+ * derived from the particle set, not the canvas. The density mask weights the
+ * field to the right of the hero and fades it out entirely on the left, so
+ * canvas-derived extents put roughly a third of every sweep in empty space —
+ * measured at 700x250, a corner-derived front engaged zero dots for the first
+ * 30% of its travel and then jumped to 97.
+ *
+ * The front starts one full band *before* the field and ends one band past it,
+ * so a transit opens and closes with genuine no-ops rather than popping into
+ * existence mid-field.
+ *
+ * Returns `null` — not a zero-weight object — for every particle the front is
+ * nowhere near, which is about 72% of the field at peak.
+ */
+export function transitInfluence(
+  baseX: number,
+  baseY: number,
+  axisX: number,
+  axisY: number,
+  spanLo: number,
+  span: number,
+  progress: number,
+  bandFraction = TRANSIT_BAND_FRACTION
+): TransitInfluence | null {
+  // Outside the sweep window there is no front. -1 is the caller's no-transit
+  // sentinel, and this is what stops it wrapping around to a real position.
+  if (progress < 0 || progress > 1) return null;
+  // A degenerate extent has no band to sweep. Both cases fail silently
+  // otherwise: span 0 leans on smoothstep's own guard for an accidentally
+  // correct answer, and a negative span inverts the band so every particle in
+  // the field reads as full weight at once.
+  if (span <= 0 || bandFraction <= 0) return null;
+
+  const band = span * bandFraction;
+  const projected = baseX * axisX + baseY * axisY;
+  const front = spanLo - band + (span + 2 * band) * progress;
+  const weight = 1 - smoothstep(0, band, Math.abs(projected - front));
+  if (weight <= 0) return null;
+
+  return { weight, ux: axisX, uy: axisY };
 }
