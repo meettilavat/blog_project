@@ -9,6 +9,7 @@ import {
   PARALLAX_MAX_PX,
   SETTLE_EPSILON_PX,
   TRANSIT_AXIS_RADIANS,
+  TRANSIT_BAND_FRACTION,
   TRANSIT_DRIFT_PX,
   TRANSIT_FIRST_DELAY_MS,
   TRANSIT_MAX_GAP_MS,
@@ -204,11 +205,23 @@ describe("transitInfluence", () => {
   });
 
   it("falls off smoothly behind and ahead of the front", () => {
+    // Progress 0.5 puts the front exactly on the particle at 50. Lower progress
+    // leaves the front behind it, higher progress carries the front past it, so
+    // both sides of the band need sampling — with only the 0.45/0.48 pair, a
+    // distance that is doubled on one side of the front goes undetected and the
+    // wavefront is visibly lopsided.
     const onFront = at(50, 0.5)!.weight;
     const nearBehind = at(50, 0.48)!.weight;
     const farBehind = at(50, 0.45)!.weight;
+    const nearAhead = at(50, 0.52)!.weight;
+    const farAhead = at(50, 0.55)!.weight;
     expect(onFront).toBeGreaterThan(nearBehind);
     expect(nearBehind).toBeGreaterThan(farBehind);
+    expect(onFront).toBeGreaterThan(nearAhead);
+    expect(nearAhead).toBeGreaterThan(farAhead);
+    // The symmetry Math.abs is there to provide: the front is 2.36 from the
+    // particle at both 0.48 and 0.52, so the two weights must agree.
+    expect(nearAhead).toBeCloseTo(nearBehind, 12);
   });
 
   it("returns null rather than a zero-weight object outside the band", () => {
@@ -250,33 +263,70 @@ describe("transitInfluence", () => {
     expect(shifted!.weight).toBeCloseTo(atOrigin!.weight, 10);
   });
 
+  it("pins the band's half-width to 9% of the span", () => {
+    // TRANSIT_BAND_FRACTION was chosen from a live demo, so a different value is
+    // a defect rather than a preference — and every other assertion in this file
+    // survives changing it, because they either use span 100 (where they hold for
+    // any band up to 200) or compare two spans (which is fraction-independent).
+    // These literals are the pin: band = 100 * 0.09 = 9 and the front sits at 50
+    // at progress 0.5, so the band's far edge lands exactly on 59 — zero weight
+    // there, non-zero a hundredth inside it. Raise the fraction and 59 engages.
+    expect(SPAN * TRANSIT_BAND_FRACTION).toBeCloseTo(9, 10);
+    expect(at(59, 0.5)).toBeNull();
+    expect(at(58.99, 0.5)).not.toBeNull();
+  });
+
   it("treats a degenerate span as no transit at all", () => {
-    // A one-particle field has no axis to sweep. Unguarded, band would be 0 and
-    // smoothstep's own guard returns 1, making weight 0 everywhere — correct
-    // today, but only by accident, and a negative span would invert the band.
+    // A one-particle field has no axis to sweep. This documents that intent; it
+    // does not detect the guard's removal, and cannot: with the guard gone, band
+    // comes out 0 or negative, smoothstep's own `edge1 <= edge0` guard returns 1,
+    // and the `weight <= 0` path returns an identical null. The guard exists so
+    // the behaviour is stated in transitInfluence instead of being inherited from
+    // another function's internals — a distinction no fixture can observe from
+    // out here, so there is no honest way to give this test teeth.
     expect(transitInfluence(50, 0, 1, 0, 0, 0, 0.5)).toBeNull();
     expect(transitInfluence(50, 0, 1, 0, 0, -100, 0.5)).toBeNull();
   });
 
   it("treats a degenerate band fraction as no transit at all", () => {
+    // Same standing as the degenerate-span test above: a zero or negative
+    // fraction yields a zero or negative band, which smoothstep already answers
+    // with 1 and so weight 0, so this documents intent rather than detecting the
+    // guard's removal. The guard is there to keep that answer local to this
+    // function rather than dependent on smoothstep's internals.
     expect(transitInfluence(50, 0, 1, 0, 0, 100, 0.5, 0)).toBeNull();
     expect(transitInfluence(50, 0, 1, 0, 0, 100, 0.5, -0.09)).toBeNull();
   });
 
   it("refuses a progress outside the sweep", () => {
-    // -1 is the caller's no-transit sentinel; it must never wrap around to a
-    // position inside the field.
+    // -1 is the caller's no-transit sentinel. These three are documentation, not
+    // coverage: the front launches a full band before the field, so for a
+    // particle inside [0, 100] an out-of-range progress returns null from the
+    // band test whether the guard is there or not.
     expect(at(50, -1)).toBeNull();
     expect(at(50, -0.01)).toBeNull();
     expect(at(50, 1.01)).toBeNull();
+
+    // This one has teeth. baseX -5 is deliberately outside the field's own
+    // extent, which is the only way to make the guard observable: at progress
+    // -0.02 the front is at -9 + 118 * -0.02 = -11.36, only 6.36 from -5 and so
+    // inside the 9px band. Without the guard this returns a real weight.
+    expect(transitInfluence(-5, 0, AXIS_X, AXIS_Y, SPAN_LO, SPAN, -0.02)).toBeNull();
+
+    // So does NaN, which is why the guard is a negated total range rather than
+    // two comparisons: `NaN < 0` and `NaN > 1` are both false, so the pair let it
+    // through and handed back { weight: NaN } — a NaN that reaches a canvas
+    // coordinate makes those dots stop drawing with nothing logged to trace it.
+    expect(at(50, Number.NaN)).toBeNull();
   });
 
-  it("keeps drift under the combined cap at full weight", () => {
-    // The worst case the frame loop can construct: a lens pull already at its own
-    // 6px cap plus a full-weight transit drift of 5.5px sums to 11.5px, which the
-    // single combined cap must clip to 8px.
-    const full = at(50, 0.5)!;
-    expect(full.weight * TRANSIT_DRIFT_PX).toBeCloseTo(TRANSIT_DRIFT_PX, 10);
+  it("sizes the drift so that a combined cap is necessary", () => {
+    // Nothing in this module caps anything — COMBINED_PULL_CAP_PX is enforced in
+    // the frame loop. What is checkable here is that the constants make the
+    // combined cap load-bearing rather than decorative: a lens pull already at
+    // its own 6px cap plus a full-weight transit drift of 5.5px sums to 11.5px,
+    // past the 8px combined cap, so capping each influence separately would let a
+    // cursor parked on a passing front shift a dot further than either allows.
     expect(LENS_PULL_CAP_PX + TRANSIT_DRIFT_PX).toBeGreaterThan(COMBINED_PULL_CAP_PX);
   });
 });

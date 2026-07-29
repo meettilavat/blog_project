@@ -1,7 +1,7 @@
 /**
  * Per-frame motion arithmetic for the hero particle field: parallax, the cursor
- * lens, damping, and the settle test. Kept free of DOM and canvas references so
- * it is unit-testable under Vitest's `node` environment.
+ * lens, damping, the settle test, and the transit wavefront. Kept free of DOM and
+ * canvas references so it is unit-testable under Vitest's `node` environment.
  *
  * Not *all* of the field's pure arithmetic, though. hero-field.tsx still owns its
  * own seeding and layout helpers — `makeSeededRandom`, `hashString`,
@@ -97,7 +97,7 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   //   full weight at every distance — the whole field dragged to the cursor.
   //
   // Fully past the band is the right answer for both, and 1 covers the whole
-  // reachable domain: both call sites pass edge0 = 0 and an already-positive
+  // reachable domain: both call sites pass edge0 = 0 and an already-non-negative
   // magnitude for x — Math.hypot() for the lens, Math.abs() for the transit — so
   // x >= edge0 always. Returning `x < edge0 ? 0 : 1` instead would read as
   // more general while adding a branch no caller can reach and no test can
@@ -189,6 +189,14 @@ export type TransitInfluence = {
  * measured at 700x250, a corner-derived front engaged zero dots for the first
  * 30% of its travel and then jumped to 97.
  *
+ * `axisX`/`axisY` MUST be a unit vector. `baseX * axisX + baseY * axisY` is a
+ * distance along the axis only when |axis| = 1, and the axis is handed straight
+ * back as `ux`/`uy` for the caller to scale by TRANSIT_DRIFT_PX — so a non-unit
+ * axis silently mis-scales both the front's position and the drift it applies, in
+ * proportion to its length. No runtime check: there is one caller and it builds
+ * the axis from Math.cos/Math.sin of TRANSIT_AXIS_RADIANS, which is unit by
+ * construction. The same axis must produce `spanLo` and `span`.
+ *
  * The front starts one full band *before* the field and ends one band past it,
  * so a transit opens and closes with genuine no-ops rather than popping into
  * existence mid-field.
@@ -206,13 +214,32 @@ export function transitInfluence(
   progress: number,
   bandFraction = TRANSIT_BAND_FRACTION
 ): TransitInfluence | null {
-  // Outside the sweep window there is no front. -1 is the caller's no-transit
-  // sentinel, and this is what stops it wrapping around to a real position.
-  if (progress < 0 || progress > 1) return null;
-  // A degenerate extent has no band to sweep. Both cases fail silently
-  // otherwise: span 0 leans on smoothstep's own guard for an accidentally
-  // correct answer, and a negative span inverts the band so every particle in
-  // the field reads as full weight at once.
+  // Outside the sweep window there is no front. This earns its place twice over,
+  // and neither reason is "it stops an out-of-range progress reaching the field":
+  // the front launches a full band before spanLo, so no progress outside [0, 1]
+  // can put it within a band of any particle inside the extent anyway.
+  //
+  //   It is the early-out for -1, the caller's no-transit sentinel. Between
+  //   transits — which is most of the time, given a 40-70s gap — this skips a
+  //   projection and a smoothstep for every particle in the field, ~1000 per
+  //   frame.
+  //
+  //   Written as a negated total range, it also refuses NaN. `NaN < 0` and
+  //   `NaN > 1` are both false, so the two-comparison form let a NaN progress
+  //   through and returned { weight: NaN }, which the caller multiplies into a
+  //   canvas coordinate: those dots silently stop drawing, with nothing logged to
+  //   trace it by, exactly as in smoothstep's 0/0 case above. The caller derives
+  //   progress from timestamps, so a zero-duration transit is one 0/0 away.
+  if (!(progress >= 0 && progress <= 1)) return null;
+  // A degenerate extent has no band to sweep, and this says so here rather than
+  // leaving the answer to another function. Unguarded, both cases already return
+  // null, but only via smoothstep's internals: band comes out zero or negative,
+  // smoothstep's own `edge1 <= edge0` guard returns 1, weight is 0, and the
+  // `weight <= 0` return below fires. Correct today, but correct by accident —
+  // change smoothstep's degenerate branch and this function's contract changes
+  // with it, silently. The corollary is that no caller can tell the two null
+  // paths apart, so the tests covering this line document intent; they cannot
+  // detect its removal.
   if (span <= 0 || bandFraction <= 0) return null;
 
   const band = span * bandFraction;
