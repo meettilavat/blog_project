@@ -129,7 +129,7 @@ export const selectedWork: LedgerEntry[] = [
  */
 export const earlierWork: string[] = [
   "Image caption generator — ResNet50 feature extraction with LSTM decoding on Flickr8k, deployed with Streamlit.",
-  "Student performance modelling — RF, GBM, and logistic regression with SHAP/LIME explainability over a 12k+ record dataset.",
+  "Student performance modelling — RF, GBM, logistic regression, and CNN with SHAP/LIME explainability over a 12k+ record dataset.",
   "Personal blog — PHP/MySQL with CKEditor publishing, local image uploads, and AWS hosting."
 ];
 
