@@ -7,9 +7,39 @@ vi.mock("lucide-react", () => ({
   )
 }));
 
-import { LedgerNote, LedgerRow, LedgerSection } from "./resume-ledger";
+import { LedgerNote, LedgerRow, LedgerRowShell, LedgerSection } from "./resume-ledger";
 
 describe("components/profile/resume-ledger.tsx", () => {
+  it("marks a row print-only on request and leaves the hook off otherwise", () => {
+    const paper = renderToStaticMarkup(
+      <LedgerRowShell printOnly>
+        <span>cell</span>
+      </LedgerRowShell>
+    );
+    const screen = renderToStaticMarkup(
+      <LedgerRowShell>
+        <span>cell</span>
+      </LedgerRowShell>
+    );
+
+    // A print-only row is still a row: same grid class, same break hook. Both
+    // asserted so the opt-in cannot be a bespoke wrapper that skips the shell.
+    expect(paper).toContain("resume-row");
+    expect(paper).toContain('data-resume-row="true"');
+    expect(paper).toContain('data-resume-print-only="true"');
+
+    expect(screen).toContain("resume-row");
+    expect(screen).toContain('data-resume-row="true"');
+    // Absent, not `="false"`: the attribute is the hook, so emitting it with a
+    // falsy value would hand a `[data-resume-print-only]` selector every row on
+    // the page. Substring check on the attribute name, which `="false"` contains.
+    expect(screen).not.toContain("data-resume-print-only");
+    // The point of `display: none` over a visually-hidden clip is that these rows
+    // leave the accessibility tree on screen; aria-hidden would instead make them
+    // announced-but-invisible, which is the failure this avoids.
+    expect(paper).not.toContain("aria-hidden");
+  });
+
   it("renders a section heading on the shared row grid with no index number", () => {
     const html = renderToStaticMarkup(
       <LedgerSection title="Experience">

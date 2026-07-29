@@ -62,6 +62,37 @@ export const actionLinks: ActionLink[] = [
   { label: "GitHub", href: publicLinks.githubProfile, external: true }
 ];
 
+/**
+ * The typeable form of a URL: no scheme, no `www.`, no trailing slash. An href
+ * is unreachable on paper, so a printed profile row has to spell out something a
+ * reader can copy into a browser by hand.
+ */
+function toPrintableUrl(url: string): string {
+  return url
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+}
+
+/**
+ * LinkedIn and GitHub as contact rows, for paper only.
+ *
+ * Separate from `contactRows` rather than merged into it, because the two lists
+ * belong to different media: `contactRows` renders on screen *and* on paper,
+ * while these are the rows that only exist once the action links above stop
+ * being clickable. Merging them would put the URLs back on screen beside the
+ * links that already carry those destinations — the duplication the rebuild
+ * removed.
+ *
+ * Values are derived from the same `publicLinks` the action links read, so a
+ * changed profile URL moves the href and the printed text together and screen
+ * and paper cannot disagree.
+ */
+export const printContactRows: ContactRow[] = [
+  { label: "LinkedIn", value: toPrintableUrl(publicLinks.linkedInProfile) },
+  { label: "GitHub", value: toPrintableUrl(publicLinks.githubProfile) }
+];
+
 export const experience: LedgerEntry[] = [
   {
     label: "2023",

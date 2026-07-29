@@ -69,6 +69,29 @@ function classTokens(tag: string): string[] {
   return (/\sclass="([^"]*)"/.exec(tag)?.[1] ?? "").split(/\s+/).filter(Boolean);
 }
 
+/**
+ * The rows marked print-only, each with its opening tag and its inner markup.
+ *
+ * The close is found by the next `</div>`, which is only correct while such a row
+ * holds no nested <div> — asserted at the call site rather than assumed, so a row
+ * that grows a wrapper fails loudly instead of yielding a truncated slice that
+ * every absence check would pass against.
+ */
+function printOnlyRows(html: string): Array<{ tag: string; inner: string }> {
+  const rows: Array<{ tag: string; inner: string }> = [];
+  for (const match of html.matchAll(/<[a-z][a-z0-9]*\s[^>]*>/gi)) {
+    const [tag] = match;
+    if (!/\sdata-resume-print-only="true"/.test(tag)) continue;
+    // The match's own index, not indexOf(tag): both print rows carry byte-for-byte
+    // identical opening tags, so a search by tag text would slice the first row's
+    // contents twice and the second row would never be examined at all.
+    const start = match.index + tag.length;
+    const end = html.indexOf("</div>", start);
+    rows.push({ tag, inner: html.slice(start, end === -1 ? html.length : end) });
+  }
+  return rows;
+}
+
 /** One entry per element carrying the `resume-row` class token. */
 function ledgerRows(html: string): Array<{ tag: string; hasPrintHook: boolean }> {
   const rows: Array<{ tag: string; hasPrintHook: boolean }> = [];
@@ -177,33 +200,130 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).not.toContain("Custom PC building");
   });
 
-  it("prints the profile links and hides only the download", () => {
+  it("keeps the whole action cluster off paper, not just the download", () => {
     const html = renderToStaticMarkup(<ResumePage />);
     const anchors = anchorTags(html);
     const find = (href: string) => anchors.find((tag) => tag.includes(`href="${href}"`)) ?? "";
 
-    const download = find("/resume/meet-tilavat-resume.pdf");
-    const linkedIn = find(LINKEDIN_PROFILE_URL);
-    const github = find(GITHUB_PROFILE_URL);
+    for (const href of [
+      "/resume/meet-tilavat-resume.pdf",
+      LINKEDIN_PROFILE_URL,
+      GITHUB_PROFILE_URL
+    ]) {
+      const tokens = classTokens(find(href));
 
-    // Each anchor was found and its class list parsed. Without this the three
-    // absence checks below would all pass on empty lists.
-    expect(classTokens(download)).toContain("inline-flex");
-    expect(classTokens(linkedIn)).toContain("inline-flex");
-    expect(classTokens(github)).toContain("inline-flex");
+      // Found, and its class list parsed. Without this the print check below would
+      // pass on an empty list for an anchor that had vanished from the band.
+      expect(tokens, href).toContain("inline-flex");
 
-    // A paper resume should not advertise a download link...
-    expect(classTokens(download)).toContain("print:hidden");
-    // ...but LinkedIn and GitHub now live *only* in `actionLinks` — `contactRows`
-    // was reduced to Base/Email/Phone — so hiding them prints a resume with no
-    // way to reach either profile.
-    expect(classTokens(linkedIn)).not.toContain("print:hidden");
-    expect(classTokens(github)).not.toContain("print:hidden");
+      // An exact class token of *this* anchor. A document-wide
+      // toContain("print:hidden") is satisfied by any one element carrying it and
+      // would say nothing about the other two; a raw-tag substring check would
+      // also be satisfied by a neighbouring attribute value.
+      expect(tokens, href).toContain("print:hidden");
+    }
 
-    // Exactly one element on the whole sheet hides on paper. Catches a wrapper
-    // taking the class as well as the shared-anchor form this replaced, neither
-    // of which the per-anchor checks above would see.
-    expect(html.split("print:hidden").length - 1).toBe(1);
+    // Exactly the three anchors carry it, plus their wrapper — the wrapper is
+    // hidden deliberately, because hiding only the anchors collapses its grid row
+    // to 0px while the band's row-gap survives, leaving contentless whitespace on
+    // paper. So: three anchors, four elements document-wide. The "View source"
+    // project link picking the class up would push the second count to five,
+    // which the per-anchor checks above cannot see.
+    expect(anchors.filter((tag) => classTokens(tag).includes("print:hidden"))).toHaveLength(3);
+    expect(html.split("print:hidden").length - 1).toBe(4);
+
+    // The project link inside "Selected work" is not part of the cluster and still
+    // prints, so the counts above are not passing because everything is hidden.
+    const caseStudy = classTokens(
+      find("/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp")
+    );
+    expect(caseStudy).toContain("inline-flex"); // found and parsed, so the next line means something
+    expect(caseStudy).not.toContain("print:hidden");
+  });
+
+  it("puts the profile URLs on paper as two more contact rows", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+    const rows = printOnlyRows(html);
+
+    expect(rows).toHaveLength(2);
+
+    for (const { tag, inner } of rows) {
+      // Rides the shared shell rather than a bespoke wrapper: same grid class,
+      // same `break-inside: avoid` hook as every other row on the sheet.
+      expect(classTokens(tag)).toContain("resume-row");
+      expect(tag).toMatch(/\sdata-resume-row="true"/);
+      // The slicing in printOnlyRows() assumed no nested <div>; if that stops
+      // holding, `inner` is truncated and the checks below stop meaning anything.
+      expect(inner).not.toMatch(/<div[\s>]/);
+      // Nothing here pretends to be followable — an href on paper is a dead end,
+      // and a second anchor per profile would break the exact href counts above.
+      expect(inner).not.toMatch(/<a[\s>]/);
+      // Hidden by `display: none`, so already out of the accessibility tree on
+      // screen. aria-hidden would instead leave them announced but invisible.
+      expect(tag).not.toContain("aria-hidden");
+    }
+
+    // Read out of the row's own cells and compared whole. A document-wide
+    // toContain("github.com/meettilavat") would be satisfied by the source
+    // repository URL — GITHUB_PROFILE_URL + "/blog_project" — that "Selected
+    // work" links to, so it could pass with these rows deleted entirely.
+    expect(
+      rows.map(({ inner }) => ({
+        label: /<dt[^>]*>([\s\S]*?)<\/dt>/.exec(inner)?.[1] ?? "",
+        value: /<dd[^>]*>([\s\S]*?)<\/dd>/.exec(inner)?.[1] ?? ""
+      }))
+    ).toEqual([
+      { label: "LinkedIn", value: "linkedin.com/in/meettilavat" },
+      { label: "GitHub", value: "github.com/meettilavat" }
+    ]);
+
+    // Once per medium, still: the URL text exists exactly once on the sheet, and
+    // only inside a print-only row. Delimited by the tag boundaries either side,
+    // so the repository href cannot satisfy the GitHub count.
+    for (const url of ["linkedin.com/in/meettilavat", "github.com/meettilavat"]) {
+      expect(html.split(`>${url}<`).length - 1, url).toBe(1);
+    }
+
+    // ...and on paper these rows are the *only* source of either URL, because the
+    // action links that also name those destinations are print-hidden. Both halves
+    // are needed: the counts above are about the sheet, this is about the medium.
+    for (const href of [LINKEDIN_PROFILE_URL, GITHUB_PROFILE_URL]) {
+      const tokens = classTokens(anchorTags(html).find((t) => t.includes(`href="${href}"`)) ?? "");
+      expect(tokens, href).toContain("inline-flex");
+      expect(tokens, href).toContain("print:hidden");
+    }
+
+    // Both land after the three shared rows, so paper reads Base/Email/Phone and
+    // then the profiles rather than interleaving them.
+    expect(html.indexOf("+91 99133 20031")).toBeLessThan(
+      html.indexOf(">linkedin.com/in/meettilavat<")
+    );
+    // ...and inside the contact <dl>, not appended after it as a third list.
+    expect(html.match(/<dl[\s>]/g) ?? []).toHaveLength(2);
+  });
+
+  it("leaves the on-screen contact rows carrying only Base, Email, and Phone", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+    // Every contact row, print-only or not, in source order: the <dl> runs from
+    // the first <dl> to its close, which is the contact list — the skills <dl>
+    // sits inside a later section.
+    const contactList = html.slice(html.indexOf("<dl"), html.indexOf("</dl>"));
+
+    const labels = [...contactList.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)].map(([, label]) => label);
+    // Positive first: five rows, in this order. An empty or mis-aimed slice would
+    // otherwise satisfy the screen-only check below for free.
+    expect(labels).toEqual(["Base", "Email", "Phone", "LinkedIn", "GitHub"]);
+
+    const paperRows = printOnlyRows(contactList);
+    expect(paperRows).toHaveLength(2);
+
+    // The three rows that render in both media carry no URL text at all — the
+    // duplication the ledger rebuild removed does not come back on screen. Sliced
+    // at the first print-only row, so the URLs below it are out of the window.
+    const sharedRows = contactList.slice(0, contactList.indexOf(paperRows[0]?.tag ?? "</dl>"));
+    expect(sharedRows).toContain("Gujarat, India");
+    expect(sharedRows).not.toContain("linkedin.com");
+    expect(sharedRows).not.toContain("github.com");
   });
 
   it("gives every ledger row the print break hook, not only some of them", () => {

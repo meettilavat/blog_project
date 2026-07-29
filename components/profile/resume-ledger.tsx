@@ -13,18 +13,35 @@ import { cn } from "@/lib/ui/classnames";
  * makes forgetting one of them impossible. Vertical rhythm still differs per row
  * type (a contact line is not a project entry), so padding stays the caller's,
  * merged over the base so a caller can also override the border weight.
+ *
+ * `printOnly` marks a row that exists only on paper. It emits a third hook
+ * rather than a Tailwind `hidden print:grid` pair for two reasons: `.resume-row`
+ * declares `display: grid` in author CSS *after* `@tailwind utilities`, so at
+ * equal specificity a plain `hidden` utility loses the source-order tie and is
+ * silently inert (the same trap the masthead's `!text-accent` works around); and
+ * keying the pair in globals.css keeps the row's display in one place beside the
+ * tracks it has to restore.
  */
 export function LedgerRowShell({
   as: Tag = "div",
   className,
+  printOnly = false,
   children
 }: {
   as?: "article" | "div";
   className?: string;
+  printOnly?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <Tag className={cn("resume-row border-b border-border/60", className)} data-resume-row="true">
+    <Tag
+      className={cn("resume-row border-b border-border/60", className)}
+      data-resume-row="true"
+      // Absent, not `="false"`, on a screen row: the attribute itself is the
+      // hook, so a stray `[data-resume-print-only]` selector can never match a
+      // row that merely opted out.
+      data-resume-print-only={printOnly ? "true" : undefined}
+    >
       {children}
     </Tag>
   );

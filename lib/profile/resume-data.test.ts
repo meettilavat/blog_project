@@ -17,6 +17,7 @@ import {
   earlierWork,
   education,
   experience,
+  printContactRows,
   selectedWork,
   skillGroups
 } from "./resume-data";
@@ -122,7 +123,8 @@ describe("lib/profile/resume-data.ts", () => {
     expect(rowValues).toContain("UTC+05:30");
     expect(rowValues).toContain("tilavatmeet2@gmail.com");
     expect(rowValues).toContain("+91 99133 20031");
-    // LinkedIn and GitHub live only in the actions.
+    // LinkedIn and GitHub stay out of the shared rows, which render in both
+    // media: on screen they are the actions, on paper `printContactRows`.
     expect(rowValues).not.toContain("linkedin.com");
     expect(rowValues).not.toContain("github.com");
     expect(actionHrefs).toContain("linkedin.com/in/meettilavat");
@@ -133,6 +135,53 @@ describe("lib/profile/resume-data.ts", () => {
       "LinkedIn",
       "GitHub"
     ]);
+  });
+
+  it("carries the profile URLs as typeable text for print, with no href", () => {
+    // Whole objects, not a substring search: `toEqual` pins the label, pins the
+    // exact value — so a value that merely *contains* the URL, or one that kept
+    // the scheme or the `www.`, fails — and fails on an added `href`, which paper
+    // cannot follow and which would double the anchor count on screen.
+    expect(printContactRows).toEqual([
+      { label: "LinkedIn", value: "linkedin.com/in/meettilavat" },
+      { label: "GitHub", value: "github.com/meettilavat" }
+    ]);
+  });
+
+  it("derives the printed URLs from the configured links, not from literals", async () => {
+    // The point of the derivation: a changed profile URL has to move the href and
+    // the printed text together. Re-imported under different links, because the
+    // module reads getPublicLinks() once at module scope — the static import at
+    // the top of this file is already bound and keeps the default mock.
+    vi.resetModules();
+    vi.doMock("@/lib/public-links", () => ({
+      getPublicLinks: () => ({
+        githubProfile: "https://code.example.test/octo/",
+        linkedInProfile: "https://www.jobs.example.test/in/octo",
+        sourceRepository: "https://code.example.test/octo/repo"
+      })
+    }));
+
+    try {
+      const reloaded = await import("./resume-data");
+
+      // Scheme dropped, `www.` dropped, trailing slash dropped — and no trace of
+      // the default mock's URLs survives, which a hardcoded value could not manage.
+      expect(reloaded.printContactRows.map((row) => row.value)).toEqual([
+        "jobs.example.test/in/octo",
+        "code.example.test/octo"
+      ]);
+      // Read off the same source as the hrefs the screen renders, so the printed
+      // text and the link target cannot drift apart.
+      expect(reloaded.actionLinks.map((link) => link.href)).toEqual([
+        "/resume/meet-tilavat-resume.pdf",
+        "https://www.jobs.example.test/in/octo",
+        "https://code.example.test/octo/"
+      ]);
+    } finally {
+      vi.doUnmock("@/lib/public-links");
+      vi.resetModules();
+    }
   });
 
   it("keeps the case-study link pointing at the featured post", () => {

@@ -214,6 +214,25 @@ a {
   }
 }
 
+/*
+ * Rows that exist only on paper — the LinkedIn/GitHub contact lines, whose URLs
+ * are unreachable text on screen because the action links above already carry
+ * those destinations.
+ *
+ * `display: none`, not a visually-hidden clip: on screen these rows are pure
+ * duplication, so they should be out of the accessibility tree too rather than
+ * announced-but-invisible.
+ *
+ * Position matters. `.resume-row` sets `display: grid` at this same specificity,
+ * so the hide has to come *after* it — hence below the collapse query rather than
+ * beside .resume-ledger. The @media print counterpart puts the grid back; it
+ * cannot use `display: revert`, which would hand a <div> plain `block` and lose
+ * the tracks.
+ */
+[data-resume-print-only="true"] {
+  display: none;
+}
+
 .kicker {
   font-family: var(--font-mono), monospace;
   font-size: 0.6875rem;
@@ -297,6 +316,17 @@ a {
   .resume-sheet [data-resume-row] {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  /*
+   * Paper is where these rows earn their place: an href leads nowhere here, so
+   * the profile URLs have to be readable text. Restores the two-track row the
+   * screen rule takes out of the flow — the tracks themselves still come from
+   * .resume-row above, and only `display` is restated, so it has to stay in step
+   * with .resume-row's own.
+   */
+  [data-resume-print-only="true"] {
+    display: grid;
   }
 
   .resume-sheet a {

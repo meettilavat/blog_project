@@ -7,6 +7,7 @@ import {
 } from "@/components/profile/resume-ledger";
 import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
 import {
+  type ContactRow,
   RESUME_NAME,
   RESUME_ROLE,
   RESUME_STANDFIRST,
@@ -15,10 +16,10 @@ import {
   earlierWork,
   education,
   experience,
+  printContactRows,
   selectedWork,
   skillGroups
 } from "@/lib/profile/resume-data";
-import { cn } from "@/lib/ui/classnames";
 
 export default function ResumePage() {
   return (
@@ -88,7 +89,10 @@ function ResumeStandfirstBand() {
       <p className="m-0 max-w-[50ch] text-[clamp(0.95rem,1.2vw,1.05rem)] leading-[1.7] text-foreground/80">
         {RESUME_STANDFIRST}
       </p>
-      <div className="flex flex-wrap gap-x-6 gap-y-2 ledger:flex-col ledger:items-end ledger:gap-2">
+      {/* The wrapper is hidden too, not just its links: hiding only the anchors
+          collapses this grid row to 0px while the band's row-gap survives,
+          leaving ~24px of contentless whitespace above the hairline on paper. */}
+      <div className="flex flex-wrap gap-x-6 gap-y-2 ledger:flex-col ledger:items-end ledger:gap-2 print:hidden">
         {actionLinks.map((link) => (
           <a
             key={link.label}
@@ -96,14 +100,14 @@ function ResumeStandfirstBand() {
             download={link.download}
             target={link.external ? "_blank" : undefined}
             rel={link.external ? "noreferrer" : undefined}
-            className={cn(
-              "inline-flex min-h-11 items-center gap-1.5 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground",
-              // Only the download hides on paper: a printed resume should not
-              // advertise a download link, but LinkedIn and GitHub now live
-              // *only* here — `contactRows` no longer carries them — so hiding
-              // the whole set would print a resume with no profiles on it.
-              link.download && "print:hidden"
-            )}
+            // `print:hidden` on every link, unconditionally: the whole cluster is
+            // screen-only. A printed resume should not advertise a download, and
+            // on paper a profile link is worse than absent — the arrow implies a
+            // click, and the label alone gives a reader no URL to type. What paper
+            // needs from these three is the URL, and that comes from the contact
+            // ledger below (`printContactRows`), which is the single block a
+            // reader looks in.
+            className="inline-flex min-h-11 items-center gap-1.5 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground print:hidden"
           >
             {link.download ? <Download className="h-3.5 w-3.5" aria-hidden="true" /> : null}
             {link.label}
@@ -143,37 +147,62 @@ function ResumeSkills() {
   );
 }
 
+/**
+ * One contact line. Shared by the three rows that render in both media and the
+ * two that only render on paper, so all five are literally the same row and a
+ * printed page cannot end up with a contact block in two grammars.
+ */
+function ContactLedgerRow({ row, printOnly = false }: { row: ContactRow; printOnly?: boolean }) {
+  return (
+    <LedgerRowShell className="py-2.5" printOnly={printOnly}>
+      {/* `self-center`, not `pt-0.5`: the value cell below is a 44px box with
+          its text centred, and a top-padded label in a stretched grid cell
+          would sit ~12px above the value it names. Both cells centre, so the
+          label and its value share a line at every width. */}
+      <dt className="kicker self-center">{row.label}</dt>
+      {/* The 44px floor lives on the cell *and* on the anchor, for two
+          different reasons. On the cell it keeps all three contact rows the
+          same height — Base carries plain text, so without it that row would
+          be 24px shorter than the two beside it. On the anchor it is the tap
+          target itself: `items-center` centres rather than stretches, so a
+          bare text-sm anchor would be a 20px hit area, which is the wrong
+          thing to aim a thumb at for a `tel:` link. 44px matches the floor
+          every other link on this page keeps. */}
+      <dd className="m-0 flex min-h-11 items-center text-sm text-foreground/85">
+        {row.href ? (
+          <a
+            href={row.href}
+            className="inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            {row.value}
+          </a>
+        ) : (
+          row.value
+        )}
+      </dd>
+    </LedgerRowShell>
+  );
+}
+
 function ResumeContact() {
   return (
     <dl className="m-0">
       {contactRows.map((row) => (
-        <LedgerRowShell key={row.label} className="py-2.5">
-          {/* `self-center`, not `pt-0.5`: the value cell below is a 44px box with
-              its text centred, and a top-padded label in a stretched grid cell
-              would sit ~12px above the value it names. Both cells centre, so the
-              label and its value share a line at every width. */}
-          <dt className="kicker self-center">{row.label}</dt>
-          {/* The 44px floor lives on the cell *and* on the anchor, for two
-              different reasons. On the cell it keeps all three contact rows the
-              same height — Base carries plain text, so without it that row would
-              be 24px shorter than the two beside it. On the anchor it is the tap
-              target itself: `items-center` centres rather than stretches, so a
-              bare text-sm anchor would be a 20px hit area, which is the wrong
-              thing to aim a thumb at for a `tel:` link. 44px matches the floor
-              every other link on this page keeps. */}
-          <dd className="m-0 flex min-h-11 items-center text-sm text-foreground/85">
-            {row.href ? (
-              <a
-                href={row.href}
-                className="inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-              >
-                {row.value}
-              </a>
-            ) : (
-              row.value
-            )}
-          </dd>
-        </LedgerRowShell>
+        <ContactLedgerRow key={row.label} row={row} />
+      ))}
+      {/* Paper only, and last: on screen the action links in the band above
+          already reach both profiles, but on paper a label is a dead end — the
+          href goes nowhere a reader can follow. These rows put the two URLs as
+          readable text in the block where a reader looks for a way to make
+          contact, so all five values sit together instead of two of them being
+          stranded as bare words beside the standfirst.
+
+          `printContactRows`, not extra `contactRows` entries: these carry no
+          href, because nothing on paper is clickable, and folding them into the
+          screen list would print the URLs twice over and show them on screen
+          next to the links that already carry them. */}
+      {printContactRows.map((row) => (
+        <ContactLedgerRow key={row.label} row={row} printOnly />
       ))}
     </dl>
   );

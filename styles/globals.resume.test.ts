@@ -18,6 +18,17 @@ const css = readFileSync(resolve(process.cwd(), "styles/globals.css"), "utf8").r
   " "
 );
 
+/**
+ * The declaration body of every innermost rule in `block` whose selector text
+ * mentions `selector`. Bodies rather than the raw slice, because "the print block
+ * contains `display: grid` somewhere" says nothing about which element gets it.
+ */
+function ruleBodies(block: string, selector: string): string[] {
+  return [...block.matchAll(/([^{}]*)\{([^{}]*)\}/g)]
+    .filter(([, selectors]) => selectors.includes(selector))
+    .map(([, , body]) => body);
+}
+
 describe("styles/globals.css resume ledger", () => {
   it("defines the ledger block at the 52rem measure", () => {
     expect(css).toContain(".resume-ledger");
@@ -36,6 +47,45 @@ describe("styles/globals.css resume ledger", () => {
     // and in paged media the query resolves against the page box — so an unscoped
     // query would stack every label on paper and print the mobile layout.
     expect(css).not.toContain("@media (max-width: 831px)");
+  });
+
+  it("hides the print-only rows on screen and restores their tracks on paper", () => {
+    const printAt = css.indexOf("@media print");
+    expect(printAt).toBeGreaterThan(-1);
+    const beforePrint = css.slice(0, printAt);
+    const printBlock = css.slice(printAt);
+    const hook = '[data-resume-print-only="true"]';
+
+    // One unconditional rule, outside any media query, taking these rows out of
+    // the flow entirely. `display: none` and not `visibility`/`clip`: on screen
+    // the rows duplicate the action links, so they belong out of the accessibility
+    // tree rather than merely out of sight.
+    const screenBodies = ruleBodies(beforePrint, hook);
+    expect(screenBodies).toHaveLength(1);
+    expect(screenBodies[0]).toContain("display: none");
+
+    // Nesting depth where that rule sits: 0 is top level, so it hides the rows in
+    // every medium and only the @media print rule below lifts it. Wrapped in
+    // `@media screen` instead, the hide would depend on the medium being one of
+    // the two a browser reports, and the print rule would become dead weight.
+    const upToHook = beforePrint.slice(0, beforePrint.indexOf(hook));
+    const depth = (upToHook.match(/\{/g) ?? []).length - (upToHook.match(/\}/g) ?? []).length;
+    expect(depth).toBe(0);
+
+    // `.resume-row` declares `display: grid` at this same specificity — one
+    // attribute selector against one class — so the hide is decided by source
+    // order and is inert anywhere above it.
+    expect(beforePrint.indexOf(hook)).toBeGreaterThan(beforePrint.lastIndexOf(".resume-row"));
+
+    // On paper the row comes back as a grid. Asserted on this rule's own body, so
+    // it cannot be satisfied by `.resume-row`'s declaration elsewhere in the file.
+    const printBodies = ruleBodies(printBlock, hook);
+    expect(printBodies).toHaveLength(1);
+    expect(printBodies[0]).toContain("display: grid");
+
+    // Still exactly one definition of the tracks: the print rule restores the
+    // display only and reads its columns from `.resume-row`.
+    expect(printBodies[0]).not.toContain("grid-template-columns");
   });
 
   it("keys the print break rule on rows and headings, not on whole sections", () => {
