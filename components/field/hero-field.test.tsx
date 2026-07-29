@@ -29,7 +29,9 @@ describe("HeroField", () => {
     const html = renderToStaticMarkup(<HeroField title="Tree Census" />);
     expect(html).toContain("<canvas");
     expect(html).toContain('aria-hidden="true"');
-    expect(html).toContain('pointer-events');
+    // Precisely none: `pointer-events-auto` would satisfy a looser match, and
+    // the canvas swallowing events would break the headline link's hover/focus.
+    expect(html).toContain("pointer-events-none");
   });
 
   it("registers the title once the entrance completes, and skips it on remount", () => {
@@ -182,6 +184,72 @@ describe("HeroField", () => {
     expect(h.intersectionObserver.disconnected).toBe(true);
   });
 
+  it("schedules nothing while offscreen, even across a visibility change", () => {
+    // A hero below the fold has its optimistic first frame cancelled by the
+    // observer's opening report, and then sits condensing-but-offscreen.
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Offscreen visibility");
+    h.setIntersecting(false);
+    expect(h.pending()).toBe(0);
+
+    h.setHidden(true);
+    h.emitVisibilityChange();
+    h.setHidden(false);
+    h.emitVisibilityChange();
+
+    // Becoming visible must not schedule for a hero that is still scrolled
+    // away: that frame would run, paint nothing, and leave a dead handle.
+    expect(h.pending()).toBe(0);
+    const painted = h.paintCount();
+    expect(h.flush(200)).toBe(0);
+    expect(h.paintCount()).toBe(painted);
+
+    // Re-entry then leaves exactly one chain, not one per missed resume.
+    h.setIntersecting(true);
+    expect(h.pending()).toBe(1);
+    expect(h.flush(ENTRANCE_BUDGET)).toBeGreaterThan(0);
+    expect(h.pending()).toBe(0);
+    stop();
+  });
+
+  it("coalesces pointer spam onto the frame already queued", () => {
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Spam");
+    h.flush(ENTRANCE_BUDGET);
+    expect(h.pending()).toBe(0);
+
+    h.movePointer(POINTER_X, POINTER_Y);
+    expect(h.pending()).toBe(1);
+    const queued = h.pendingIds();
+
+    // A second move before that frame runs must ride it rather than cancelling
+    // and re-requesting identical work — `wake()`'s `raf` test is what does it.
+    h.movePointer(POINTER_X + 4, POINTER_Y + 4);
+    expect(h.pending()).toBe(1);
+    expect(h.pendingIds()).toEqual(queued);
+    stop();
+  });
+
+  it("hands the lens to a cursor that arrived during the entrance", () => {
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Arrived");
+    h.flush(3); // entrance under way
+    h.movePointer(POINTER_X, POINTER_Y); // cursor arrives, then holds still
+    expect(h.pending()).toBe(1); // still the entrance's own frame
+
+    const ran = h.flush(ENTRANCE_BUDGET);
+    expect(ran).toBeLessThan(ENTRANCE_BUDGET);
+    expect(h.pending()).toBe(0); // engaged, then halted
+
+    // The frame it settled on is lensed: a cursor already inside the hero does
+    // not have to move again to be noticed.
+    const engagedAlpha = h.maxAlpha();
+    h.leavePointer();
+    h.flush(1000);
+    expect(h.maxAlpha()).toBeLessThan(engagedAlpha);
+    stop();
+  });
+
   it("attaches no pointer listeners on a coarse pointer, and behaves as it did before", () => {
     const h = createFieldHarness({ interactive: false });
     const stop = startField(h.canvas, "Coarse");
@@ -202,8 +270,31 @@ describe("HeroField", () => {
     h.leavePointer();
     expect(h.pending()).toBe(0);
     expect(h.paintCount()).toBe(painted);
+
+    // Force a fresh paint so the positions are newly recorded rather than the
+    // same frame compared against itself: the particles must still be at base.
+    h.triggerMutation();
+    expect(h.paintCount()).toBe(painted + 1);
     expect(maxDrift(base, h.positions())).toBe(0);
     stop();
+  });
+
+  it("does nothing at all for a zero-size hero", () => {
+    // A collapsed or not-yet-laid-out hero clamps to 1x1 and produces no
+    // targets. Running the entrance over an empty particle list would burn a
+    // full entrance's worth of frames painting nothing.
+    const h = createFieldHarness({ width: 0, height: 0 });
+    const stop = startField(h.canvas, "Collapsed");
+
+    expect(h.pending()).toBe(0);
+    expect(h.paintCount()).toBe(0);
+    expect(h.host.listenerCount("pointermove")).toBe(0);
+    expect(h.host.listenerCount("pointerleave")).toBe(0);
+    expect(h.documentListenerCount("visibilitychange")).toBe(0);
+    expect(h.intersectionObserver.callback).toBeNull();
+    expect(h.mutationObserver.callback).toBeNull();
+
+    stop(); // the teardown it hands back must still be safe to call
   });
 
   it("keeps one frame chain when a hidden mount becomes visible", () => {

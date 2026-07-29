@@ -27,8 +27,9 @@ export function __resetPlayedSlugs() {
   playedSlugs.clear();
 }
 
-// Dev-only frame counter for the §10 frame budget: no frames while idle with no
-// pointer, and none while the hero is offscreen.
+// Dev-only frame counter for the §10 frame budget: no frames once the field has
+// stopped moving — cursor present or not — and none at all while the hero is
+// offscreen or the document is hidden.
 export const __frameCount = { value: 0 };
 
 type Particle = {
@@ -173,6 +174,12 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     };
   });
 
+  // A zero-size hero — `display: none`, a collapsed flex parent, a measurement
+  // taken before layout — clamps to 1x1 and yields no targets. There is nothing
+  // to animate, so bail before wiring anything up rather than spending a full
+  // entrance painting an empty canvas.
+  if (!particles.length) return () => {};
+
   let accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#F2A93B";
   let raf = 0;
   let start = 0;
@@ -195,9 +202,30 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
 
   const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
+  // Every frame is requested through here, so the invariant "`raf` is non-zero
+  // iff a frame is queued" lives in one place instead of being hand-maintained
+  // at each call site. Cancelling first makes double-scheduling structurally
+  // impossible, and refusing while offscreen makes the zero-frames-offscreen
+  // guarantee hold no matter which caller forgot to check.
+  const schedule = (callback: FrameRequestCallback) => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = onscreen ? requestAnimationFrame(callback) : 0;
+  };
+
+  const cancel = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  };
+
   // ---- condense (unchanged entrance) ----
   const tick = (now: number) => {
-    if (!condensing || !onscreen) return;
+    // Defensive: `schedule()` refuses offscreen and the gates cancel on the way
+    // out, so this should be unreachable. Zero `raf` anyway — a stale handle
+    // here would block `wake()` for the rest of the field's life.
+    if (!condensing || !onscreen) {
+      raf = 0;
+      return;
+    }
     if (!start) start = now;
     const elapsed = now - start;
     if (elapsed < DRIFT_MS) {
@@ -206,7 +234,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         p.y = p.hy + Math.sin((now + p.hx) * 0.001) * 2;
       }
       draw();
-      raf = requestAnimationFrame(tick);
+      schedule(tick);
     } else if (elapsed < DRIFT_MS + CONDENSE_MS) {
       const t = ease((elapsed - DRIFT_MS) / CONDENSE_MS);
       for (const p of particles) {
@@ -214,7 +242,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         p.y = p.hy + (p.ty - p.hy) * t;
       }
       draw();
-      raf = requestAnimationFrame(tick);
+      schedule(tick);
     } else {
       for (const p of particles) {
         p.x = p.tx;
@@ -223,7 +251,10 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       draw();
       playedSlugs.add(title);
       condensing = false;
-      raf = 0; // SETTLED: zero frames until a pointer arrives
+      raf = 0; // SETTLED: this chain ends here
+      // A cursor that arrived during the entrance is already inside the hero,
+      // so hand it the lens now rather than making it move again to be noticed.
+      if (pointer) wake();
     }
   };
 
@@ -265,19 +296,21 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // are identical, so the next `pointermove` re-arms the loop through
     // `wake()` — `raf` is 0 by then, so that guard cannot swallow it.
     if (fieldIsSettled(maxDelta)) {
-      raf = 0;
+      raf = 0; // this chain ends here
       return;
     }
-    raf = requestAnimationFrame(interactiveTick);
+    schedule(interactiveTick);
   };
 
+  // The `raf` test keeps pointer spam from cancelling and re-requesting a frame
+  // that is already queued for the very same work.
   const wake = () => {
     if (!interactive || !onscreen || condensing || raf) return;
-    raf = requestAnimationFrame(interactiveTick);
+    schedule(interactiveTick);
   };
 
   if (condensing) {
-    raf = requestAnimationFrame(tick);
+    schedule(tick);
   } else {
     for (const p of particles) {
       p.x = p.tx;
@@ -316,12 +349,11 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       if (visible === onscreen) return;
       onscreen = visible;
       if (!onscreen) {
-        if (raf) cancelAnimationFrame(raf);
-        raf = 0;
+        cancel();
         return;
       }
       if (condensing) {
-        raf = requestAnimationFrame(tick);
+        schedule(tick);
       } else if (pointer) {
         wake();
       }
@@ -332,18 +364,17 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
 
   const onVisibility = () => {
     if (document.hidden) {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
+      cancel();
       return;
     }
     // A hero that mounted in a background tab still has its first frame
     // queued — a hidden document suspends rAF rather than dropping it, and no
     // visibilitychange fired on the way in to cancel it. Clear whatever is
-    // queued before resuming, so exactly one chain is ever in flight.
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
+    // queued before resuming, so `wake()` is not blocked by a handle that is
+    // about to fire anyway.
+    cancel();
     if (condensing) {
-      raf = requestAnimationFrame(tick);
+      schedule(tick);
     } else if (pointer) {
       wake();
     }

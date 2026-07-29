@@ -16,6 +16,21 @@ import { vi } from "vitest";
  * particle positions and alpha rather than on pixels. Only the members the
  * component actually uses are implemented: if it starts calling something else,
  * the tests fail loudly rather than passing vacuously.
+ *
+ * Constructing a harness **stubs seven globals as a side effect**
+ * (`requestAnimationFrame`, `cancelAnimationFrame`, `IntersectionObserver`,
+ * `MutationObserver`, `getComputedStyle`, `window`, `document`), because the
+ * code under test reaches for them the way it does in a browser. Two
+ * consequences worth knowing:
+ *
+ * - **One live harness at a time.** The stubs are process-global, so a second
+ *   harness replaces the first one's globals; an already-started field would
+ *   then request frames from the newer queue. Create the next harness only
+ *   after the previous field is torn down.
+ * - **The caller owns cleanup.** Call `vi.unstubAllGlobals()` in an `afterEach`
+ *   (as `components/field/hero-field.test.tsx` does). The harness deliberately
+ *   exposes no `restore()` of its own: it cannot restore only its own stubs, so
+ *   offering a per-harness-looking method would misrepresent what it does.
  */
 
 /** One recorded paint: what `draw()` put on the canvas for a single frame. */
@@ -53,7 +68,12 @@ function createListenerTarget() {
     listenerCount(type: string) {
       return (listeners.get(type) ?? []).length;
     },
-    /** Dispatches to current listeners only — a removed listener never fires. */
+    /**
+     * A listener removed before this call never fires. The list is snapshotted
+     * first, so a listener removed by an earlier handler *within the same
+     * dispatch* still runs — unlike the DOM, which would skip it. No field
+     * listener removes another, so the difference never shows.
+     */
     emit(type: string, event: unknown = {}) {
       for (const handler of [...(listeners.get(type) ?? [])]) handler(event);
     }
@@ -255,6 +275,14 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
       return queue.length;
     },
     /**
+     * Handles of the queued frames. Lets a test tell "the same frame is still
+     * queued" from "that frame was cancelled and an identical one requested",
+     * which a count alone cannot distinguish.
+     */
+    pendingIds() {
+      return queue.map((entry) => entry.id);
+    },
+    /**
      * Runs up to `maxFrames` batches, advancing a virtual clock. Stops early
      * when the queue drains, and returns how many frames actually ran — so
      * `ran < maxFrames` proves the loop halted on its own.
@@ -327,10 +355,6 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
     documentListenerCount(type: string) {
       return documentTarget.listenerCount(type);
     },
-    documentElement,
-
-    restore() {
-      vi.unstubAllGlobals();
-    }
+    documentElement
   };
 }
