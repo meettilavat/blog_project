@@ -153,6 +153,72 @@ describe("HeroField", () => {
     stop();
   });
 
+  it("finishes an interrupted return after the document comes back", () => {
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Interrupted by hiding");
+    h.flush(ENTRANCE_BUDGET);
+    const base = h.positions();
+
+    h.movePointer(POINTER_X, POINTER_Y);
+    h.flush(1000);
+    expect(maxDrift(base, h.positions())).toBeGreaterThan(1);
+
+    h.leavePointer();
+    h.flush(2); // return in flight, nowhere near home
+    expect(maxDrift(base, h.positions())).toBeGreaterThan(0.5);
+
+    h.setHidden(true);
+    h.emitVisibilityChange();
+    expect(h.pending()).toBe(0); // nothing runs while hidden
+
+    h.setHidden(false);
+    h.emitVisibilityChange();
+    // The cursor is long gone, but the field is still off base: the return has
+    // to be picked back up rather than abandoned until the next hover.
+    expect(h.pending()).toBe(1);
+
+    const ran = h.flush(1000);
+    expect(ran).toBeGreaterThan(1);
+    expect(h.pending()).toBe(0); // and it halts once home
+    expect(maxDrift(base, h.positions())).toBeLessThan(0.5);
+
+    // Nothing outstanding now, so a further resume must stay free.
+    h.setHidden(true);
+    h.emitVisibilityChange();
+    h.setHidden(false);
+    h.emitVisibilityChange();
+    expect(h.pending()).toBe(0);
+    stop();
+  });
+
+  it("finishes an interrupted return after the hero scrolls back into view", () => {
+    const h = createFieldHarness();
+    const stop = startField(h.canvas, "Interrupted by scrolling");
+    h.flush(ENTRANCE_BUDGET);
+    const base = h.positions();
+
+    h.movePointer(POINTER_X, POINTER_Y);
+    h.flush(1000);
+    h.leavePointer();
+    h.flush(2);
+    expect(maxDrift(base, h.positions())).toBeGreaterThan(0.5);
+
+    h.setIntersecting(false);
+    expect(h.pending()).toBe(0);
+
+    h.setIntersecting(true);
+    expect(h.pending()).toBe(1);
+    expect(h.flush(1000)).toBeGreaterThan(1);
+    expect(h.pending()).toBe(0);
+    expect(maxDrift(base, h.positions())).toBeLessThan(0.5);
+
+    // At rest again: leaving and re-entering the viewport costs no frames.
+    h.setIntersecting(false);
+    h.setIntersecting(true);
+    expect(h.pending()).toBe(0);
+    stop();
+  });
+
   it("runs and paints nothing while the hero is offscreen, and resumes on re-entry", () => {
     const h = createFieldHarness();
     const stop = startField(h.canvas, "Offscreen");
@@ -234,8 +300,11 @@ describe("HeroField", () => {
     const h = createFieldHarness();
     const stop = startField(h.canvas, "Arrived");
     h.flush(3); // entrance under way
+    const entranceFrame = h.pendingIds();
+
     h.movePointer(POINTER_X, POINTER_Y); // cursor arrives, then holds still
-    expect(h.pending()).toBe(1); // still the entrance's own frame
+    // Still the entrance's own frame — the same handle, not a replacement.
+    expect(h.pendingIds()).toEqual(entranceFrame);
 
     const ran = h.flush(ENTRANCE_BUDGET);
     expect(ran).toBeLessThan(ENTRANCE_BUDGET);

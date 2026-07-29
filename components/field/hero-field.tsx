@@ -27,9 +27,12 @@ export function __resetPlayedSlugs() {
   playedSlugs.clear();
 }
 
-// Dev-only frame counter for the §10 frame budget: no frames once the field has
-// stopped moving — cursor present or not — and none at all while the hero is
-// offscreen or the document is hidden.
+// Dev-only frame counter for the §10 frame budget. It counts frames *executed*:
+// no frames once the field has stopped moving, cursor present or not, and none
+// while the hero is offscreen or the document is hidden. The two halves are
+// enforced differently — `schedule()` refuses outright while offscreen, whereas
+// the hidden-document half relies on the browser suspending rAF, since a mount
+// in a background tab deliberately leaves its first frame queued.
 export const __frameCount = { value: 0 };
 
 type Particle = {
@@ -186,6 +189,12 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   let condensing = !alreadyPlayed;
   let onscreen = true;
   let pointer: { x: number; y: number; nx: number; ny: number } | null = null;
+  // True only while the cursor has left but the damped return has not reached
+  // base yet. The gates use it to finish an interrupted return, which keeps the
+  // departing cursor as well served as the arriving one — and because it is
+  // false whenever the field is at rest, a resume with nothing outstanding still
+  // schedules nothing.
+  let returnPending = false;
 
   const interactive = window.matchMedia(INTERACTIVE_QUERY).matches;
 
@@ -260,6 +269,9 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
 
   // ---- engaged (parallax + lensing, damped) ----
   const interactiveTick = () => {
+    // `!onscreen` is vestigial — `schedule()` refuses while offscreen and the
+    // gates cancel on the way out — but it costs nothing and zeroing `raf` here
+    // keeps a stale handle from ever blocking `wake()`.
     if (!interactive || !onscreen || condensing) {
       raf = 0;
       return;
@@ -296,6 +308,9 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // are identical, so the next `pointermove` re-arms the loop through
     // `wake()` — `raf` is 0 by then, so that guard cannot swallow it.
     if (fieldIsSettled(maxDelta)) {
+      // Settled with no cursor is the definition of "home": nothing is left for
+      // a gate to resume.
+      if (!pointer) returnPending = false;
       raf = 0; // this chain ends here
       return;
     }
@@ -303,7 +318,8 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   };
 
   // The `raf` test keeps pointer spam from cancelling and re-requesting a frame
-  // that is already queued for the very same work.
+  // that is already queued for the very same work. `!onscreen` is vestigial for
+  // the same reason as in `interactiveTick`: `schedule()` would refuse anyway.
   const wake = () => {
     if (!interactive || !onscreen || condensing || raf) return;
     schedule(interactiveTick);
@@ -329,11 +345,14 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
     pointer = { x, y, nx: x / bounds.width, ny: y / bounds.height };
+    // With a cursor present the field tracks it rather than heading home.
+    returnPending = false;
     wake();
   };
 
   const onPointerLeave = () => {
     pointer = null;
+    returnPending = true; // outstanding until the loop reports it reached base
     wake(); // wake to run the damped return, which then halts itself
   };
 
@@ -354,7 +373,9 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       }
       if (condensing) {
         schedule(tick);
-      } else if (pointer) {
+      } else if (pointer || returnPending) {
+        // A return interrupted by scrolling away still has to finish, or the
+        // field holds a part-lensed frame until the next hover.
         wake();
       }
     },
@@ -367,15 +388,19 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       cancel();
       return;
     }
-    // A hero that mounted in a background tab still has its first frame
-    // queued — a hidden document suspends rAF rather than dropping it, and no
-    // visibilitychange fired on the way in to cancel it. Clear whatever is
-    // queued before resuming, so `wake()` is not blocked by a handle that is
-    // about to fire anyway.
+    // `schedule()` cancels before it requests, so this `cancel()` is no longer
+    // what prevents a second chain — it is belt-and-braces, kept for one narrow
+    // reason. A non-zero `raf` here provably denotes a live queued
+    // `interactiveTick` (every terminal path zeroes the slot), so `wake()`
+    // declining would be correct if the engine merely *suspends* callbacks in a
+    // hidden document. Clearing first also covers an engine that *drops* them,
+    // where declining would freeze the field for good. Cheap insurance against
+    // a behaviour we cannot observe from here.
     cancel();
     if (condensing) {
       schedule(tick);
-    } else if (pointer) {
+    } else if (pointer || returnPending) {
+      // A return interrupted by the tab going away still has to finish.
       wake();
     }
   };
@@ -393,8 +418,8 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   return () => {
     condensing = false;
     pointer = null;
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
+    returnPending = false;
+    cancel();
     if (host) {
       host.removeEventListener("pointermove", onPointerMove);
       host.removeEventListener("pointerleave", onPointerLeave);
