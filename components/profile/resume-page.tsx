@@ -41,18 +41,7 @@ export default function ResumePage() {
       </LedgerSection>
 
       <LedgerSection title="Skills">
-        {skillGroups.map((group) => (
-          <div key={group.label} className="resume-row border-b border-border/60 py-3.5" data-resume-row="true">
-            <p className="kicker pt-1">{group.label}</p>
-            <ul className="m-0 flex list-none flex-wrap p-0 text-sm leading-7 text-foreground/85">
-              {group.items.map((item) => (
-                <li key={item} className="after:mx-2 after:text-accent/70 after:content-['/'] last:after:hidden">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <ResumeSkills />
       </LedgerSection>
     </article>
   );
@@ -105,6 +94,34 @@ function ResumeStandfirstBand() {
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * A skill group is the same construct as a contact row — a label in the mono
+ * track, its value in the content track — so it takes the same dl/dt/dd markup
+ * rather than div/p/ul. The <ul> survives inside the <dd> because the items are
+ * genuine peers: the "/" between them is a CSS ::after, so flattening the list
+ * would hand a screen reader one run-on string instead of a counted list.
+ */
+function ResumeSkills() {
+  return (
+    <dl className="m-0">
+      {skillGroups.map((group) => (
+        <div key={group.label} className="resume-row border-b border-border/60 py-3.5" data-resume-row="true">
+          <dt className="kicker pt-1">{group.label}</dt>
+          <dd className="m-0">
+            <ul className="m-0 flex list-none flex-wrap p-0 text-sm leading-7 text-foreground/85">
+              {group.items.map((item) => (
+                <li key={item} className="after:mx-2 after:text-accent/70 after:content-['/'] last:after:hidden">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

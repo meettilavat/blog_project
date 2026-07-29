@@ -176,10 +176,20 @@ a {
 }
 
 /*
- * The resume ledger: one mono label track and one content track. The content
- * track is 43rem — the same reading measure the post page uses — so resume
- * bullets wrap identically to article body text. Defining the tracks here
- * rather than per-row is what keeps the page to two left edges.
+ * The resume ledger: one mono label track and one content track. At full width
+ * the content track measures 43rem — the same reading measure the post page
+ * uses — so resume bullets wrap like article body text.
+ *
+ * 43rem is the target, not a guarantee. .site-canvas yields 0.928 × viewport
+ * below 1152px, so the ledger stops reaching 52rem near a 900px viewport (896px
+ * with overlay scrollbars, ~912px with a classic 15px one) while the rows only
+ * collapse at 831px. Through that band there are still two tracks and the
+ * content track compresses — measured 42.3rem at a 900px viewport and 38.4rem
+ * at 832px, the last width before the collapse. minmax(0, 1fr) absorbs it, and
+ * nothing downstream depends on the exact 43rem.
+ *
+ * Defining the tracks here rather than per-row is what keeps the page to two
+ * left edges.
  */
 .resume-ledger {
   width: min(100%, 52rem);

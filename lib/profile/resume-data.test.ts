@@ -32,6 +32,56 @@ describe("lib/profile/resume-data.ts", () => {
     );
   });
 
+  it("carries the one work placement, with a month range in its label detail", () => {
+    expect(experience).toHaveLength(1);
+    const [placement] = experience;
+
+    expect(placement?.label).toBe("2023");
+    // The second label line exists for exactly this shape: a year that needs a
+    // month range beneath it. It is what LedgerRow's <br /> branch renders.
+    expect(placement?.labelDetail).toBe("May–Jul");
+    expect(placement?.title).toBe("Web Development Trainee");
+    expect(placement?.meta).toBe("Yellow Apple Solutions · Surat, India");
+    expect(placement?.bullets).toHaveLength(3);
+    expect(placement?.bullets?.join(" ")).toContain("responsive HTML, CSS, and JavaScript");
+    // `stack` and `link` are project affordances; a placement carries neither.
+    expect(placement?.stack).toBeUndefined();
+    expect(placement?.link).toBeUndefined();
+  });
+
+  it("lists both degrees newest first, with nothing padding them out", () => {
+    expect(education.map((entry) => entry.label)).toEqual(["2021–24", "2018–21"]);
+    expect(education.map((entry) => entry.title)).toEqual([
+      "B.Tech, Computer Engineering — CGPA 8.92",
+      "Diploma, Computer Engineering — CGPA 9.00"
+    ]);
+    expect(education[0]?.meta).toContain("Pandit Deendayal Energy University");
+    expect(education[1]?.meta).toContain("Marwadi University");
+
+    // Newest first, read off each label's start year rather than trusting the
+    // array order to describe itself.
+    const startYears = education.map((entry) => Number.parseInt(entry.label, 10));
+    expect(startYears).toEqual([...startYears].sort((a, b) => b - a));
+
+    // A degree is a heading plus an institution and nothing else — LedgerRow's
+    // "omit rather than render empty" path depends on these staying absent.
+    for (const entry of education) {
+      expect(entry.labelDetail).toBeUndefined();
+      expect(entry.bullets).toBeUndefined();
+      expect(entry.stack).toBeUndefined();
+      expect(entry.link).toBeUndefined();
+    }
+  });
+
+  it("labels periods rather than indices in experience and education", () => {
+    // selectedWork is guarded below; these two carry dated labels, so the guard
+    // has to be the period shape itself. `not.toMatch(/^\d+$/)` would be wrong
+    // here — "2023" is all digits and would fail a bare digit check.
+    for (const entry of [...experience, ...education]) {
+      expect(entry.label).toMatch(/^\d{4}(–\d{2})?$/);
+    }
+  });
+
   it("labels selected work by status rather than by index", () => {
     expect(selectedWork.map((entry) => entry.label)).toEqual([
       "Production",

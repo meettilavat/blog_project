@@ -29,6 +29,28 @@ vi.mock("lucide-react", () => ({
 
 import ResumePage from "./resume-page";
 
+/**
+ * The markup of one ledger section, from its own `data-resume-section` marker to
+ * the next one (or the end of the sheet). Slicing is what makes an assertion
+ * about what a section must *not* contain mean anything: the stack keywords
+ * banned from Skills are legitimately present under Selected work, so a
+ * whole-document check would either fail wrongly or assert nothing.
+ */
+function sectionMarkup(html: string, heading: string): string {
+  const marker = 'data-resume-section="true"';
+  const bounds: number[] = [];
+  for (let at = html.indexOf(marker); at !== -1; at = html.indexOf(marker, at + 1)) {
+    bounds.push(at);
+  }
+
+  const headingAt = html.indexOf(`>${heading}</h2>`);
+  expect(headingAt, `no <h2> found for section "${heading}"`).toBeGreaterThan(-1);
+
+  const start = bounds.filter((at) => at < headingAt).pop() ?? 0;
+  const end = bounds.find((at) => at > headingAt) ?? html.length;
+  return html.slice(start, end);
+}
+
 describe("components/profile/resume-page.tsx", () => {
   it("makes the owner's name the only h1", () => {
     const html = renderToStaticMarkup(<ResumePage />);
@@ -125,6 +147,41 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain("Download PDF");
     expect(html).not.toContain("VS Code");
     expect(html).not.toContain("Custom PC building");
+  });
+
+  it("keeps project-stack keywords out of the skills list", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+    const skills = sectionMarkup(html, "Skills");
+
+    // Establish the slice is a real, bounded window first: an empty or
+    // mis-aimed slice would satisfy every absence check below for free.
+    expect(skills).toContain("Languages");
+    expect(skills).toContain("PostgreSQL/PostGIS");
+    expect(skills.length).toBeLessThan(html.length);
+
+    // These name one project's stack. They are not claimed as skills.
+    expect(skills).not.toContain("Kotlin");
+    expect(skills).not.toContain("Jetpack Compose");
+    expect(skills).not.toContain("Tiptap");
+
+    // ...and each really is on the page, so the three checks above are not
+    // passing merely because the strings appear nowhere at all.
+    expect(html).toContain("Kotlin");
+    expect(html).toContain("Jetpack Compose");
+    expect(html).toContain("Tiptap");
+  });
+
+  it("models skill groups as a definition list, like the contact rows", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+    const skills = sectionMarkup(html, "Skills");
+
+    // Both label-plus-value sections are the same construct, so both are a <dl>.
+    expect(skills).toMatch(/<dt class="kicker[^"]*">Languages<\/dt>/);
+    expect(skills).toContain("<dd");
+    expect(html.match(/<dl[\s>]/g) ?? []).toHaveLength(2);
+    // The section's own kicker is a <span>; a <p class="kicker"> here would mean
+    // a skill group had gone back to div/p markup.
+    expect(skills).not.toMatch(/<p class="kicker/);
   });
 
   it("stays effect-free and free of section subtitles", () => {

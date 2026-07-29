@@ -37,6 +37,24 @@ function clampMagnitude(value: number, cap: number): number {
 }
 
 function smoothstep(edge0: number, edge1: number, x: number): number {
+  // A zero-width or inverted band has no gradient to interpolate across. Guard
+  // it: unguarded, the two degenerate cases fail differently and both silently.
+  //
+  //   edge1 === edge0 and x === edge0 divides 0 by 0, and the NaN flows on into
+  //   pullX/pullY/alpha. Canvas ignores NaN coordinates, so the field would just
+  //   stop drawing, with nothing logged to trace it by.
+  //
+  //   edge1 < edge0 is worse, because it looks like it works: the quotient goes
+  //   negative, clamps to 0, and lensInfluence's 1 - smoothstep then reads as
+  //   full weight at every distance — the whole field dragged to the cursor.
+  //
+  // Fully past the band is the right answer for both, and 1 covers the whole
+  // reachable domain: the sole call site passes edge0 = 0 and Math.hypot() for
+  // x, so x >= edge0 always. Returning `x < edge0 ? 0 : 1` instead would read as
+  // more general while adding a branch no caller can reach and no test can
+  // distinguish — a future caller with a non-zero edge0 should revisit this line
+  // rather than inherit dead generality.
+  if (edge1 <= edge0) return 1;
   const t = clamp01((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
 }

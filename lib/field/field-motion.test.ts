@@ -95,6 +95,35 @@ describe("lensInfluence", () => {
     expect(bright.alpha).toBeLessThanOrEqual(LENS_ALPHA_CAP);
   });
 
+  it("treats a degenerate radius as no lens at all", () => {
+    // No production caller passes a radius — hero-field.tsx uses the default —
+    // but the parameter is public and the smoothstep behind it divides by
+    // (radius - 0). The two degenerate modes fail differently, so both are
+    // pinned separately. Each assertion is an equality against a finite number,
+    // so a NaN fails rather than slipping through a comparison.
+
+    // Radius 0 with the cursor exactly on the particle is the literal 0/0.
+    const centred = lensInfluence(0, 0, 0, 0, 0.4, 0);
+    expect(centred.pullX).toBe(0);
+    expect(centred.pullY).toBe(0);
+    expect(centred.alpha).toBe(0.4);
+
+    // A negative radius does not produce NaN — it inverts the lens, which is
+    // harder to notice: the weight reads as full at every distance, so every
+    // particle takes the maximum pull and a brightness gain.
+    const inverted = lensInfluence(0, 0, 30, 40, 0.4, -LENS_RADIUS_PX);
+    expect(inverted.pullX).toBe(0);
+    expect(inverted.pullY).toBe(0);
+    expect(inverted.alpha).toBe(0.4);
+
+    // Radius 0 at a distance already behaved, because the quotient is +Infinity
+    // and clamps to 1. Kept so the guard cannot regress it.
+    const offCentre = lensInfluence(0, 0, 30, 40, 0.4, 0);
+    expect(offCentre.pullX).toBe(0);
+    expect(offCentre.pullY).toBe(0);
+    expect(offCentre.alpha).toBe(0.4);
+  });
+
   it("falls off smoothly with distance", () => {
     const close = lensInfluence(0, 0, 20, 0, 0.4).alpha;
     const mid = lensInfluence(0, 0, 70, 0, 0.4).alpha;
@@ -121,5 +150,11 @@ describe("fieldIsSettled", () => {
   it("reports settled only once movement is imperceptible", () => {
     expect(fieldIsSettled(SETTLE_EPSILON_PX / 2)).toBe(true);
     expect(fieldIsSettled(SETTLE_EPSILON_PX * 2)).toBe(false);
+  });
+
+  it("treats a delta exactly at epsilon as still moving", () => {
+    // The boundary itself, not just either side of it: without this, swapping
+    // the comparison for <= keeps every other case in this suite passing.
+    expect(fieldIsSettled(SETTLE_EPSILON_PX)).toBe(false);
   });
 });

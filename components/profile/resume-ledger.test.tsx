@@ -119,13 +119,47 @@ describe("components/profile/resume-ledger.tsx", () => {
     expect(html).not.toContain("text-foreground/70");
   });
 
-  it("renders earlier work as a muted note list without accent rules", () => {
+  it("omits the bullet list for an empty array, not only for a missing one", () => {
     const html = renderToStaticMarkup(
-      <LedgerNote label="Earlier" items={["Image caption generator — ResNet50 on Flickr8k."]} />
+      <LedgerRow
+        entry={{ label: "2018–21", title: "Diploma, Computer Engineering", bullets: [] }}
+      />
     );
 
-    expect(html).toContain("Earlier");
-    expect(html).toContain("Image caption generator");
+    // The row itself still renders, so the absences below cannot hold trivially.
+    expect(html).toContain("Diploma, Computer Engineering");
+    expect(html).not.toContain("<ul");
+    // Anchored on the tag boundary: a bare "<li" substring would also match a
+    // <link>, so it could go on passing after the element it guards appeared.
+    expect(html).not.toMatch(/<li[\s>]/);
+  });
+
+  it("renders earlier work as a muted note list without accent rules", () => {
+    const html = renderToStaticMarkup(
+      <LedgerNote
+        label="Earlier"
+        items={["Image caption generator — ResNet50 on Flickr8k.", "Personal blog — PHP/MySQL."]}
+      />
+    );
+
     expect(html).toContain('data-resume-row="true"');
+
+    // Held to the same standard as LedgerRow above: isolate the label cell so
+    // putting the items in the label track — or the label in the content track —
+    // fails here. A whole-document toContain would see both either way.
+    const labelCell = /<p class="kicker[^"]*">([\s\S]*?)<\/p>/.exec(html)?.[1] ?? "";
+    expect(labelCell).toBe("Earlier");
+
+    // Source order is what assigns a cell to a track: label first, list second.
+    expect(html.indexOf("Earlier")).toBeLessThan(html.indexOf("Image caption generator"));
+
+    // Every item lands in its own <li> rather than being concatenated into one.
+    expect(html.match(/<li[\s>]/g) ?? []).toHaveLength(2);
+    expect(html).toContain("Image caption generator");
+    expect(html).toContain("Personal blog");
+
+    // "Muted, without accent rules" is the whole point of this variant: the
+    // accent rule spans a full LedgerRow's bullets get must not appear.
+    expect(html).not.toContain("bg-accent");
   });
 });

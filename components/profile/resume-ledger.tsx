@@ -72,7 +72,10 @@ export function LedgerRow({ entry, muted = false }: { entry: LedgerEntry; muted?
             {entry.stack}
           </p>
         ) : null}
-        {entry.bullets ? <LedgerBullets items={entry.bullets} /> : null}
+        {/* Length, not truthiness: [] is truthy, and would render an empty <ul>
+            — the empty-element-instead-of-omission failure this row avoids
+            everywhere else. */}
+        {entry.bullets?.length ? <LedgerBullets items={entry.bullets} /> : null}
         {entry.link ? (
           <a
             href={entry.link.href}
