@@ -9,12 +9,18 @@ import { cn } from "@/lib/ui/classnames";
  *
  * That repeat is purely visual, so it is hidden from assistive tech — the <h2>
  * stays the single announced heading rather than being read out twice.
+ *
+ * It also only earns its place at wide widths. Below `ledger` (832px) the
+ * .resume-row tracks collapse to a stack, which would put the kicker directly
+ * above its own heading — the same word twice, in sequence — and a stacked label
+ * cannot anchor a row whose heading has scrolled away anyway. `ledger:` is the
+ * exact complement of the `max-width: 831px` collapse in globals.css.
  */
 export function LedgerSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-[clamp(2.75rem,4.5vw,4rem)]" data-resume-section="true">
       <div className="resume-row border-b border-border pb-3">
-        <span aria-hidden="true" className="kicker self-end">
+        <span aria-hidden="true" className="kicker hidden self-end ledger:block">
           {title}
         </span>
         <h2 className="m-0 font-display text-[clamp(1.35rem,2.4vw,1.75rem)] font-bold leading-none tracking-[-0.025em] text-foreground">

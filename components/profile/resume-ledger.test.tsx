@@ -24,7 +24,7 @@ describe("components/profile/resume-ledger.tsx", () => {
     expect(html).not.toMatch(/>0\d</);
   });
 
-  it("hides the repeated section label from assistive tech", () => {
+  it("hides the repeated section label from assistive tech and from the stacked layout", () => {
     const html = renderToStaticMarkup(
       <LedgerSection title="Experience">
         <p>child</p>
@@ -38,11 +38,22 @@ describe("components/profile/resume-ledger.tsx", () => {
 
     const labelTag = /<span[^>]*class="kicker[^>]*>/.exec(html)?.[0] ?? "";
     const headingTag = /<h2[^>]*>/.exec(html)?.[0] ?? "";
+    const labelClasses = (/class="([^"]*)"/.exec(labelTag)?.[1] ?? "").split(/\s+/);
 
     expect(labelTag).toContain('aria-hidden="true"');
     // Moving aria-hidden onto the heading instead would silence the section
     // name entirely, so assert it is absent there rather than only present above.
     expect(headingTag).not.toContain("aria-hidden");
+
+    // Below `ledger` (832px) .resume-row stacks, which would print the kicker
+    // directly above its own heading. Asserted as exact class tokens, not
+    // substrings of the tag: `toContain("hidden")` on the raw tag would also be
+    // satisfied by aria-hidden="true" and would assert nothing.
+    expect(labelClasses).toContain("hidden");
+    // The responsive half is what keeps the wide-screen anchor alive. Dropping
+    // it would leave the kicker hidden at every width, silently deleting the
+    // only reason it exists.
+    expect(labelClasses).toContain("ledger:block");
   });
 
   it("puts the period in the label track and the role in the content track", () => {
