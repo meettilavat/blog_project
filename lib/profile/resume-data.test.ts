@@ -8,6 +8,7 @@ vi.mock("@/lib/public-links", () => ({
   })
 }));
 
+import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
 import {
   RESUME_NAME,
   RESUME_ROLE,
@@ -186,9 +187,10 @@ describe("lib/profile/resume-data.ts", () => {
 
   it("keeps the case-study link pointing at the featured post", () => {
     const caseStudy = selectedWork[0]?.link;
-    expect(caseStudy?.href).toBe(
-      "/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp"
-    );
+    // The constant the module itself builds this href from, not a copy of the slug:
+    // promoting a different essay would otherwise turn this test red with a message
+    // about a URL, saying nothing about the featured post having moved.
+    expect(caseStudy?.href).toBe(`/posts/${FEATURED_POST_SLUG}`);
     expect(caseStudy?.external).toBeFalsy();
   });
 });

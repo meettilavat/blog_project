@@ -1267,6 +1267,185 @@ describe("HeroField", () => {
       stop();
     });
 
+    /**
+     * Drives the chain one hover wakes, and reports what that chain did: how many
+     * frames it ran, plus the peak alpha reached by the dots sitting further than
+     * a lens radius from the cursor, alongside the highest base alpha among those
+     * same dots.
+     *
+     * That last pair is what separates a lens from a wavefront, and peak alpha
+     * alone cannot: a cursor in the dense right-hand mass reaches LENS_ALPHA_CAP
+     * by itself, so both readings are 0.85. But `lensInfluence` returns zero
+     * weight beyond its radius, and the field composes gain from each particle's
+     * *settled* target — so membership here is exactly "the lens cannot reach
+     * this dot", and out there a correct field paints base alpha to the bit while
+     * a transit crossing the field lifts the same dots to the ceiling.
+     */
+    const hoverAndWatch = (
+      harness: ReturnType<typeof createFieldHarness>,
+      x: number,
+      y: number,
+      settled: Array<{ x: number; y: number; alpha: number }>
+    ) => {
+      const far: number[] = [];
+      for (let i = 0; i < settled.length; i++) {
+        if (Math.hypot(settled[i].x - x, settled[i].y - y) > LENS_RADIUS_PX) far.push(i);
+      }
+      const farBase = far.reduce((peak, i) => Math.max(peak, settled[i].alpha), 0);
+
+      harness.movePointer(x, y);
+      let ran = 0;
+      let farPeak = 0;
+      for (let step = 0; step < 400; step++) {
+        if (harness.flush(1) === 0) break;
+        ran++;
+        const dots = harness.lastFrame().dots;
+        for (const i of far) farPeak = Math.max(farPeak, dots[i].alpha);
+      }
+      return { ran, farCount: far.length, farBase, farPeak };
+    };
+
+    /**
+     * The assertions both hidden-arming tests below end on: the hover woke a lens
+     * and nothing else.
+     *
+     * ~25 frames is a lens converging at DAMPING from its 12px parallax offset;
+     * 106 is a 1500ms sweep plus the relax behind it, measured with each sequence
+     * below. The two are far enough apart that the bound does not have to be
+     * fussy, and the far-dot equality catches the same thing on a second axis.
+     */
+    const expectLensOnly = (seen: ReturnType<typeof hoverAndWatch>) => {
+      expect(seen.ran).toBeGreaterThan(1); // the hover did wake and animate
+      expect(seen.ran).toBeLessThan(40);
+      // Guard: the bound below needs dots out there to have been checked at all.
+      expect(seen.farCount).toBeGreaterThan(0);
+      expect(seen.farPeak).toBe(seen.farBase);
+    };
+
+    it("does not fire a transit on the next hover after a resize armed one while hidden", () => {
+      // `armTransit`'s guard is `onscreen`, which tracks intersection — so unlike
+      // its offscreen sibling above, a hero that is merely in a *hidden tab* does
+      // arm. This is the sequence that reaches it: `applyResize` runs while hidden,
+      // behind the back of the visibility gate that already disarmed.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "transit hidden resize arm");
+      settle(harness);
+
+      // A resize notification lands, then the visitor switches tabs before the
+      // debounce comes due.
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.setHidden(true);
+      harness.emitVisibilityChange();
+      // The hidden branch disarmed the transit gap. What survives is the resize
+      // debounce, and a background tab throttles setTimeout rather than suspending
+      // it, so it still comes due.
+      expect(harness.pendingTimers()).toBe(1);
+
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
+      expect(harness.canvas.width).toBe(1200); // it rebuilt, hidden or not
+      expect(harness.pendingTimers()).toBe(1); // ...and armed a gap while hidden
+
+      // The gap elapses with the tab still hidden. The timer raises the flag and
+      // calls `wake()`, which tests `onscreen` and not `document.hidden` — that is
+      // deliberate, because the hidden half of the frame budget rests on the engine
+      // suspending rAF. So a frame is left queued, and a real engine never runs it:
+      // modelled here by not flushing.
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+
+      harness.setHidden(false);
+      harness.emitVisibilityChange();
+      // The rebuild dropped the pointer and cleared the return, so the resume has
+      // nothing outstanding to schedule and cancels the suspended frame. Lowering
+      // the flag is all it does — and all that stands between the raised flag and
+      // the hover below.
+      expect(harness.pending()).toBe(0);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+
+      // 0.8 across and vertically centred in the rebuilt 600x300 field.
+      expectLensOnly(hoverAndWatch(harness, 480, 150, settledDots));
+      stop();
+    });
+
+    it("does not fire a transit on the next hover after a hidden repeat visit armed one", () => {
+      // The second caller that arms while hidden: the play-once registry sends a
+      // repeat visit straight to a settled frame and arms from there, and a mount
+      // gets no visibilitychange on the way in, so nothing has disarmed anything.
+      const first = createFieldHarness();
+      const stopFirst = startField(first.canvas, "transit hidden replay");
+      first.flush(ENTRANCE_BUDGET); // the registry is only written once it lands
+      stopFirst();
+      vi.unstubAllGlobals();
+
+      const harness = createFieldHarness({ hidden: true });
+      const stop = startField(harness.canvas, "transit hidden replay");
+      expect(harness.pending()).toBe(0); // no entrance to run
+      expect(harness.pendingTimers()).toBe(1); // the first delay, armed in a background tab
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      expect(harness.pending()).toBe(1); // raised the flag and queued a suspended frame
+
+      harness.setHidden(false);
+      harness.emitVisibilityChange();
+      expect(harness.pending()).toBe(0);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+
+      expectLensOnly(hoverAndWatch(harness, POINTER_X, POINTER_Y, settledDots));
+      stop();
+    });
+
+    it("walks the field home when the hero leaves inside a transit's tail", () => {
+      // The sibling below cuts a sweep short, where `disarmTransit` still sees
+      // `transitStart >= 0` and flags the return itself. This is the other half of
+      // the window: the front leaves the field at progress ~0.92, so
+      // `interactiveTick` clears `transitStart` with the dots still displaced and
+      // `disarmTransit`'s guard no longer fires. The flag has to be raised where
+      // the sweep ends instead.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "transit tail");
+      settle(harness);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+      const base = settledDots.map((dot) => ({ x: dot.x, y: dot.y }));
+      const residual = SETTLE_EPSILON_PX / DAMPING;
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      // Step to the frame the sweep ends on. Re-arming the next gap is that frame's
+      // only externally visible marker: the first-delay timer fired to get here, so
+      // the field holds no timer at all until `progress > 1` arms one. Bounded
+      // rather than a bare `while`, so a chain that never re-arms fails instead of
+      // hanging the suite.
+      let ran = 0;
+      while (harness.pendingTimers() === 0 && ran < 400) {
+        expect(harness.flush(1), "the chain halted before the sweep ended").toBe(1);
+        ran++;
+      }
+      expect(harness.pendingTimers()).toBe(1);
+      expect(ran).toBeGreaterThan(80); // a whole sweep: ~95 frames for 1500ms at 16ms
+
+      // The tail. No transit is in flight any more, and the worst dot is 1.9483px
+      // off base — 5x the residual the loop halts at, and 11 frames from home.
+      expect(maxDrift(base, harness.positions())).toBeGreaterThan(residual);
+      expect(harness.pending()).toBe(1);
+
+      harness.setIntersecting(false);
+      expect(harness.pending()).toBe(0);
+      harness.setIntersecting(true);
+      // Without the flag raised where the sweep ended, neither gate finds anything
+      // outstanding: this is 0, no frame ever runs, and the hero holds a field
+      // frozen mid-relax until the next hover or transit.
+      expect(harness.pending()).toBe(1);
+      expect(harness.flush(200)).toBeGreaterThan(1);
+      expect(harness.pending()).toBe(0);
+
+      const after = harness.lastFrame().dots;
+      for (let i = 0; i < after.length; i++) {
+        expect(Math.abs(after[i].x - settledDots[i].x)).toBeLessThan(residual);
+        expect(Math.abs(after[i].y - settledDots[i].y)).toBeLessThan(residual);
+      }
+      stop();
+    });
+
     it("walks the field home after a transit is abandoned mid-sweep", () => {
       const harness = createFieldHarness();
       const stop = startField(harness.canvas, "transit abandoned");

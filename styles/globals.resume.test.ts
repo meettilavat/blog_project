@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import preset from "@/config/tailwind/preset.mjs";
+
 /**
  * The stylesheet with comments stripped. Every assertion here is a substring
  * check against selector or declaration text, and this file's comments discuss
@@ -41,12 +43,27 @@ describe("styles/globals.css resume ledger", () => {
     expect(occurrences).toBe(1);
   });
 
-  it("collapses the label track below the ledger breakpoint", () => {
-    expect(css).toContain("@media screen and (max-width: 831px)");
-    // Screen-only on purpose. Letter (816px) and A4 (794px) both sit below 831px,
-    // and in paged media the query resolves against the page box — so an unscoped
-    // query would stack every label on paper and print the mobile layout.
-    expect(css).not.toContain("@media (max-width: 831px)");
+  it("collapses the label track one pixel below the preset's ledger screen", () => {
+    // Read off the preset rather than restated here, because `ledger` is a Tailwind
+    // screen: every `ledger:` utility on the sheet splits at that width, and this
+    // hand-written query has to describe the same edge or the two layouts disagree
+    // across the band between them. That is not hypothetical — this branch already
+    // shipped a standfirst splitting at `folio` (768px) against a row collapse at
+    // 831px, contradicting itself over 63px — and it was fixed by hand-aligning the
+    // numbers, which leaves nothing to stop the next drift. `max-width` excludes
+    // the breakpoint itself, so the query sits exactly one pixel below it.
+    const screens = preset.theme?.extend?.screens as Record<string, string>;
+    const ledger = Number.parseInt(screens.ledger, 10);
+    // The lookup resolved: NaN would make both checks below vacuous, since
+    // "max-width: NaNpx" appears in no stylesheet and `not.toContain` would pass.
+    expect(ledger).toBeGreaterThan(0);
+
+    expect(css).toContain(`@media screen and (max-width: ${ledger - 1}px)`);
+    // Screen-only on purpose. Letter (816px) and A4 (794px) both sit below the
+    // breakpoint, and in paged media the query resolves against the page box — so
+    // an unscoped query would stack every label on paper and print the mobile
+    // layout.
+    expect(css).not.toContain(`@media (max-width: ${ledger - 1}px)`);
   });
 
   it("hides the print-only rows on screen and restores their tracks on paper", () => {

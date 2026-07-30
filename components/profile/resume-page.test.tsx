@@ -27,7 +27,17 @@ vi.mock("lucide-react", () => ({
   )
 }));
 
+import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
+
 import ResumePage from "./resume-page";
+
+/**
+ * Where the case-study link points, built the way `resume-data.ts` builds it. A
+ * copy of the slug would turn two tests red on the day a different essay is
+ * promoted, with failures that talk about URLs rather than about the featured post
+ * having moved.
+ */
+const FEATURED_POST_HREF = `/posts/${FEATURED_POST_SLUG}`;
 
 /**
  * The markup of one ledger section, from its own `data-resume-section` marker to
@@ -122,6 +132,27 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain("Software engineer");
   });
 
+  it("recolours the availability line with an important utility", () => {
+    const html = renderToStaticMarkup(<ResumePage />);
+    // The opening tag of the element carrying the line, found by its text so the
+    // role kicker directly above — same `.kicker` class, no accent — cannot stand in
+    // for it.
+    const tokens = classTokens(/<p[^>]*>(?=Open to full-time roles)/.exec(html)?.[0] ?? "");
+
+    // Found and parsed, so the token check below is not passing on an empty list.
+    expect(tokens).toContain("kicker");
+
+    // `.kicker` declares its own `color` and sits in author CSS after
+    // `@tailwind utilities`, so at equal specificity the later rule wins and a plain
+    // `text-accent` utility here is inert — the line renders muted grey, silently,
+    // and looks deliberate. The `!` is the whole recolouring.
+    //
+    // An exact token rather than a substring: `text-accent` is a substring of
+    // `!text-accent`, so `toContain` against the raw tag text would pass for the
+    // broken form too, and this assertion would pin nothing at all.
+    expect(tokens).toContain("!text-accent");
+  });
+
   it("renders every section without index numbers", () => {
     const html = renderToStaticMarkup(<ResumePage />);
 
@@ -185,9 +216,7 @@ describe("components/profile/resume-page.tsx", () => {
     expect(html).toContain("Image caption generator");
     expect(html).not.toContain("MeetTilavat.com (Blog Platform)");
     expect(html).toContain(SOURCE_REPOSITORY_URL);
-    expect(html).toContain(
-      'href="/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp"'
-    );
+    expect(html).toContain(`href="${FEATURED_POST_HREF}"`);
   });
 
   it("keeps the PDF download and drops the retired skill groups", () => {
@@ -234,9 +263,7 @@ describe("components/profile/resume-page.tsx", () => {
 
     // The project link inside "Selected work" is not part of the cluster and still
     // prints, so the counts above are not passing because everything is hidden.
-    const caseStudy = classTokens(
-      find("/posts/building-tree-census-a-django-and-next-js-platform-from-local-dev-to-production-on-gcp")
-    );
+    const caseStudy = classTokens(find(FEATURED_POST_HREF));
     expect(caseStudy).toContain("inline-flex"); // found and parsed, so the next line means something
     expect(caseStudy).not.toContain("print:hidden");
   });

@@ -209,23 +209,42 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   const armTransit = (delayMs: number) => {
     if (transitTimer) clearTimeout(transitTimer);
     transitTimer = 0;
-    // Arming never inherits a raised flag, so this function's postcondition —
-    // after it returns, a transit is scheduled or dropped, never pending — holds
-    // on its own terms rather than depending on `disarmTransit` having run first.
-    // Vestigial in the same sense as the `!onscreen` tests in `tick` and
-    // `interactiveTick`: with the guard below in place no reachable sequence
-    // strands the flag, because the only canceller that does not disarm is
-    // `onVisibility`'s resume, which a browser reaches only from the hidden
-    // branch that disarmed already. Deleting this line leaves the suite green —
-    // it is here so that relaxing the guard below cannot silently reintroduce a
-    // queued transit, not because anything today depends on it.
+    // This line and the guard below split one postcondition between them: after
+    // `armTransit` returns, a transit is scheduled or dropped, never left pending.
+    // This is the hidden-tab half, and on that path it is the only thing that
+    // lowers the flag at all.
+    //
+    // The guard below is `onscreen`, which tracks *intersection*; nothing here
+    // tests `document.hidden`. So a transit can be armed, come due, and raise
+    // `transitPending` entirely inside a hidden tab — after `onVisibility`'s hidden
+    // branch has already disarmed — leaving `onVisibility`'s resume to run with the
+    // flag up. Two callers arm from that state, both measured:
+    //
+    //   `applyResize`. A ResizeObserver notification is delivered regardless of
+    //   visibility, and a background tab *throttles* setTimeout rather than
+    //   suspending it, so a debounce armed just before a tab switch comes due while
+    //   hidden and arms a gap behind the hidden branch's back.
+    //
+    //   The settled-mount path below, for a repeat visit (`alreadyPlayed`) mounting
+    //   into a background tab. A mount gets no visibilitychange on the way in, so
+    //   nothing has disarmed anything yet.
+    //
+    // The gap then elapses while hidden and the timer's `wake()` accepts — it tests
+    // `onscreen`, not `document.hidden`, deliberately, because the hidden half of
+    // the frame budget rests on the engine suspending rAF. Come the resume,
+    // `armTransit` is reached with the flag raised and `pointer`/`returnPending`
+    // both clear, so nothing schedules, and the flag then stays up until either a
+    // gate disarms or — the case that shows — the visitor's cursor touches the hero
+    // and opens a full sweep on the spot instead of at the end of a gap. Measured
+    // both ways: 106 frames, lifting dots outside the cursor's lens radius to the
+    // 0.85 ceiling, against 25 frames of pure lens with this line in place.
     transitPending = false;
-    // The guard that actually carries it: no timer exists at all while offscreen,
-    // rather than one whose callback `wake()` will refuse and whose raised flag
-    // nothing would then lower. `applyResize` and the visibility gate both reach
-    // here while the hero is scrolled away, and for them this early return *is*
-    // the drop the spec asks for. Both gates assign `onscreen` before they arm,
-    // so a hero scrolling back into view still gets a fresh gap.
+    // The offscreen half: no timer exists at all while offscreen, rather than one
+    // whose callback `wake()` will refuse and whose raised flag nothing would then
+    // lower. `applyResize` and the visibility gate both reach here while the hero is
+    // scrolled away, and for them this early return *is* the drop the spec asks for.
+    // Both gates assign `onscreen` before they arm, so a hero scrolling back into
+    // view still gets a fresh gap.
     if (!onscreen) return;
     transitTimer = window.setTimeout(() => {
       transitTimer = 0;
@@ -485,6 +504,16 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     const progress = transitStart < 0 ? -1 : (now - transitStart) / TRANSIT_MS;
     if (transitStart >= 0 && progress > 1) {
       transitStart = -1;
+      // The front leaves the field at progress ~0.92, so the sweep ends with the
+      // dots still displaced — measured 1.95px at 800x400, against the 0.36px
+      // (SETTLE_EPSILON_PX / DAMPING) residual the loop halts at — and the relax
+      // behind it continues with no transit in flight. `disarmTransit` only raises
+      // this flag `if (transitStart >= 0)`, so from here on it would not: going
+      // offscreen inside that window and coming back schedules nothing and strands
+      // the field 5x the residual off base until the next hover or transit. This
+      // says the same thing the flag says everywhere else — the dots are walking
+      // home — and the settle path below clears it again on arrival.
+      returnPending = true;
       armTransit(randomGap());
     }
 
