@@ -38,6 +38,30 @@ describe("plate figure treatment", () => {
   });
 });
 
+// `--font-serif` is Fraunces, declared only by apps/admin/app/layout.tsx. The public
+// app deliberately omits it — apps/public/app/__tests__/layout.test.tsx asserts the
+// rendered <html> class list does not contain it. Every rule that reads it is shared
+// by both apps, so each needs an inner fallback.
+//
+// Not for the reason it looks like: an undefined custom property does not fall through
+// to the next family in the stack, it voids the whole declaration. Measured on the
+// live site before the fix — a blockquote injected into a real post computed to
+// `Newsreader, "Newsreader Fallback", …`, the inherited body value, never Georgia. So
+// the rules already looked right; they just depended on being invalid to get there.
+describe("shared serif rules name a fallback for the public app", () => {
+  const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
+  const globals = readFileSync(resolve(process.cwd(), "styles/globals.css"), "utf8");
+
+  it("falls back to the body serif wherever --font-serif is read", () => {
+    const bare = /font-family:\s*var\(--font-serif\)/;
+    expect(css).not.toMatch(bare);
+    expect(globals).not.toMatch(bare);
+    // Two in tiptap.css (headings, blockquote), one in globals.css (typestyle toggle).
+    expect(css.match(/var\(--font-serif,\s*var\(--font-body\)\)/g)).toHaveLength(2);
+    expect(globals.match(/var\(--font-serif,\s*var\(--font-body\)\)/g)).toHaveLength(1);
+  });
+});
+
 describe("long-form type system + optical craft (spec §7), public-scoped", () => {
   const css = readFileSync(resolve(process.cwd(), "styles/tiptap.css"), "utf8");
 

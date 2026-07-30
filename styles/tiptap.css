@@ -55,10 +55,19 @@ html[data-app="admin"].dark .tiptap-editor-surface {
   text-wrap: balance;
 }
 
+/* `--font-serif` is the admin's Fraunces; the public app deliberately does not define
+   it (pinned by apps/public/app/__tests__/layout.test.tsx). Without the inner
+   fallback the declaration is simply invalid there — an undefined custom property
+   voids the whole thing rather than falling through to Georgia, so the public site
+   inherited its body serif and happened to look right. Naming --font-body says that
+   outright instead of relying on invalid-declaration semantics. Same pixels either
+   way; this only stops the rule shifting if --font-serif ever reaches the public app.
+   On public these headings are overridden by the .tiptap-editorial rule below and
+   render in --font-display; this declaration is what dresses them in the editor. */
 .tiptap h1,
 .tiptap h2,
 .tiptap h3 {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: var(--font-serif, var(--font-body)), Georgia, serif;
   letter-spacing: -0.025em;
 }
 
@@ -182,7 +191,11 @@ html[data-app="admin"].dark .tiptap-editor-surface p {
   padding: 0.45rem 0 0.45rem 1.35rem;
   border-left: 2px solid var(--accent);
   color: var(--foreground);
-  font-family: var(--font-serif), Georgia, serif;
+  /* See the heading rule above: --font-serif is admin-only, so name the public
+     body serif explicitly rather than leaning on the declaration being void. On
+     public this resolves to Newsreader, whose true italic cut is declared with
+     `preload: false` and arrives by face matching on first use. */
+  font-family: var(--font-serif, var(--font-body)), Georgia, serif;
   font-size: 1.08rem;
   font-style: italic;
 }

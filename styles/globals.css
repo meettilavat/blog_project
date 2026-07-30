@@ -160,8 +160,13 @@ html {
   border-radius: 1px;
 }
 
+/* The serif/sans toggle is admin-only (apps/admin/components/shell/typography-toggle),
+   but the attribute is written to document.body by the shared provider, and a stale
+   `bodyStyle: "serif"` in localStorage sets it on the public site too. --font-serif is
+   not defined there, so name the public body serif as the fallback instead of leaving
+   an invalid declaration. */
 body[data-typestyle="serif"] {
-  font-family: var(--font-serif);
+  font-family: var(--font-serif, var(--font-body)), Georgia, serif;
 }
 
 a {
