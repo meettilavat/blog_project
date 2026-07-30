@@ -193,6 +193,29 @@ export function fieldIsSettled(maxDelta: number, epsilon = SETTLE_EPSILON_PX): b
   return maxDelta < epsilon;
 }
 
+/**
+ * Whether a field left this far from base still has work to do — the question a
+ * visibility or intersection gate has to answer before deciding to resume.
+ *
+ * The threshold is not a taste value: a particle `d` from its target moves
+ * `d * damping` on the next step, so another frame is worth running exactly when
+ * `d * damping` would clear the settle epsilon. Anything at or below that is a
+ * field `fieldIsSettled` has already stopped, and waking it would spend a frame
+ * to rediscover that and repaint an identical image.
+ *
+ * This exists so callers can *derive* "something is outstanding" from the field
+ * itself. A flag tracking the same thing has to be written at every point the
+ * field can come to rest displaced, and on this component two separate review
+ * findings were places where one such write had been missed.
+ */
+export function fieldNeedsResume(
+  maxDisplacement: number,
+  epsilon = SETTLE_EPSILON_PX,
+  damping = DAMPING
+): boolean {
+  return maxDisplacement * damping > epsilon;
+}
+
 export type TransitInfluence = {
   weight: number;
   /** Unit push direction — the travel axis, handed back so callers need no trig. */

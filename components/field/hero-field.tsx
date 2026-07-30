@@ -14,6 +14,7 @@ import {
   clampMagnitude,
   composeAlpha,
   fieldIsSettled,
+  fieldNeedsResume,
   lensInfluence,
   parallaxOffset,
   particleDepth,
@@ -244,8 +245,8 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // The gap then elapses while hidden and the timer's `wake()` accepts — it tests
     // `onscreen`, not `document.hidden`, deliberately, because the hidden half of
     // the frame budget rests on the engine suspending rAF. Come the resume,
-    // `armTransit` is reached with the flag raised and `pointer`/`returnPending`
-    // both clear, so nothing schedules, and the flag then stays up until either a
+    // `armTransit` is reached with the flag raised, no cursor, and a field already
+    // at base, so nothing schedules, and the flag then stays up until either a
     // gate disarms or — the case that shows — the visitor's cursor touches the hero
     // and opens a full sweep on the spot instead of at the end of a gap. Measured
     // both ways: 106 frames, lifting dots outside the cursor's lens radius to the
@@ -269,10 +270,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     if (transitTimer) clearTimeout(transitTimer);
     transitTimer = 0;
     transitPending = false;
-    // Abandoning a sweep leaves dots displaced by up to COMBINED_PULL_CAP_PX, so
-    // flag the return as outstanding: whichever gate resumes finishes the walk
-    // home, exactly as it does for a cursor that left.
-    if (transitStart >= 0) returnPending = true;
     transitStart = -1;
   };
 
@@ -384,12 +381,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   let condensing = !alreadyPlayed;
   let onscreen = true;
   let pointer: { x: number; y: number; nx: number; ny: number } | null = null;
-  // True only while the cursor has left but the damped return has not reached
-  // base yet. The gates use it to finish an interrupted return, which keeps the
-  // departing cursor as well served as the arriving one — and because it is
-  // false whenever the field is at rest, a resume with nothing outstanding still
-  // schedules nothing.
-  let returnPending = false;
   // True only while a resize has been observed but deliberately withheld because
   // the entrance is still running. `tick`'s terminal branch is the sole consumer.
   let resizePending = false;
@@ -422,6 +413,29 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   const cancel = () => {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+  };
+
+  /**
+   * Whether the field is far enough from base that another frame would move it.
+   * This is what a gate asks before resuming: a cursor that left mid-return, a
+   * transit abandoned mid-sweep, or anything else that stopped the loop while the
+   * dots were still travelling all answer yes, and a field at rest answers no, so
+   * a resume with nothing outstanding still costs nothing.
+   *
+   * Measured rather than tracked. This replaced a `returnPending` flag that had
+   * seven writers, and two separate review findings on this file were places where
+   * one of those writes had been missed — the transit's tail, which cleared
+   * `transitStart` while the dots were still 1.9px out, and the abandon path. A
+   * flag has to be maintained everywhere the field can come to rest displaced; a
+   * measurement is true whenever it is true.
+   */
+  const fieldNeedsWork = () => {
+    let worst = 0;
+    for (const p of particles) {
+      const displacement = Math.max(Math.abs(p.x - p.tx), Math.abs(p.y - p.ty));
+      if (displacement > worst) worst = displacement;
+    }
+    return fieldNeedsResume(worst);
   };
 
   // ---- condense (unchanged entrance) ----
@@ -487,7 +501,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         // cursor means nothing is outstanding — and it is what keeps the next
         // visibility or intersection resume from spending a frame to rediscover
         // that and repaint an identical field.
-        returnPending = false;
       }
     }
   };
@@ -525,7 +538,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       // the field 5x the residual off base until the next hover or transit. This
       // says the same thing the flag says everywhere else — the dots are walking
       // home — and the settle path below clears it again on arrival.
-      returnPending = true;
       armTransit(randomGap());
     }
 
@@ -603,9 +615,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // settle test that ignored the transit would end the chain before the front
     // reached a single dot and the sweep would never render at all.
     if (fieldIsSettled(maxDelta) && transitStart < 0) {
-      // Settled with no cursor is the definition of "home": nothing is left for
-      // a gate to resume.
-      if (!pointer) returnPending = false;
       raf = 0; // this chain ends here
       return;
     }
@@ -652,14 +661,11 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // Normalised against `width`, not `bounds.width`: `x` is already in field
     // space, and mixing the two spaces in one object is what caused the bug.
     pointer = { x, y, nx: x / width, ny: y / height };
-    // With a cursor present the field tracks it rather than heading home.
-    returnPending = false;
     wake();
   };
 
   const onPointerLeave = () => {
     pointer = null;
-    returnPending = true; // outstanding until the loop reports it reached base
     wake(); // wake to run the damped return, which then halts itself
   };
 
@@ -685,7 +691,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         // A fresh gap, never the remainder: otherwise scrolling back fires a
         // transit instantly, and so does a tab left open all afternoon.
         armTransit(randomGap());
-        if (pointer || returnPending) {
+        if (pointer || fieldNeedsWork()) {
           // A return interrupted by scrolling away still has to finish, or the
           // field holds a part-lensed frame until the next hover. An abandoned
           // sweep is one of those returns — `disarmTransit` flagged it above.
@@ -717,7 +723,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     } else {
       // A fresh gap, for the same reason as the intersection gate above.
       armTransit(randomGap());
-      if (pointer || returnPending) {
+      if (pointer || fieldNeedsWork()) {
         // A return interrupted by the tab going away still has to finish.
         wake();
       }
@@ -777,9 +783,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     pointer = null;
     disarmTransit();
     // The rebuilt field is snapped to base, so unlike the offscreen case there is
-    // nothing left to walk home — `disarmTransit`'s `returnPending` only matters
-    // when particles were left displaced.
-    returnPending = false;
+    // nothing left to walk home and no gate will find work to resume.
     armTransit(randomGap());
     // Resizing the bitmap cleared it, so this repaint is what keeps the hero from
     // sitting blank: with nothing outstanding, no gate would schedule a frame.
@@ -806,10 +810,6 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     resizePending = false;
     cancel();
     disarmTransit();
-    // After `disarmTransit`, not before: it raises `returnPending` whenever a
-    // transit was in flight, so the other order states this and then has it
-    // undone by the next line. `applyResize` sequences the pair the same way.
-    returnPending = false;
     if (host) {
       host.removeEventListener("pointermove", onPointerMove);
       host.removeEventListener("pointerleave", onPointerLeave);
