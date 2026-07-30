@@ -139,7 +139,11 @@ export default function RootLayout({
           >
             Skip to content
           </a>
-          <div className="relative flex min-h-dvh flex-col">
+          {/* `overflow-x-clip`, not `hidden`: the hero breaks out to 100vw via
+              `.hero-bleed`, and a classic scrollbar makes 100vw exceed the visible
+              width. `clip` contains that without becoming a scroll container, so
+              sticky descendants keep working — `hidden` would silently break them. */}
+          <div className="relative flex min-h-dvh flex-col overflow-x-clip">
             <PublicHeader />
             <main id="content" className="site-canvas flex flex-1 flex-col pb-24 pt-[clamp(2.5rem,5vw,5.5rem)]">
               {children}

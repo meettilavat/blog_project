@@ -175,6 +175,83 @@ a {
   padding-inline: clamp(1.25rem, 3.6vw, 4.5rem);
 }
 
+/*
+ * Breaks a block out of `.site-canvas` to the full viewport width, for the hero
+ * so its particle field has somewhere to be.
+ *
+ * Measured at 1728: the container caps at 72rem and its padding leaves a 1029px
+ * content box, while the headline alone occupies 912px of it — so the field was
+ * boxed into the one region already full of type, with ~350px of empty page
+ * gutter sitting unused on each side. Reaching the viewport gives it that gutter.
+ *
+ * No `width` declaration: a block fills its containing block minus its margins,
+ * so the negative margins alone widen this to exactly 100vw. Stating both invites
+ * them to disagree. The ancestor carries `overflow-x: clip` because `100vw`
+ * counts a classic scrollbar's width, which would otherwise add a horizontal
+ * scrollbar on platforms that reserve layout space for one.
+ */
+.hero-bleed {
+  margin-inline: calc(50% - 50vw);
+}
+
+/*
+ * The resume ledger: one mono label track and one content track. At full width
+ * the content track measures 43rem — the same reading measure the post page
+ * uses — so resume bullets wrap like article body text.
+ *
+ * 43rem is the target, not a guarantee. .site-canvas yields 0.928 × viewport
+ * below 1152px, so the ledger stops reaching 52rem near a 900px viewport (896px
+ * with overlay scrollbars, ~912px with a classic 15px one) while the rows only
+ * collapse at 831px. Through that band there are still two tracks and the
+ * content track compresses — measured 42.3rem at a 900px viewport and 38.4rem
+ * at 832px, the last width before the collapse. minmax(0, 1fr) absorbs it, and
+ * nothing downstream depends on the exact 43rem.
+ *
+ * Defining the tracks here rather than per-row is what keeps the page to two
+ * left edges.
+ */
+.resume-ledger {
+  width: min(100%, 52rem);
+  margin-inline: auto;
+}
+
+.resume-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  column-gap: 2rem;
+}
+
+/*
+ * Screen-only: Letter (816px) and A4 (794px) are both narrower than 831px, and
+ * paged media resolves this against the page box — so an unscoped query would
+ * print the stacked mobile layout. On paper .resume-row keeps its base tracks.
+ */
+@media screen and (max-width: 831px) {
+  .resume-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.375rem;
+  }
+}
+
+/*
+ * Rows that exist only on paper — the LinkedIn/GitHub contact lines, whose URLs
+ * are unreachable text on screen because the action links above already carry
+ * those destinations.
+ *
+ * `display: none`, not a visually-hidden clip: on screen these rows are pure
+ * duplication, so they should be out of the accessibility tree too rather than
+ * announced-but-invisible.
+ *
+ * Position matters. `.resume-row` sets `display: grid` at this same specificity,
+ * so the hide has to come *after* it — hence below the collapse query rather than
+ * beside .resume-ledger. The @media print counterpart puts the grid back; it
+ * cannot use `display: revert`, which would hand a <div> plain `block` and lose
+ * the tracks.
+ */
+[data-resume-print-only="true"] {
+  display: none;
+}
+
 .kicker {
   font-family: var(--font-mono), monospace;
   font-size: 0.6875rem;
@@ -245,16 +322,30 @@ a {
     display: block;
   }
 
+  /*
+   * Rows and headings only — deliberately *not* [data-resume-section]. A section
+   * wrapper holds every row it owns, and "Selected work" is taller than a page:
+   * asking the UA not to break inside it only makes it push the whole section to
+   * a fresh page and then break inside it anyway, trading a page of trailing
+   * whitespace for nothing. The guarantee worth keeping is per-row — a single
+   * entry, its bullets, and its link stay together.
+   */
+  .resume-sheet h1,
   .resume-sheet h2,
-  .resume-sheet h3,
-  .resume-sheet address,
-  .resume-sheet [data-resume-skill-group="true"] {
+  .resume-sheet [data-resume-row] {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  .resume-sheet [data-resume-project="true"] {
-    break-inside: auto;
+  /*
+   * Paper is where these rows earn their place: an href leads nowhere here, so
+   * the profile URLs have to be readable text. Restores the two-track row the
+   * screen rule takes out of the flow — the tracks themselves still come from
+   * .resume-row above, and only `display` is restated, so it has to stay in step
+   * with .resume-row's own.
+   */
+  [data-resume-print-only="true"] {
+    display: grid;
   }
 
   .resume-sheet a {

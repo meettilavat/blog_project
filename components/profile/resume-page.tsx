@@ -1,420 +1,209 @@
-import { cn } from "@/lib/ui/classnames";
-import { getPublicLinks } from "@/lib/public-links";
-import { FEATURED_POST_SLUG } from "@/lib/posts/featured";
+import { ArrowUpRight, Download } from "lucide-react";
+import {
+  LedgerNote,
+  LedgerRow,
+  LedgerRowShell,
+  LedgerSection
+} from "@/components/profile/resume-ledger";
 import { AVAILABILITY_STATUS } from "@/lib/profile/availability";
-import { ArrowUpRight, Download, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
-
-type Experience = {
-  role: string;
-  company: string;
-  period: string;
-  location: string;
-  bullets: string[];
-};
-
-type Education = {
-  school: string;
-  credential: string;
-  period: string;
-  location: string;
-};
-
-type Project = {
-  name: string;
-  stack?: string;
-  href?: string;
-  linkLabel?: string;
-  external?: boolean;
-  caseStudy?: boolean;
-  bullets: string[];
-};
-
-const publicLinks = getPublicLinks();
-
-const experiences: Experience[] = [
-  {
-    role: "Web Development Trainee",
-    company: "Yellow Apple Solutions",
-    period: "May – Jul 2023",
-    location: "Surat, India",
-    bullets: [
-      "Converted UI mockups into responsive HTML, CSS, and JavaScript pages.",
-      "Refined spacing, interaction states, and feedback-driven interface changes.",
-      "Fixed layout and interaction regressions before handoff."
-    ]
-  }
-];
-
-const education: Education[] = [
-  {
-    school: "Pandit Deendayal Energy University (PDEU)",
-    credential: "B.Tech, Computer Engineering — CGPA 8.92",
-    period: "2021 – 2024",
-    location: "Gandhinagar, Gujarat, India"
-  },
-  {
-    school: "Marwadi University",
-    credential: "Diploma, Computer Engineering — CGPA 9.00",
-    period: "2018 – 2021",
-    location: "Rajkot, Gujarat, India"
-  }
-];
-
-const projects: Project[] = [
-  {
-    name: "Vriksha Ganana / Tree Census Platform",
-    stack: "Kotlin, Jetpack Compose, Django REST, PostGIS, Next.js, Google Cloud, Cloud SQL, GCS",
-    href: `/posts/${FEATURED_POST_SLUG}`,
-    linkLabel: "Read case study",
-    caseStudy: true,
-    bullets: [
-      "Built an end-to-end municipal tree-census platform for SNMC across an Android field app, Django/PostGIS APIs, and a Next.js operations dashboard.",
-      "Implemented map-based field workflows, photo evidence, offline sync, Google Sign-In/JWT auth, and supervisor review flows.",
-      "Operated the live SNMC production deployment on GCP with Compute Engine, Cloud SQL/PostgreSQL 18 + PostGIS, GCS photo storage, Nginx, Redis/Celery, and uptime checks."
-    ]
-  },
-  {
-    name: "MeetTilavat.com (Blog Platform)",
-    stack: "Next.js, Tailwind CSS, Supabase, Tiptap, Docker, Jenkins",
-    href: publicLinks.sourceRepository,
-    linkLabel: "View source",
-    external: true,
-    bullets: [
-      "Split public read-only site and private admin/editor app backed by Supabase.",
-      "Built rich-text publishing with images, tables, and Supabase Storage uploads.",
-      "Containerized Docker builds with Jenkins CI/CD for repeatable deploys."
-    ]
-  },
-  {
-    name: "Personal Blog (PHP/MySQL)",
-    stack: "HTML, CSS, PHP, SQL, JavaScript, AWS",
-    bullets: [
-      "PHP/MySQL blog with admin publishing, CKEditor formatting, local image uploads, and AWS hosting."
-    ]
-  },
-  {
-    name: "Image Caption Generator",
-    stack: "ResNet50, LSTM, Python, Streamlit, AWS/Azure",
-    bullets: [
-      "Trained on Flickr8k using ResNet50 feature extraction + LSTM decoding.",
-      "Deployed with Streamlit; experimented across AWS and Azure."
-    ]
-  },
-  {
-    name: "Diabetic Retinopathy Classification",
-    stack: "CNN ensemble",
-    bullets: [
-      "Preprocessed fundus images (CLAHE, histogram EQ) and tested segmentation approaches.",
-      "Ensembled ResNet, VGG, Inception, and Xception for DR staging."
-    ]
-  },
-  {
-    name: "Predicting Engineering Student Performance",
-    bullets: [
-      "Modeled academic outcomes with RF, GBM, Logistic Regression, and CNN.",
-      "Used SHAP/LIME for explainability on a 12k+ student dataset."
-    ]
-  }
-];
-
-const skills = {
-  languages: ["Python", "JavaScript", "SQL", "Java", "PHP", "C/C++", "HTML/CSS"],
-  frameworks: ["Django REST Framework", "Next.js", "React", "Node.js", "Laravel", "Angular"],
-  devops: ["Google Cloud", "Cloud SQL", "GCS", "Docker", "Jenkins", "Nginx", "Linux", "AWS"],
-  tools: ["Git", "GitHub", "VS Code", "JetBrains IDEs"],
-  backendData: ["PostgreSQL/PostGIS", "REST APIs", "Celery", "Redis"],
-  languagesSpoken: ["English (IELTS 8.0)", "Gujarati", "Hindi"],
-  other: ["Custom PC building", "Hardware troubleshooting"]
-};
+import {
+  type ContactRow,
+  RESUME_NAME,
+  RESUME_ROLE,
+  RESUME_STANDFIRST,
+  actionLinks,
+  contactRows,
+  earlierWork,
+  education,
+  experience,
+  printContactRows,
+  selectedWork,
+  skillGroups
+} from "@/lib/profile/resume-data";
 
 export default function ResumePage() {
   return (
-    <article className="resume-sheet mx-auto max-w-[88rem] space-y-[clamp(4rem,5vw,5.5rem)]">
-      <ResumeHeroSection />
+    <article className="resume-sheet resume-ledger">
+      <ResumeMasthead />
+      <ResumeStandfirstBand />
+      <ResumeContact />
 
-      <ResumeExperienceEducationSection />
+      <LedgerSection title="Experience">
+        {experience.map((entry) => (
+          <LedgerRow key={entry.title} entry={entry} />
+        ))}
+      </LedgerSection>
 
-      <ResumeProjectsSection />
+      <LedgerSection title="Education">
+        {education.map((entry) => (
+          <LedgerRow key={entry.title} entry={entry} />
+        ))}
+      </LedgerSection>
 
-      <ResumeSkillsSection />
+      <LedgerSection title="Selected work">
+        {selectedWork.map((entry) => (
+          <LedgerRow key={entry.title} entry={entry} />
+        ))}
+        <LedgerNote label="Earlier" items={earlierWork} />
+      </LedgerSection>
+
+      <LedgerSection title="Skills">
+        <ResumeSkills />
+      </LedgerSection>
     </article>
   );
 }
 
-function ResumeHeroSection() {
+function ResumeMasthead() {
   return (
-    <header className="border-b border-border/80 pb-[clamp(3rem,5vw,4.5rem)]">
-      <div className="grid gap-10 document:grid-cols-[minmax(0,1fr)_minmax(18rem,0.36fr)] document:items-end document:gap-[clamp(3rem,6vw,7rem)]">
-        <div className="space-y-6">
-          <p className="kicker">Curriculum vitae</p>
-          <h1 className="max-w-[18ch] text-balance font-display text-[clamp(2.8rem,6.2vw,6.35rem)] leading-[0.96] tracking-[-0.035em] text-foreground">
-            Software engineer building dependable web products and systems.
-          </h1>
-          <p className="max-w-[58ch] text-[clamp(1.05rem,1.5vw,1.25rem)] leading-[1.75] text-foreground/78">
-            I enjoy working end-to-end—from feature development to shipping and operations—with a focus on clarity,
-            reliability, and automation.
-          </p>
-          <dl className="grid max-w-[42rem] gap-x-8 gap-y-3 border-y border-border/65 py-4 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="kicker">Base</dt>
-              <dd className="mt-1 text-foreground/80">Gujarat, India</dd>
-            </div>
-            <div>
-              <dt className="kicker">Status</dt>
-              <dd className="mt-1 text-foreground/80">{AVAILABILITY_STATUS}</dd>
-            </div>
-          </dl>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
-            <a
-              className="print:hidden inline-flex min-h-11 items-center gap-2 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
-              href="/resume/meet-tilavat-resume.pdf"
-              download="Meet_Tilavat_Resume.pdf"
-            >
-              <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              Download PDF
-            </a>
-            <a
-              className="inline-flex min-h-11 items-center border-b border-border font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
-              href="mailto:tilavatmeet2@gmail.com"
-            >
-              Email Me
-            </a>
-            <a
-              className="inline-flex min-h-11 items-center gap-1 border-b border-border font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
-              href={publicLinks.githubProfile}
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          </div>
-        </div>
-        <address className="not-italic document:border-l document:border-border/75 document:pl-7">
-          <div className="flex items-end justify-between gap-4 border-b border-border/75 pb-3">
-            <h2 className="kicker">Contact index</h2>
-            <span className="font-mono text-[10px] text-foreground/65">UTC+05:30</span>
-          </div>
-          <ul className="divide-y divide-border/60">
-            <li><ContactRow label="Email" value="tilavatmeet2@gmail.com" href="mailto:tilavatmeet2@gmail.com" icon={<Mail className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
-            <li><ContactRow label="Phone" value="+91 99133 20031" href="tel:+919913320031" icon={<Phone className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
-            <li><ContactRow label="LinkedIn" value="linkedin.com/in/meettilavat" href={publicLinks.linkedInProfile} external icon={<Linkedin className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
-            <li><ContactRow label="GitHub" value="github.com/meettilavat" href={publicLinks.githubProfile} external icon={<Github className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
-            <li><ContactRow label="Location" value="Gujarat, India" icon={<MapPin className="h-3.5 w-3.5" aria-hidden="true" />} /></li>
-          </ul>
-        </address>
+    <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 border-b border-border pb-4">
+      <h1 className="m-0 font-display text-[clamp(1.9rem,3.4vw,2.6rem)] font-bold leading-[0.98] tracking-[-0.03em] text-foreground">
+        {RESUME_NAME}
+      </h1>
+      <div className="text-left sm:text-right">
+        <p className="kicker">{RESUME_ROLE}</p>
+        {/* `!text-accent`, not `text-accent`: .kicker declares its own
+            `color: var(--ink-muted)` and lives in author CSS *after*
+            `@tailwind utilities`, so at equal specificity the later rule wins and
+            a plain utility here is inert — the line renders muted grey. The
+            important modifier is what actually recolours it. */}
+        <p className="kicker mt-1 !text-accent">{AVAILABILITY_STATUS}</p>
       </div>
     </header>
   );
 }
 
-function ResumeExperienceEducationSection() {
+/**
+ * The band that stops the compact masthead reading as empty: prose on the left,
+ * the action links filling the horizontal void on the right.
+ *
+ * Splits at `ledger:` (832px), not a breakpoint of its own: that is the exact
+ * complement of the `max-width: 831px` query that collapses `.resume-row`, so
+ * this band and the ledger rows below it change shape at the same width. A
+ * narrower breakpoint here would leave a band of widths where a two-column
+ * standfirst sits above already-stacked rows.
+ */
+function ResumeStandfirstBand() {
   return (
-    <section className="grid gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(19rem,0.85fr)] lg:gap-[clamp(4rem,8vw,9rem)]" role="region" aria-labelledby="resume-experience">
-      <div>
-        <SectionHeading index="01" title="Experience" subtitle="Hands-on product delivery and cross-functional execution." id="resume-experience" />
-        <div className="mt-8 space-y-10 border-l border-border/75 pl-6 sm:pl-8" data-resume-timeline="true">
-          {experiences.map((exp) => (
-            <article key={exp.company} className="relative space-y-4">
-              <span className="absolute -left-[calc(1.5rem+3px)] top-1.5 h-[7px] w-[7px] bg-accent sm:-left-[calc(2rem+3px)]" aria-hidden="true" />
-              <p className="kicker tabular-nums">{exp.period}</p>
-              <div>
-                <h3 className="font-display text-2xl leading-tight text-foreground">{exp.role}</h3>
-                <p className="mt-1 text-sm text-foreground/70">{exp.company} · {exp.location}</p>
-              </div>
-              <ResumeBulletList items={exp.bullets} className="mt-3" />
-            </article>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <SectionHeading index="02" title="Education" subtitle="Core academics with strong engineering outcomes." id="resume-education" />
-        <div className="mt-6">
-          {education.map((edu) => (
-            <article
-              key={edu.school}
-              className="grid gap-2 border-b border-border/70 py-5 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5"
-            >
-              <p className="kicker tabular-nums">{edu.period}</p>
-              <div>
-                <h3 className="font-display text-xl leading-tight text-foreground">{edu.school}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/80">{edu.credential}</p>
-                <p className="mt-1 text-sm text-foreground/70">{edu.location}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ResumeProjectsSection() {
-  return (
-    <section role="region" aria-labelledby="resume-projects">
-      <SectionHeading
-        index="03"
-        title="Selected Projects"
-        subtitle="Production work and applied ML builds across web, infra, and experimentation."
-        id="resume-projects"
-      />
-      <div className="mt-6">
-        {projects.map((project, index) => (
-          <article
-            key={project.name}
-            data-resume-project="true"
-            className="grid gap-5 border-b border-border/75 py-7 project:grid-cols-[3.25rem_minmax(0,1fr)_auto] project:gap-7"
+    <div className="grid gap-x-10 gap-y-6 border-b border-border py-5 ledger:grid-cols-[minmax(0,1fr)_auto]">
+      <p className="m-0 max-w-[50ch] text-[clamp(0.95rem,1.2vw,1.05rem)] leading-[1.7] text-foreground/80">
+        {RESUME_STANDFIRST}
+      </p>
+      {/* The wrapper is hidden too, not just its links: hiding only the anchors
+          collapses this grid row to 0px while the band's row-gap survives,
+          leaving ~24px of contentless whitespace above the hairline on paper. */}
+      <div className="flex flex-wrap gap-x-6 gap-y-2 ledger:flex-col ledger:items-end ledger:gap-2 print:hidden">
+        {actionLinks.map((link) => (
+          <a
+            key={link.label}
+            href={link.href}
+            download={link.download}
+            target={link.external ? "_blank" : undefined}
+            rel={link.external ? "noreferrer" : undefined}
+            // `print:hidden` on every link, unconditionally: the whole cluster is
+            // screen-only. A printed resume should not advertise a download, and
+            // on paper a profile link is worse than absent — the arrow implies a
+            // click, and the label alone gives a reader no URL to type. What paper
+            // needs from these three is the URL, and that comes from the contact
+            // ledger below (`printContactRows`), which is the single block a
+            // reader looks in.
+            className="inline-flex min-h-11 items-center gap-1.5 border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground print:hidden"
           >
-            <p className="font-mono text-[11px] tabular-nums text-accent">{String(index + 1).padStart(2, "0")}</p>
-            <div className="min-w-0 space-y-4">
-              <div>
-                <h3 className="font-display text-[clamp(1.45rem,2.4vw,2.15rem)] leading-tight text-foreground">{project.name}</h3>
-                {project.stack ? <p className="mt-2 max-w-[80ch] font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-foreground/70">{project.stack}</p> : null}
-              </div>
-              <ResumeBulletList items={project.bullets} />
-            </div>
-            {project.href ? (
-                <a
-                  href={project.href}
-                  target={project.external ? "_blank" : undefined}
-                  rel={project.external ? "noreferrer" : undefined}
-                  className="inline-flex min-h-11 items-center gap-1 self-start border-b border-accent/65 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
-                >
-                  {project.linkLabel ?? "View project"}
-                  {project.caseStudy ? <span className="text-foreground/55">· Fig. 01</span> : null}
-                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </a>
-            ) : <span aria-hidden="true" />}
-          </article>
+            {link.download ? <Download className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+            {link.label}
+            {link.external ? <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+          </a>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function ResumeSkillsSection() {
-  return (
-    <section role="region" aria-labelledby="resume-skills">
-      <SectionHeading index="04" title="Skills" subtitle="Current stack and tools used in day-to-day delivery." id="resume-skills" />
-      <dl className="mt-6 grid ledger:grid-cols-2">
-        <SkillGroup title="Languages & Frameworks" items={[...skills.languages, ...skills.frameworks]} />
-        <SkillGroup title="DevOps & Cloud" items={skills.devops} />
-        <SkillGroup title="Tools" items={skills.tools} />
-        <SkillGroup title="Backend & Data" items={skills.backendData} />
-        <SkillGroup title="Languages (Spoken)" items={skills.languagesSpoken} />
-        <SkillGroup title="Other" items={skills.other} />
-      </dl>
-    </section>
-  );
-}
-
-function SectionHeading({ index, title, subtitle, id }: { index: string; title: string; subtitle: string; id?: string }) {
-  return (
-    <div className="grid gap-3 border-b border-border/75 pb-4 sm:grid-cols-[3rem_minmax(0,1fr)] sm:items-end">
-      <span className="font-mono text-[11px] tabular-nums text-accent">{index}</span>
-      <div>
-        <h2 id={id} className="font-display text-[clamp(2rem,3.5vw,3rem)] leading-none tracking-[-0.025em] text-foreground">{title}</h2>
-        <p className="mt-2 max-w-[58ch] text-sm leading-relaxed text-foreground/70">{subtitle}</p>
       </div>
     </div>
   );
 }
 
-function ContactRow({
-  label,
-  value,
-  icon,
-  href,
-  external = false
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  href?: string;
-  external?: boolean;
-}) {
-  const rowContent = (
-    <>
-      <span className="inline-flex h-8 w-6 shrink-0 items-center justify-start text-accent">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-foreground/70">{label}</span>
-        <span className="block break-words text-sm text-foreground/85">{value}</span>
-      </span>
-      {external ? (
-        <span className="inline-flex h-7 w-5 shrink-0 items-center justify-end">
-          <ArrowUpRight className="h-3.5 w-3.5 text-foreground/70" aria-hidden="true" />
-        </span>
-      ) : null}
-    </>
-  );
-
-  if (!href) {
-    return (
-      <div className="flex min-h-14 items-center gap-2 py-2.5">
-        {rowContent}
-      </div>
-    );
-  }
-
+/**
+ * A skill group is the same construct as a contact row — a label in the mono
+ * track, its value in the content track — so it takes the same dl/dt/dd markup
+ * rather than div/p/ul. The <ul> survives inside the <dd> because the items are
+ * genuine peers: the "/" between them is a CSS ::after, so flattening the list
+ * would hand a screen reader one run-on string instead of a counted list.
+ */
+function ResumeSkills() {
   return (
-    <a
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      className="group flex min-h-14 items-center gap-2 py-2.5 transition-colors duration-200 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground motion-reduce:transition-none"
-    >
-      {rowContent}
-    </a>
-  );
-}
-
-function ResumeBulletList({
-  items,
-  className,
-  itemClassName
-}: {
-  items: string[];
-  className?: string;
-  itemClassName?: string;
-}) {
-  return (
-    <ul className={cn("m-0 list-none space-y-2 p-0", className)}>
-      {items.map((item) => (
-        <li
-          key={item}
-          className="grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-3"
-        >
-          <span
-            aria-hidden="true"
-            className="mt-[0.68rem] inline-block h-px w-2 bg-accent"
-          />
-          <span className={cn("block text-sm leading-[1.75] text-foreground/85", itemClassName)}>{item}</span>
-        </li>
+    <dl className="m-0">
+      {skillGroups.map((group) => (
+        <LedgerRowShell key={group.label} className="py-3.5">
+          <dt className="kicker pt-1">{group.label}</dt>
+          <dd className="m-0">
+            <ul className="m-0 flex list-none flex-wrap p-0 text-sm leading-7 text-foreground/85">
+              {group.items.map((item) => (
+                <li key={item} className="after:mx-2 after:text-accent/70 after:content-['/'] last:after:hidden">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </LedgerRowShell>
       ))}
-    </ul>
+    </dl>
   );
 }
 
-function SkillGroup({
-  title,
-  items,
-}: {
-  title: string;
-  items: string[];
-}) {
+/**
+ * One contact line. Shared by the three rows that render in both media and the
+ * two that only render on paper, so all five are literally the same row and a
+ * printed page cannot end up with a contact block in two grammars.
+ */
+function ContactLedgerRow({ row, printOnly = false }: { row: ContactRow; printOnly?: boolean }) {
   return (
-    <div data-resume-skill-group="true" className="border-b border-border/75 py-5 ledger:odd:pr-8 ledger:even:border-l ledger:even:pl-8">
-      <dt className="kicker">{title}</dt>
-      <dd className="mt-3">
-        <ul className="flex flex-wrap text-sm leading-7 text-foreground/82">
-        {items.map((item) => (
-          <li key={item} className="after:mx-2 after:text-accent/70 after:content-['/'] last:after:hidden">{item}</li>
-        ))}
-        </ul>
+    <LedgerRowShell className="py-2.5" printOnly={printOnly}>
+      {/* `self-center`, not `pt-0.5`: the value cell below is a 44px box with
+          its text centred, and a top-padded label in a stretched grid cell
+          would sit ~12px above the value it names. Both cells centre, so the
+          label and its value share a line at every width. */}
+      <dt className="kicker self-center">{row.label}</dt>
+      {/* The 44px floor lives on the cell *and* on the anchor, for two
+          different reasons. On the cell it keeps all three contact rows the
+          same height — Base carries plain text, so without it that row would
+          be 24px shorter than the two beside it. On the anchor it is the tap
+          target itself: `items-center` centres rather than stretches, so a
+          bare text-sm anchor would be a 20px hit area, which is the wrong
+          thing to aim a thumb at for a `tel:` link. 44px matches the floor
+          every other link on this page keeps. */}
+      <dd className="m-0 flex min-h-11 items-center text-sm text-foreground/85">
+        {row.href ? (
+          <a
+            href={row.href}
+            className="inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            {row.value}
+          </a>
+        ) : (
+          row.value
+        )}
       </dd>
-    </div>
+    </LedgerRowShell>
+  );
+}
+
+function ResumeContact() {
+  return (
+    <dl className="m-0">
+      {contactRows.map((row) => (
+        <ContactLedgerRow key={row.label} row={row} />
+      ))}
+      {/* Paper only, and last: on screen the action links in the band above
+          already reach both profiles, but on paper a label is a dead end — the
+          href goes nowhere a reader can follow. These rows put the two URLs as
+          readable text in the block where a reader looks for a way to make
+          contact, so all five values sit together instead of two of them being
+          stranded as bare words beside the standfirst.
+
+          `printContactRows`, not extra `contactRows` entries: these carry no
+          href, because nothing on paper is clickable, and folding them into the
+          screen list would print the URLs twice over and show them on screen
+          next to the links that already carry them. */}
+      {printContactRows.map((row) => (
+        <ContactLedgerRow key={row.label} row={row} printOnly />
+      ))}
+    </dl>
   );
 }
