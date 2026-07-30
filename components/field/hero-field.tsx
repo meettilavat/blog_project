@@ -674,6 +674,33 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     host.addEventListener("pointerleave", onPointerLeave);
   }
 
+  /**
+   * The two halves of a gate transition, shared by the intersection and visibility
+   * observers so "the gates agree" is a fact rather than a diff-by-eye claim.
+   *
+   * They were duplicated verbatim before, and that is how the hidden-tab bug
+   * survived a review: the bodies matched textually while their reachability
+   * differed, so only one of the two got reasoned about.
+   */
+  const suspend = () => {
+    cancel();
+    disarmTransit();
+  };
+
+  const resume = () => {
+    if (condensing) {
+      schedule(tick);
+      return;
+    }
+    // A fresh gap, never the remainder: otherwise scrolling back fires a transit
+    // instantly, and so does a tab left open all afternoon.
+    armTransit(randomGap());
+    // An interrupted return still has to finish, or the field holds a part-lensed
+    // frame until the next hover. An abandoned sweep is one of those returns, and
+    // `fieldNeedsWork` sees it without anything having had to flag it.
+    if (pointer || fieldNeedsWork()) wake();
+  };
+
   // Zero frames while the hero is offscreen (spec §5.1).
   const fieldObserver = new IntersectionObserver(
     (entries) => {
@@ -681,23 +708,10 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       if (visible === onscreen) return;
       onscreen = visible;
       if (!onscreen) {
-        cancel();
-        disarmTransit();
+        suspend();
         return;
       }
-      if (condensing) {
-        schedule(tick);
-      } else {
-        // A fresh gap, never the remainder: otherwise scrolling back fires a
-        // transit instantly, and so does a tab left open all afternoon.
-        armTransit(randomGap());
-        if (pointer || fieldNeedsWork()) {
-          // A return interrupted by scrolling away still has to finish, or the
-          // field holds a part-lensed frame until the next hover. An abandoned
-          // sweep is one of those returns — `disarmTransit` flagged it above.
-          wake();
-        }
-      }
+      resume();
     },
     { rootMargin: "0px" }
   );
@@ -705,8 +719,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
 
   const onVisibility = () => {
     if (document.hidden) {
-      cancel();
-      disarmTransit();
+      suspend();
       return;
     }
     // `schedule()` cancels before it requests, so this `cancel()` is no longer
@@ -718,16 +731,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // where declining would freeze the field for good. Cheap insurance against
     // a behaviour we cannot observe from here.
     cancel();
-    if (condensing) {
-      schedule(tick);
-    } else {
-      // A fresh gap, for the same reason as the intersection gate above.
-      armTransit(randomGap());
-      if (pointer || fieldNeedsWork()) {
-        // A return interrupted by the tab going away still has to finish.
-        wake();
-      }
-    }
+    resume();
   };
   document.addEventListener("visibilitychange", onVisibility);
 
