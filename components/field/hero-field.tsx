@@ -12,6 +12,11 @@ import {
 const DRIFT_MS = 1000;
 const CONDENSE_MS = 1500;
 
+// How long resize notifications are coalesced before the field is rebuilt.
+// Exported so the tests drive the debounce by the value the field actually uses
+// rather than by a literal that silently stops matching when this is retuned.
+export const RESIZE_DEBOUNCE_MS = 120;
+
 // Interaction is for cursors only. Touch devices keep exactly today's behaviour:
 // condense once, then hold a static settled frame.
 const INTERACTIVE_QUERY = "(hover: hover) and (pointer: fine)";
@@ -166,14 +171,17 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     height = Math.max(1, Math.floor(rect.height));
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    // Reset before scaling rather than trusting the bitmap resize to have done
-    // it. `ctx.scale` multiplies into the existing transform, so on the second
-    // call this is the difference between 2x and 4x — a field drawn at double
-    // size with three quarters of it off-canvas. The spec says assigning
-    // `canvas.width` clears the transform, but engines have been seen skipping
-    // that when the value is unchanged, and one reachable case assigns the same
-    // value on a rebuild: a window moved between displays so that dpr and the
-    // CSS box change by reciprocal factors.
+    // Reset before scaling rather than folding into whatever transform is
+    // already there. `ctx.scale` multiplies, so on the second call the
+    // difference is 2x versus 4x — a field drawn at double size with three
+    // quarters of it off-canvas. Resetting explicitly is what makes this
+    // function's postcondition — the transform is exactly the dpr scale, on
+    // every call — hold on its own terms, rather than depending on the
+    // assignments above having cleared it. That dependency would be load-bearing
+    // because a rebuild can assign `canvas.width`/`canvas.height` the values
+    // they already hold: a window moved between displays so that dpr and the CSS
+    // box change by reciprocal factors passes `applyResize`'s integer guard on
+    // the CSS box while the buffer dimensions come out unchanged.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
@@ -493,15 +501,24 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
   // ---- resize: re-measure rather than stretch a stale bitmap ----
-  const RESIZE_DEBOUNCE_MS = 120;
   let resizeTimer = 0;
 
   const applyResize = () => {
     resizeTimer = 0;
     const rect = canvas.getBoundingClientRect();
-    // Only act on a real change. Sub-pixel churn — a scrollbar appearing, a font
-    // swap settling — must not throw the field away for a fractional difference.
-    if (Math.floor(rect.width) === width && Math.floor(rect.height) === height) return;
+    // Only act on a real change — i.e. would `measure()` come out at a different
+    // size? Sub-pixel churn (a scrollbar appearing, a font swap settling) must
+    // not throw the field away for a fractional difference. Clamped the same way
+    // `measure()` clamps, or a hero collapsed to zero after mount would never
+    // compare equal to the 1x1 it produced and every notification would cost a
+    // rebuild plus an empty repaint. It still compares unequal on the way back
+    // up, so recovery when the hero regrows is unaffected.
+    if (
+      Math.max(1, Math.floor(rect.width)) === width &&
+      Math.max(1, Math.floor(rect.height)) === height
+    ) {
+      return;
+    }
 
     // A resize during the entrance is deferred, not applied: `measure()`
     // regenerates the very home positions the condense is interpolating from, so
@@ -527,7 +544,15 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     returnPending = false;
     // Resizing the bitmap cleared it, so this repaint is what keeps the hero from
     // sitting blank: with nothing outstanding, no gate would schedule a frame.
-    if (!raf) draw();
+    // Unconditional, and any queued frame is dropped first. Deferring to a frame
+    // that happens to be in flight is not equivalent — the intersection gate
+    // cancels it if the hero scrolls away, and on the way back nothing resumes,
+    // because the two lines above are exactly what the gates test. The hero would
+    // then hold the cleared bitmap until the next pointermove, theme flip, or
+    // resize. Cancelling costs nothing: the field was just rebuilt at rest with
+    // no pointer, so that frame had only an identical paint left to do.
+    cancel();
+    draw();
   };
 
   const fieldResizeObserver = new ResizeObserver(() => {

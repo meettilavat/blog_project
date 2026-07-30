@@ -155,11 +155,11 @@ export function createFieldHarness(options: FieldHarnessOptions = {}) {
   //   without resetting first ends up at 4x, not 2x. Recording absolutely would
   //   report a tidy 2x either way, which made the dpr assertion unfalsifiable.
   //
-  //   Assigning `canvas.width` resets the transform per spec, but engines have
-  //   been observed skipping that when the assigned value is unchanged. This stub
-  //   deliberately models the pessimistic engine and never resets on its own, so
-  //   production code is forced to reset explicitly and a missing reset shows up
-  //   here as a compounded scale instead of passing on a friendlier browser.
+  //   Assigning `canvas.width` resets the transform per spec, but this stub never
+  //   resets on its own — so `measure()` has to state its postcondition itself
+  //   rather than inherit it from a side effect of the bitmap assignment. A
+  //   missing explicit reset then shows up here as a compounded scale instead of
+  //   depending on whether the assignment happened to carry a new value.
   let scale: { x: number; y: number } | null = null;
 
   const context = {

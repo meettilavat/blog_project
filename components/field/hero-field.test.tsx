@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import HeroField, {
+  RESIZE_DEBOUNCE_MS,
   startField,
   __frameCount,
   __playedSlugs,
@@ -400,6 +401,11 @@ describe("HeroField", () => {
     expect(h.documentListenerCount("visibilitychange")).toBe(0);
     expect(h.intersectionObserver.callback).toBeNull();
     expect(h.mutationObserver.callback).toBeNull();
+    // Including the ResizeObserver. `startField` documents that this bail is what
+    // makes a zero-size hero unable to recover once it gains a box; wiring the
+    // observer above the bail would quietly make that comment wrong, and no other
+    // test would notice.
+    expect(h.resizeObserver.callback).toBeNull();
 
     stop(); // the teardown it hands back must still be safe to call
   });
@@ -427,7 +433,7 @@ describe("HeroField", () => {
     stop();
   });
 
-  it("removes every listener and disconnects both observers on teardown", () => {
+  it("removes every listener and disconnects all three observers on teardown", () => {
     const h = createFieldHarness();
     const stop = startField(h.canvas, "Teardown");
 
@@ -444,6 +450,7 @@ describe("HeroField", () => {
     expect(h.documentListenerCount("visibilitychange")).toBe(0);
     expect(h.intersectionObserver.disconnected).toBe(true);
     expect(h.mutationObserver.disconnected).toBe(true);
+    expect(h.resizeObserver.disconnected).toBe(true);
 
     // Nothing the platform does afterwards can paint again.
     const painted = h.paintCount();
@@ -451,6 +458,12 @@ describe("HeroField", () => {
     h.setIntersecting(true);
     h.emitVisibilityChange();
     h.triggerMutation();
+    // The resize entry point too, so the sweep covers all four rather than three
+    // — but it is a weak probe, and deliberately so: `triggerResize` short-circuits
+    // on the harness's own disconnected flag and never reaches the field's
+    // callback, so the `resizeObserver.disconnected` assertion above is what
+    // actually carries this half.
+    h.triggerResize();
     expect(h.flush(200)).toBe(0);
     expect(h.paintCount()).toBe(painted);
   });
@@ -504,15 +517,18 @@ describe("HeroField", () => {
         }))
         .filter((dot) => dot.gain > 1e-6);
 
-      // Unmapped, the raw (380, 180) lands where the headline sits and the field
-      // is empty, so nothing brightens at all — which is why this assertion, not
-      // the loop below, is the one that fails without the fix.
-      expect(brightened.length).toBeGreaterThan(0);
-      // And every dot that did brighten sits within the lens radius of the mapped
-      // point rather than somewhere else dense.
+      // This loop is what carries the test. Drop the scale factors and dots still
+      // brighten — raw (380, 180) is nx = 0.475 in the 800x400 field space, where
+      // the horizontal density mask is about 0.26 rather than the zero it clamps
+      // to further left, so there is field to light up — they are just the wrong
+      // dots: the failure is `expected 480.39 to be less than 131`, a lens centred
+      // half the hero away from the mapped point.
       for (const dot of brightened) {
         expect(Math.hypot(dot.x - 760, dot.y - 360)).toBeLessThan(LENS_RADIUS_PX + 1);
       }
+      // The guard that keeps the loop from passing over an empty array — which is
+      // how it would pass if the lens stopped reaching any dot at all.
+      expect(brightened.length).toBeGreaterThan(0);
 
       // `nx`/`ny` are field-space too. Normalising the mapped `x` by `bounds.width`
       // instead would put them at 1.9 and 1.8 — `parallaxOffset` has no clamp, so
@@ -539,10 +555,54 @@ describe("HeroField", () => {
       // Nothing happens until the debounce elapses.
       expect(harness.paintCount()).toBe(paintsAtRest);
 
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
       expect(harness.paintCount()).toBe(paintsAtRest + 1);
       // A rebuild is a snap, not an animation: no frames are left queued.
       expect(harness.pending()).toBe(0);
+      stop();
+    });
+
+    it("repaints on a rebuild even when a frame was already queued", () => {
+      // `measure()` reassigns `canvas.width`, which clears the bitmap, so the
+      // repaint at the end of `applyResize` is the only thing that refills it.
+      // Skipping it because a frame happens to be in flight strands the hero
+      // blank: that frame is not a substitute, because the intersection gate
+      // cancels it the moment the hero scrolls away, and on the way back in there
+      // is nothing to resume — `applyResize` cleared `pointer` and `returnPending`
+      // itself, which is precisely what both gates test before scheduling. The
+      // hero then holds a cleared bitmap until the next pointermove, theme flip,
+      // or resize.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "resize with a frame queued");
+      harness.flush(ENTRANCE_BUDGET);
+      expect(harness.pending()).toBe(0);
+      const paintsAtRest = harness.paintCount();
+
+      // A cursor arrives and the frame it wakes is deliberately left unrun —
+      // `advanceClock` moves time without running frames, which is the state a
+      // busy main thread puts the real field in whenever a frame is still queued
+      // as the debounce comes due.
+      harness.movePointer(POINTER_X, POINTER_Y);
+      expect(harness.pending()).toBe(1);
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
+
+      // Out of view and back again: the queued frame is gone and neither gate
+      // finds anything outstanding to schedule, so the rebuild's own repaint is
+      // the only one the hero will ever get.
+      harness.setIntersecting(false);
+      harness.setIntersecting(true);
+      expect(harness.pending()).toBe(0);
+
+      expect(harness.paintCount()).toBeGreaterThan(paintsAtRest);
+      // And it painted the rebuilt field rather than leaving the stale one as the
+      // last word: the 800-wide space put dots past 600.
+      for (const dot of harness.lastFrame().dots) {
+        expect(dot.x).toBeLessThanOrEqual(600);
+        expect(dot.y).toBeLessThanOrEqual(300);
+      }
       stop();
     });
 
@@ -555,11 +615,14 @@ describe("HeroField", () => {
       for (const size of [700, 600, 500, 400]) {
         harness.setSize(size, 300);
         harness.triggerResize();
-        harness.advanceClock(50); // each inside the 120ms window
+        harness.advanceClock(Math.floor(RESIZE_DEBOUNCE_MS / 2)); // each re-arms the timer
       }
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       expect(harness.paintCount()).toBe(paintsAtRest + 1);
+      // And the one rebuild is a snap, same as the single-notification case: a
+      // burst that ended up scheduling a frame would satisfy the count above.
+      expect(harness.pending()).toBe(0);
       stop();
     });
 
@@ -571,7 +634,7 @@ describe("HeroField", () => {
 
       harness.setSize(800.4, 400.2); // sub-pixel churn from a scrollbar settling
       harness.triggerResize();
-      harness.advanceClock(200);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS * 2); // well past the debounce
 
       expect(harness.paintCount()).toBe(paintsAtRest);
       stop();
@@ -585,15 +648,16 @@ describe("HeroField", () => {
 
       harness.setSize(600, 300);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       expect(harness.canvas.width).toBe(1200);
       expect(harness.canvas.height).toBe(600);
       // The dpr itself, not a value derived from it: the field draws in CSS
       // pixels and the transform is what stretches that over the buffer. The
-      // harness records the latest `scale()` call verbatim, and the mount already
-      // recorded this pair — that the rebuild applies it at all is pinned by the
-      // test below, where the dpr changes.
+      // harness composes `scale()` calls the way the real API does — it never
+      // resets the transform on its own — so this is the assertion that catches a
+      // rebuild which rescales without resetting first: the mount's 2x and the
+      // rebuild's 2x would compound and this would read { x: 4, y: 4 }.
       expect(harness.scaleApplied()).toEqual({ x: 2, y: 2 });
       stop();
     });
@@ -610,7 +674,7 @@ describe("HeroField", () => {
       Object.assign(window, { devicePixelRatio: 1 });
       harness.setSize(600, 300);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       expect(harness.canvas.width).toBe(600);
       expect(harness.canvas.height).toBe(300);
@@ -630,11 +694,11 @@ describe("HeroField", () => {
 
       harness.setSize(600, 300);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       harness.setSize(800, 400);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       expect(harness.positions()).toEqual(first);
       stop();
@@ -652,7 +716,7 @@ describe("HeroField", () => {
 
       harness.setSize(600, 300);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       // The entrance is untouched: still animating, and the buffer still carries
       // the size it was measured at. Snapping here is what this must not do.
@@ -691,11 +755,11 @@ describe("HeroField", () => {
 
       harness.setSize(600, 300);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
       // Dragged back to where it started before the entrance finished.
       harness.setSize(800, 400);
       harness.triggerResize();
-      harness.advanceClock(120);
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
 
       harness.flush(ENTRANCE_BUDGET);
       expect(harness.canvas.width).toBe(1600);
