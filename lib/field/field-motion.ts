@@ -92,7 +92,7 @@ export function clampMagnitude(value: number, cap: number): number {
   return Math.min(cap, Math.max(-cap, value));
 }
 
-function smoothstep(edge0: number, edge1: number, x: number): number {
+export function smoothstep(edge0: number, edge1: number, x: number): number {
   // A zero-width or inverted band has no gradient to interpolate across. Guard
   // it: unguarded, the two degenerate cases fail differently and both silently.
   //
