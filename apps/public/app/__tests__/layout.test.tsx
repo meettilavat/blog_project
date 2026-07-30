@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -94,10 +96,47 @@ describe("apps/public/app/layout.tsx", () => {
     expect(html).toContain("localStorage.getItem(\"theme\")");
     expect(html).toContain("name=\"theme-color\"");
     expect(html).toContain("--font-display");
+    expect(html).toContain("--font-body-italic");
     expect(html).not.toContain("--font-serif");
     expect(html).toContain('content="#F7F7F5"');
     expect(html).toContain('content="#0B0D10"');
     expect(html).toContain('type="application/rss+xml"');
     expect(html).not.toContain("grid-ruled");
+  });
+});
+
+// `preload` is only observable in the emitted <link> tags, so this asserts on source.
+// It guards the one tempting simplification: folding the two Newsreader calls back
+// into a single `style: ["normal", "italic"]`, which silently restores a 64.5 KB
+// High-priority preload for a face nothing above the fold renders.
+//
+// No CSS binding is needed to keep `<em>` on the real italic. Both calls generate the
+// same family name, so the italic @font-face merges into the family the body already
+// inherits and normal face matching finds it. Verified in Chromium against a
+// production build with no such rule present: `<em>` fetched
+// 9433d1a810498265-s.<hash>.woff2 on demand — the non-preload variant of the same
+// file — and document.fonts reported a loaded italic Newsreader face. An earlier
+// version of this suite asserted a globals.css rule was load-bearing here; it was
+// redundant, and only a probe showed that.
+describe("public italic font strategy", () => {
+  // Comments are stripped so these assert on code. The prose above the declarations
+  // names the very patterns being matched, which would otherwise satisfy the positive
+  // checks and defeat the negative one outright.
+  const stripComments = (source: string) =>
+    source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+  const layout = stripComments(
+    readFileSync(resolve(process.cwd(), "apps/public/app/layout.tsx"), "utf8")
+  );
+
+  it("declares the italic cut separately and keeps it off the preload path", () => {
+    expect(layout).toContain('style: ["italic"]');
+    expect(layout).toContain("preload: false");
+    // The upright face must not re-absorb italic; that is what forces the preload.
+    expect(layout).not.toContain('style: ["normal", "italic"]');
+  });
+
+  it("keeps the italic declaration applied so its @font-face is retained", () => {
+    expect(layout).toContain("newsreaderItalic.variable");
   });
 });

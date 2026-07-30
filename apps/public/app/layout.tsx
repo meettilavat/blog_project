@@ -34,9 +34,27 @@ const metadataBase = configuredSiteUrl ? new URL(configuredSiteUrl) : undefined;
 
 const newsreader = Newsreader({
   subsets: ["latin"],
-  style: ["normal", "italic"],
   display: "swap",
   variable: "--font-body"
+});
+
+// Newsreader's italic is a separate cut, not a slant, so it is worth shipping — but
+// as its own declaration with `preload: false`. Listed alongside the upright face in
+// one `style: ["normal", "italic"]` call it was preloaded at High priority on every
+// page: 64.5 KB, the heaviest asset after the main JS chunk, for a face nothing above
+// the fold renders. Measured on throttled mobile it finished at 213ms while the
+// upright face carrying the LCP text — competing for the same bandwidth — landed at
+// 256ms.
+//
+// Splitting it does not cost correctness: both calls resolve to the same family name,
+// so this @font-face merges into the family the body inherits and `<em>` still gets
+// the real italic, fetched on first use rather than upfront. No CSS rule needed.
+const newsreaderItalic = Newsreader({
+  subsets: ["latin"],
+  style: ["italic"],
+  display: "swap",
+  preload: false,
+  variable: "--font-body-italic"
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -108,7 +126,12 @@ export default function RootLayout({
       lang="en"
       data-app="public"
       data-scroll-behavior="smooth"
-      className={cn(newsreader.variable, spaceGrotesk.variable, plexMono.variable)}
+      className={cn(
+        newsreader.variable,
+        newsreaderItalic.variable,
+        spaceGrotesk.variable,
+        plexMono.variable
+      )}
       suppressHydrationWarning
     >
       <head>
