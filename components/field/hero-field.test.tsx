@@ -10,7 +10,7 @@ import HeroField, {
   __playedSlugs,
   __resetPlayedSlugs
 } from "@/components/field/hero-field";
-import { LENS_RADIUS_PX } from "@/lib/field/field-motion";
+import { LENS_ALPHA_CAP, LENS_RADIUS_PX } from "@/lib/field/field-motion";
 import { createFieldHarness, maxDrift } from "@/tests/support/field-harness";
 
 const source = readFileSync(resolve(process.cwd(), "components/field/hero-field.tsx"), "utf8");
@@ -797,6 +797,44 @@ describe("HeroField", () => {
       const paintsAfterStop = harness.paintCount();
       harness.advanceClock(500);
       expect(harness.paintCount()).toBe(paintsAfterStop);
+    });
+  });
+
+  // Nested inside `HeroField` for the same reason as the blocks around it: the
+  // `afterEach` above is what unstubs the globals each harness installs.
+  describe("startField alpha composition", () => {
+    it("paints an unlensed particle at exactly its base alpha", () => {
+      // The refactor routes every particle through composeAlpha, including those
+      // with no influence at all. min(cap, a * 1) must be indistinguishable from a.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "alpha identity");
+      harness.flush(400);
+      const settled = harness.lastFrame().dots.map((dot) => dot.alpha);
+
+      harness.movePointer(10, 10); // far corner, clear of most of the field
+      harness.flush(60);
+      const after = harness.lastFrame().dots;
+
+      // Dots beyond the lens radius of the pointer are untouched to the bit.
+      const untouched = after.filter(
+        (dot) => Math.hypot(dot.x - 10, dot.y - 10) > LENS_RADIUS_PX * 2
+      );
+      expect(untouched.length).toBeGreaterThan(0);
+      for (const dot of untouched) {
+        const index = after.indexOf(dot);
+        expect(dot.alpha).toBe(settled[index]);
+      }
+      stop();
+    });
+
+    it("never exceeds the alpha ceiling with the cursor at rest on the field", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "alpha ceiling");
+      harness.flush(400);
+      harness.movePointer(600, 150); // inside the dense right-hand mass
+      harness.flush(120);
+      expect(harness.maxAlpha()).toBeLessThanOrEqual(LENS_ALPHA_CAP);
+      stop();
     });
   });
 

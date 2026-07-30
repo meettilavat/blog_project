@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import {
+  COMBINED_PULL_CAP_PX,
+  LENS_ALPHA_GAIN,
+  clampMagnitude,
+  composeAlpha,
   fieldIsSettled,
   lensInfluence,
   parallaxOffset,
@@ -360,16 +364,27 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     for (const p of particles) {
       let targetX = p.tx;
       let targetY = p.ty;
-      let alpha = p.a;
+      // Accumulated separately from the target so one cap can bound the sum of
+      // every pull acting on this particle. Task 5 adds a second contributor.
+      let pullX = 0;
+      let pullY = 0;
+      let gain = 0;
 
       if (pointer) {
+        // Parallax is a depth offset, not a pull: it applies straight to the
+        // target and stays outside the pull cap, bounded separately by
+        // PARALLAX_MAX_PX. Capping it alongside the pulls would fight the depth
+        // effect it exists to create.
         targetX += parallaxOffset(pointer.nx, p.depth);
         targetY += parallaxOffset(pointer.ny, p.depth);
-        const lens = lensInfluence(p.tx, p.ty, pointer.x, pointer.y, p.a);
-        targetX += lens.pullX;
-        targetY += lens.pullY;
-        alpha = lens.alpha;
+        const lens = lensInfluence(p.tx, p.ty, pointer.x, pointer.y);
+        pullX += lens.pullX;
+        pullY += lens.pullY;
+        gain += lens.weight * LENS_ALPHA_GAIN;
       }
+
+      targetX += clampMagnitude(pullX, COMBINED_PULL_CAP_PX);
+      targetY += clampMagnitude(pullY, COMBINED_PULL_CAP_PX);
 
       const nextX = stepToward(p.x, targetX);
       const nextY = stepToward(p.y, targetY);
@@ -377,7 +392,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       if (delta > maxDelta) maxDelta = delta;
       p.x = nextX;
       p.y = nextY;
-      p.ra = alpha;
+      p.ra = composeAlpha(p.a, gain);
     }
 
     draw();

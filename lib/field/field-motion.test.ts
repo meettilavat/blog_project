@@ -4,10 +4,12 @@ import {
   COMBINED_PULL_CAP_PX,
   DAMPING,
   LENS_ALPHA_CAP,
+  LENS_ALPHA_GAIN,
   LENS_PULL_CAP_PX,
   LENS_RADIUS_PX,
   PARALLAX_MAX_PX,
   SETTLE_EPSILON_PX,
+  TRANSIT_ALPHA_GAIN,
   TRANSIT_AXIS_RADIANS,
   TRANSIT_BAND_FRACTION,
   TRANSIT_DRIFT_PX,
@@ -15,6 +17,7 @@ import {
   TRANSIT_MAX_GAP_MS,
   TRANSIT_MIN_GAP_MS,
   TRANSIT_MS,
+  composeAlpha,
   fieldIsSettled,
   lensInfluence,
   parallaxOffset,
@@ -65,20 +68,19 @@ describe("parallaxOffset", () => {
 
 describe("lensInfluence", () => {
   it("leaves particles outside the radius untouched", () => {
-    const result = lensInfluence(0, 0, LENS_RADIUS_PX + 10, 0, 0.4);
+    const result = lensInfluence(0, 0, LENS_RADIUS_PX + 10, 0);
     expect(result.pullX).toBe(0);
     expect(result.pullY).toBe(0);
-    expect(result.alpha).toBe(0.4);
+    expect(result.weight).toBe(0);
   });
 
   it("pulls toward the cursor, not away from it", () => {
-    // Cursor is to the right, so the pull must be positive.
-    const result = lensInfluence(0, 0, 40, 0, 0.4);
+    const result = lensInfluence(0, 0, 40, 0);
     expect(result.pullX).toBeGreaterThan(0);
   });
 
   it("caps displacement so a lingering cursor cannot clump the field", () => {
-    const result = lensInfluence(0, 0, LENS_RADIUS_PX * 0.05, 0, 0.4);
+    const result = lensInfluence(0, 0, LENS_RADIUS_PX * 0.05, 0);
     expect(Math.abs(result.pullX)).toBeLessThanOrEqual(LENS_PULL_CAP_PX);
     expect(Math.abs(result.pullY)).toBeLessThanOrEqual(LENS_PULL_CAP_PX);
   });
@@ -86,22 +88,33 @@ describe("lensInfluence", () => {
   it("engages the cap on both axes and both signs when geometry exceeds it", () => {
     // The pull term peaks near d = 0.42 * radius; at the default radius that
     // peak is ~6.08px, so the cap clips it. Without a clamp this returns 6.08.
-    expect(lensInfluence(0, 0, 54.8, 0, 0.4).pullX).toBe(LENS_PULL_CAP_PX);
+    expect(lensInfluence(0, 0, 54.8, 0).pullX).toBe(LENS_PULL_CAP_PX);
     // A widened lens clears the cap on both axes by a wide margin (~8.68px each).
-    const wide = lensInfluence(0, 0, 120, 120, 0.4, 300);
+    const wide = lensInfluence(0, 0, 120, 120, 300);
     expect(wide.pullX).toBe(LENS_PULL_CAP_PX);
     expect(wide.pullY).toBe(LENS_PULL_CAP_PX);
     // Clamping is symmetric, so a cursor up-left is bounded the same way.
-    const negative = lensInfluence(0, 0, -120, -120, 0.4, 300);
+    const negative = lensInfluence(0, 0, -120, -120, 300);
     expect(negative.pullX).toBe(-LENS_PULL_CAP_PX);
     expect(negative.pullY).toBe(-LENS_PULL_CAP_PX);
   });
 
-  it("brightens inside the radius but never past the cap", () => {
-    const near = lensInfluence(0, 0, 5, 0, 0.4);
-    expect(near.alpha).toBeGreaterThan(0.4);
-    const bright = lensInfluence(0, 0, 0, 0, 0.84);
-    expect(bright.alpha).toBeLessThanOrEqual(LENS_ALPHA_CAP);
+  it("reports a weight that rises toward the cursor", () => {
+    expect(lensInfluence(0, 0, 0, 0).weight).toBeCloseTo(1, 10);
+    const close = lensInfluence(0, 0, 20, 0).weight;
+    const mid = lensInfluence(0, 0, 70, 0).weight;
+    const far = lensInfluence(0, 0, 120, 0).weight;
+    expect(close).toBeGreaterThan(mid);
+    expect(mid).toBeGreaterThan(far);
+    expect(far).toBeGreaterThan(0);
+  });
+
+  it("returns a weight, not a finished alpha, so influences can compose", () => {
+    // The old signature returned a ceilinged alpha, which two influences cannot
+    // merge: there is no correct way to combine two already-capped values.
+    const result = lensInfluence(0, 0, 10, 0) as Record<string, unknown>;
+    expect(result.alpha).toBeUndefined();
+    expect(typeof result.weight).toBe("number");
   });
 
   it("treats a degenerate radius as no lens at all", () => {
@@ -112,33 +125,45 @@ describe("lensInfluence", () => {
     // so a NaN fails rather than slipping through a comparison.
 
     // Radius 0 with the cursor exactly on the particle is the literal 0/0.
-    const centred = lensInfluence(0, 0, 0, 0, 0.4, 0);
+    const centred = lensInfluence(0, 0, 0, 0, 0);
     expect(centred.pullX).toBe(0);
     expect(centred.pullY).toBe(0);
-    expect(centred.alpha).toBe(0.4);
+    expect(centred.weight).toBe(0);
 
     // A negative radius does not produce NaN — it inverts the lens, which is
     // harder to notice: the weight reads as full at every distance, so every
     // particle takes the maximum pull and a brightness gain.
-    const inverted = lensInfluence(0, 0, 30, 40, 0.4, -LENS_RADIUS_PX);
+    const inverted = lensInfluence(0, 0, 30, 40, -LENS_RADIUS_PX);
     expect(inverted.pullX).toBe(0);
     expect(inverted.pullY).toBe(0);
-    expect(inverted.alpha).toBe(0.4);
+    expect(inverted.weight).toBe(0);
 
     // Radius 0 at a distance already behaved, because the quotient is +Infinity
     // and clamps to 1. Kept so the guard cannot regress it.
-    const offCentre = lensInfluence(0, 0, 30, 40, 0.4, 0);
+    const offCentre = lensInfluence(0, 0, 30, 40, 0);
     expect(offCentre.pullX).toBe(0);
     expect(offCentre.pullY).toBe(0);
-    expect(offCentre.alpha).toBe(0.4);
+    expect(offCentre.weight).toBe(0);
+  });
+});
+
+describe("composeAlpha", () => {
+  it("leaves a particle at its base alpha when nothing acts on it", () => {
+    // Exactly equal, not merely close: an unlensed, untransited particle must
+    // paint at the alpha buildFieldTargets gave it.
+    expect(composeAlpha(0.4, 0)).toBe(0.4);
+    expect(composeAlpha(0.66, 0)).toBe(0.66);
   });
 
-  it("falls off smoothly with distance", () => {
-    const close = lensInfluence(0, 0, 20, 0, 0.4).alpha;
-    const mid = lensInfluence(0, 0, 70, 0, 0.4).alpha;
-    const far = lensInfluence(0, 0, 120, 0, 0.4).alpha;
-    expect(close).toBeGreaterThan(mid);
-    expect(mid).toBeGreaterThan(far);
+  it("brightens proportionally to the total gain", () => {
+    expect(composeAlpha(0.4, 0.5)).toBeCloseTo(0.6, 10);
+  });
+
+  it("holds the ceiling however many influences pile on", () => {
+    // The brightest base alpha the field produces is 0.66, and both gains at
+    // once give 0.66 * (1 + 0.55 + 0.95) = 1.65 — so the cap is what binds.
+    expect(composeAlpha(0.66, LENS_ALPHA_GAIN + TRANSIT_ALPHA_GAIN)).toBe(LENS_ALPHA_CAP);
+    expect(composeAlpha(0.84, 99)).toBe(LENS_ALPHA_CAP);
   });
 });
 

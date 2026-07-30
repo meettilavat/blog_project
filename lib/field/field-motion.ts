@@ -80,7 +80,7 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-function clampMagnitude(value: number, cap: number): number {
+export function clampMagnitude(value: number, cap: number): number {
   return Math.min(cap, Math.max(-cap, value));
 }
 
@@ -133,7 +133,12 @@ export function parallaxOffset(pointerNorm: number, depth: number, max = PARALLA
 export type LensInfluence = {
   pullX: number;
   pullY: number;
-  alpha: number;
+  /**
+   * Falloff 0..1, not a finished alpha. The caller sums this with every other
+   * influence's weight and hands the total to `composeAlpha`, because two
+   * influences each returning an already-ceilinged alpha cannot be merged.
+   */
+  weight: number;
 };
 
 /**
@@ -146,20 +151,30 @@ export function lensInfluence(
   baseY: number,
   pointerX: number,
   pointerY: number,
-  alpha: number,
   radius = LENS_RADIUS_PX
 ): LensInfluence {
   const dx = pointerX - baseX;
   const dy = pointerY - baseY;
   const weight = 1 - smoothstep(0, radius, Math.hypot(dx, dy));
   if (weight <= 0) {
-    return { pullX: 0, pullY: 0, alpha };
+    return { pullX: 0, pullY: 0, weight: 0 };
   }
   return {
     pullX: clampMagnitude(dx * weight * LENS_PULL, LENS_PULL_CAP_PX),
     pullY: clampMagnitude(dy * weight * LENS_PULL, LENS_PULL_CAP_PX),
-    alpha: Math.min(LENS_ALPHA_CAP, alpha * (1 + weight * LENS_ALPHA_GAIN))
+    weight
   };
+}
+
+/**
+ * The single owner of the alpha ceiling, for every influence at once.
+ *
+ * Lives here rather than inside each influence so that two of them acting on one
+ * particle produce one capped result instead of two capped results with no
+ * defined way to combine them.
+ */
+export function composeAlpha(baseAlpha: number, totalGain: number): number {
+  return Math.min(LENS_ALPHA_CAP, baseAlpha * (1 + totalGain));
 }
 
 export function stepToward(current: number, target: number, damping = DAMPING): number {
