@@ -10,7 +10,17 @@ import HeroField, {
   __playedSlugs,
   __resetPlayedSlugs
 } from "@/components/field/hero-field";
-import { LENS_ALPHA_CAP, LENS_ALPHA_GAIN, LENS_RADIUS_PX } from "@/lib/field/field-motion";
+import {
+  COMBINED_PULL_CAP_PX,
+  DAMPING,
+  LENS_ALPHA_CAP,
+  LENS_ALPHA_GAIN,
+  LENS_RADIUS_PX,
+  SETTLE_EPSILON_PX,
+  TRANSIT_FIRST_DELAY_MS,
+  TRANSIT_MAX_GAP_MS,
+  TRANSIT_MIN_GAP_MS
+} from "@/lib/field/field-motion";
 import { createFieldHarness, maxDrift } from "@/tests/support/field-harness";
 
 const source = readFileSync(resolve(process.cwd(), "components/field/hero-field.tsx"), "utf8");
@@ -892,6 +902,316 @@ describe("HeroField", () => {
       harness.flush(120);
       expect(harness.maxAlpha()).toBeLessThanOrEqual(LENS_ALPHA_CAP);
       stop();
+    });
+  });
+
+  // Nested inside `HeroField` for the same reason as the blocks around it: the
+  // `afterEach` above is what unstubs the globals each harness installs.
+  describe("startField transit", () => {
+    const settle = (harness: ReturnType<typeof createFieldHarness>) => {
+      harness.flush(400);
+      expect(harness.pending()).toBe(0);
+    };
+
+    it("runs no frames while waiting for the first transit", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit idle");
+      settle(harness);
+      const paintsAtRest = harness.paintCount();
+
+      // Just short of the armed delay: the timer is set but has not fired.
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS - 1);
+      expect(harness.pending()).toBe(0);
+      expect(harness.paintCount()).toBe(paintsAtRest);
+      stop();
+    });
+
+    it("arms and renders a first transit after the entrance", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit first");
+      settle(harness);
+      const settledPeak = harness.maxAlpha();
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      expect(harness.pending()).toBe(1);
+
+      // Mid-sweep the field is brighter than at rest.
+      harness.flush(45);
+      expect(harness.maxAlpha()).toBeGreaterThan(settledPeak);
+
+      // And it finishes and halts on its own.
+      const ran = harness.flush(400);
+      expect(ran).toBeLessThan(400);
+      expect(harness.pending()).toBe(0);
+      stop();
+    });
+
+    it("paints a full sweep rather than halting on the first zero-weight frame", () => {
+      // The load-bearing regression: a transit's opening frames have zero weight
+      // everywhere, because the front starts a full band outside the field. If the
+      // halt test does not also require "no transit in flight", the field reads as
+      // settled and the chain ends before the front reaches any dot.
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit full sweep");
+      settle(harness);
+      const paintsAtRest = harness.paintCount();
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      harness.flush(400);
+
+      // TRANSIT_MS / 16ms per frame is ~94 frames, plus the damped relax behind
+      // the front. A halt-on-first-frame bug yields single digits.
+      expect(harness.paintCount() - paintsAtRest).toBeGreaterThan(80);
+      stop();
+    });
+
+    it("keeps the chain alive through the very first transit frame", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit first frame");
+      settle(harness);
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      harness.flush(1);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("re-arms with a gap no shorter than the minimum", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit rearm");
+      settle(harness);
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      harness.flush(400);
+      expect(harness.pending()).toBe(0);
+      const paintsAfterFirst = harness.paintCount();
+
+      // A gap shorter than the minimum fires nothing.
+      harness.advanceClock(TRANSIT_MIN_GAP_MS - 1);
+      expect(harness.pending()).toBe(0);
+      expect(harness.paintCount()).toBe(paintsAfterFirst);
+
+      // Past the maximum, one has definitely fired.
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("returns the field to base alpha after a transit passes", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit relax");
+      settle(harness);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      harness.flush(400);
+
+      // Alpha comes back exactly: with no influence left, `composeAlpha(a, 0)` is
+      // `min(cap, a)`, and every base alpha is below the cap.
+      //
+      // Positions come back only within the settle epsilon. The halt test bounds
+      // each axis's per-frame step to SETTLE_EPSILON_PX, so a dot can stop up to
+      // SETTLE_EPSILON_PX / DAMPING short of its target — measured worst here is
+      // 0.30px. That is not slack: mid-sweep the same dots sit 3.1px off base, so
+      // a transit that failed to release them misses this by an order of
+      // magnitude.
+      const residual = SETTLE_EPSILON_PX / DAMPING;
+      const after = harness.lastFrame().dots;
+      for (let i = 0; i < after.length; i++) {
+        expect(after[i].alpha).toBeCloseTo(settledDots[i].alpha, 10);
+        expect(Math.abs(after[i].x - settledDots[i].x)).toBeLessThan(residual);
+        expect(Math.abs(after[i].y - settledDots[i].y)).toBeLessThan(residual);
+      }
+      stop();
+    });
+
+    it("holds the combined displacement cap with a cursor parked on the sweep", () => {
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "transit plus lens");
+      settle(harness);
+      const base = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+
+      // On the field's vertical midline, and held still. `ny` is then exactly 0.5,
+      // so `parallaxOffset` returns exactly 0 on the y axis and a dot's vertical
+      // displacement from base *is* its capped vertical pull, with no parallax to
+      // allow for. x is left in the dense right-hand mass, where there are bright
+      // dots within lens range above and below the cursor.
+      harness.movePointer(600, 200);
+      harness.flush(120);
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+
+      // The y axis is also where the two influences add rather than fight: the
+      // transit travels up (uy = -0.809, the larger of its two components) and a
+      // dot below the cursor is pulled up toward it. For a dot ~55px below, the
+      // lens is at its own 6px cap and the sweep adds 4.45 more.
+      //
+      // This is the only assertion that pins COMBINED_PULL_CAP_PX at all, so its
+      // margins are worth recording: the worst vertical displacement is 7.51px
+      // with the cap and 8.51px without it. Bounding the Euclidean drift instead
+      // would have no teeth — the field's extremes are parallax-dominated, and
+      // there both numbers are 12.00px to twelve decimal places.
+      let worstY = 0;
+      for (let step = 0; step < 400; step++) {
+        if (harness.flush(1) === 0) break;
+        const dots = harness.lastFrame().dots;
+        for (let i = 0; i < dots.length; i++) {
+          worstY = Math.max(worstY, Math.abs(dots[i].y - base[i].y));
+        }
+        expect(harness.maxAlpha()).toBeLessThanOrEqual(LENS_ALPHA_CAP);
+      }
+      expect(worstY).toBeLessThanOrEqual(COMBINED_PULL_CAP_PX);
+      stop();
+    });
+
+    it("runs transits on a touch device, where there is no cursor to rely on", () => {
+      // Without this, a phone gets a single entrance and then a frozen field
+      // forever, which is the complaint this feature exists to answer.
+      const harness = createFieldHarness({ interactive: false });
+      const stop = startField(harness.canvas, "transit touch");
+      settle(harness);
+      expect(harness.host.listenerCount("pointermove")).toBe(0);
+      const paintsAtRest = harness.paintCount();
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      expect(harness.pending()).toBe(1);
+      harness.flush(400);
+      expect(harness.paintCount() - paintsAtRest).toBeGreaterThan(80);
+      stop();
+    });
+
+    it("drops a transit that comes due while the hero is offscreen", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit offscreen");
+      settle(harness);
+      expect(harness.pendingTimers()).toBe(1); // the armed first delay
+      harness.setIntersecting(false);
+      const paintsOffscreen = harness.paintCount();
+
+      // Disarmed, not merely ignored. The two assertions below cannot tell the
+      // difference on their own — `wake()` refuses while offscreen, so a timer
+      // left running fires, schedules nothing, and looks identical from here. What
+      // it leaves behind is `transitPending` raised, and nothing ever lowers it:
+      // the next wake for any reason at all, a hover or a gate resuming an
+      // outstanding return, then opens a transit on the spot rather than at the
+      // end of a gap.
+      expect(harness.pendingTimers()).toBe(0);
+
+      // Long enough for several transits to have come due.
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS + TRANSIT_MAX_GAP_MS * 3);
+      expect(harness.pending()).toBe(0);
+      expect(harness.paintCount()).toBe(paintsOffscreen);
+
+      // Coming back does not fire a backlog — it arms a fresh gap.
+      harness.setIntersecting(true);
+      expect(harness.pending()).toBe(0);
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("drops a transit that comes due while the tab is hidden", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit hidden");
+      settle(harness);
+      expect(harness.pendingTimers()).toBe(1);
+      harness.setHidden(true);
+      harness.emitVisibilityChange();
+      const paintsHidden = harness.paintCount();
+
+      // Disarmed for the same reason as the offscreen gate above — and here it is
+      // load-bearing on its own: `wake()` does not test `document.hidden`, so a
+      // surviving timer would schedule a frame in a background tab and rely
+      // entirely on the engine to suspend it.
+      expect(harness.pendingTimers()).toBe(0);
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS + TRANSIT_MAX_GAP_MS * 3);
+      expect(harness.pending()).toBe(0);
+      expect(harness.paintCount()).toBe(paintsHidden);
+
+      harness.setHidden(false);
+      harness.emitVisibilityChange();
+      expect(harness.pending()).toBe(0);
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("walks the field home after a transit is abandoned mid-sweep", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit abandoned");
+      settle(harness);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      harness.flush(45); // mid-sweep, dots displaced
+      expect(harness.positions()).not.toEqual(
+        settledDots.map((dot) => ({ x: dot.x, y: dot.y }))
+      );
+
+      harness.setIntersecting(false);
+      expect(harness.pending()).toBe(0);
+      harness.setIntersecting(true);
+      // The interrupted return is outstanding, so the gate resumes it.
+      expect(harness.pending()).toBe(1);
+      harness.flush(200);
+
+      // Home to within the settle epsilon, as in "returns the field to base alpha"
+      // above — the dots were 3px off when the sweep was cut short.
+      const residual = SETTLE_EPSILON_PX / DAMPING;
+      const after = harness.lastFrame().dots;
+      for (let i = 0; i < after.length; i++) {
+        expect(Math.abs(after[i].x - settledDots[i].x)).toBeLessThan(residual);
+        expect(Math.abs(after[i].y - settledDots[i].y)).toBeLessThan(residual);
+      }
+      stop();
+    });
+
+    it("arms a transit on a repeat visit that skips the entrance", () => {
+      // The play-once registry sends a second mount straight to a settled frame,
+      // and that path must arm the schedule too or a returning visitor gets none.
+      const first = createFieldHarness();
+      const stopFirst = startField(first.canvas, "transit replay");
+      first.flush(ENTRANCE_BUDGET); // the registry is only written once it lands
+      stopFirst();
+      vi.unstubAllGlobals();
+
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit replay");
+      expect(harness.pending()).toBe(0); // no entrance to run
+      harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("clears the transit timer on teardown", () => {
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit teardown");
+      settle(harness);
+      expect(harness.pendingTimers()).toBeGreaterThan(0);
+      stop();
+      expect(harness.pendingTimers()).toBe(0);
+      harness.advanceClock(TRANSIT_MAX_GAP_MS * 2);
+      expect(harness.pending()).toBe(0);
+    });
+
+    it("gives a different title a different cadence", () => {
+      // Cadence draws from a dedicated seeded generator, so it is deterministic
+      // per title — which is what makes the timing assertions above possible.
+      const gaps: number[] = [];
+      for (const title of ["cadence one", "cadence two"]) {
+        const harness = createFieldHarness();
+        const stop = startField(harness.canvas, title);
+        harness.flush(400);
+        harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+        harness.flush(400);
+        let elapsed = 0;
+        while (harness.pending() === 0 && elapsed < TRANSIT_MAX_GAP_MS + 1000) {
+          harness.advanceClock(500);
+          elapsed += 500;
+        }
+        gaps.push(elapsed);
+        stop();
+        vi.unstubAllGlobals();
+      }
+      expect(gaps[0]).not.toBe(gaps[1]);
     });
   });
 

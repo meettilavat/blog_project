@@ -4,13 +4,21 @@ import { useEffect, useRef } from "react";
 import {
   COMBINED_PULL_CAP_PX,
   LENS_ALPHA_GAIN,
+  TRANSIT_ALPHA_GAIN,
+  TRANSIT_AXIS_RADIANS,
+  TRANSIT_DRIFT_PX,
+  TRANSIT_FIRST_DELAY_MS,
+  TRANSIT_MAX_GAP_MS,
+  TRANSIT_MIN_GAP_MS,
+  TRANSIT_MS,
   clampMagnitude,
   composeAlpha,
   fieldIsSettled,
   lensInfluence,
   parallaxOffset,
   particleDepth,
-  stepToward
+  stepToward,
+  transitInfluence
 } from "@/lib/field/field-motion";
 
 const DRIFT_MS = 1000;
@@ -159,6 +167,61 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   let height = 1;
   let particles: Particle[] = [];
 
+  // ---- transit state ----
+  // Declared above `measure()` because `measure()` assigns the axis extents
+  // below, and it runs once before anything else in this function: a `let`
+  // declared further down would still be in its temporal dead zone by then and
+  // that first assignment would throw.
+  //
+  // `transitStart` is the rAF timestamp the current transit began, or -1 for
+  // none. Never set from a setTimeout callback: the timer raises
+  // `transitPending` and the next frame stamps the start from its own clock. A
+  // timer callback has no timestamp of its own, so stamping it there means
+  // reading some other clock, and `progress` is then wrong by whatever separates
+  // that clock's origin from rAF's — for `Date.now()`, the whole Unix epoch,
+  // which drives `progress` so far out of [0, 1] that no dot ever renders.
+  let transitStart = -1;
+  let transitPending = false;
+  let transitTimer = 0;
+  // Travel axis and the field's extent along it. Recomputed by measure().
+  let axisX = Math.cos(TRANSIT_AXIS_RADIANS);
+  let axisY = Math.sin(TRANSIT_AXIS_RADIANS);
+  let spanLo = 0;
+  let span = 0;
+
+  // A generator of its own, deliberately not the one `measure()` uses for
+  // particle home positions. That one is re-seeded on every rebuild, so a shared
+  // stream would restart mid-cadence; and sharing would make the two
+  // order-dependent, so how many gaps had been drawn would change where every
+  // particle sits — which is exactly what "produces an identical field when
+  // rebuilt at the same size" forbids.
+  const cadenceRand = makeSeededRandom(seed ^ 0x5bf03635);
+  const randomGap = () =>
+    TRANSIT_MIN_GAP_MS + cadenceRand() * (TRANSIT_MAX_GAP_MS - TRANSIT_MIN_GAP_MS);
+
+  // `wake` is declared further down but only *called* here, from a timer
+  // callback, so its `const` is long since initialised by the time this runs —
+  // the same arrangement `tick` already uses.
+  const armTransit = (delayMs: number) => {
+    if (transitTimer) clearTimeout(transitTimer);
+    transitTimer = window.setTimeout(() => {
+      transitTimer = 0;
+      transitPending = true;
+      wake();
+    }, delayMs);
+  };
+
+  const disarmTransit = () => {
+    if (transitTimer) clearTimeout(transitTimer);
+    transitTimer = 0;
+    transitPending = false;
+    // Abandoning a sweep leaves dots displaced by up to COMBINED_PULL_CAP_PX, so
+    // flag the return as outstanding: whichever gate resumes finishes the walk
+    // home, exactly as it does for a cursor that left.
+    if (transitStart >= 0) returnPending = true;
+    transitStart = -1;
+  };
+
   /**
    * Reads the element's box and rebuilds everything derived from it: the backing
    * buffer, the dpr transform, and the particle set.
@@ -222,6 +285,30 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         depth: particleDepth(t.a, minAlpha, maxAlpha)
       };
     });
+
+    // Extents along the travel axis, from the particles rather than the canvas:
+    // the density mask clears the left of the hero, so canvas-derived extents
+    // would spend a third of every sweep crossing empty space.
+    //
+    // Recomputed from the constant rather than carried over, so this function's
+    // postcondition covers the axis too: `transitInfluence` requires that the
+    // same unit axis produced `spanLo`/`span`, and deriving it here is what makes
+    // that true by construction on every call.
+    axisX = Math.cos(TRANSIT_AXIS_RADIANS);
+    axisY = Math.sin(TRANSIT_AXIS_RADIANS);
+    let lo = Number.POSITIVE_INFINITY;
+    let hi = Number.NEGATIVE_INFINITY;
+    for (const p of particles) {
+      const projected = p.tx * axisX + p.ty * axisY;
+      if (projected < lo) lo = projected;
+      if (projected > hi) hi = projected;
+    }
+    // A rebuild can legitimately produce no particles at all — a hero collapsed
+    // to 1x1 after mount reaches `applyResize`, which keeps the field running —
+    // and that leaves lo/hi infinite. `span` of 0 is what `transitInfluence`
+    // guards on, so a degenerate field simply has no transit.
+    spanLo = Number.isFinite(lo) ? lo : 0;
+    span = Number.isFinite(hi - lo) ? Math.max(0, hi - lo) : 0;
   };
 
   measure();
@@ -331,6 +418,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       draw();
       playedSlugs.add(title);
       condensing = false;
+      armTransit(TRANSIT_FIRST_DELAY_MS);
       raf = 0; // SETTLED: this chain ends here
       // A cursor that arrived during the entrance is already inside the hero,
       // so hand it the lens now rather than making it move again to be noticed.
@@ -350,14 +438,31 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     }
   };
 
-  // ---- engaged (parallax + lensing, damped) ----
-  const interactiveTick = () => {
+  // ---- engaged (parallax + lensing + transit, damped) ----
+  const interactiveTick = (now: number) => {
+    // `interactive` is deliberately absent: a transit must run on a touch device,
+    // where there is no cursor to relieve a frozen field. Pointer influence is
+    // gated per-particle below instead.
+    //
     // `!onscreen` is vestigial — `schedule()` refuses while offscreen and the
     // gates cancel on the way out — but it costs nothing and zeroing `raf` here
     // keeps a stale handle from ever blocking `wake()`.
-    if (!interactive || !onscreen || condensing) {
+    if (!onscreen || condensing) {
       raf = 0;
       return;
+    }
+
+    // The timer only raised a flag; this is where the transit gets its clock, so
+    // that `now` and `transitStart` are always two readings of the same one.
+    if (transitPending) {
+      transitPending = false;
+      transitStart = now;
+    }
+
+    const progress = transitStart < 0 ? -1 : (now - transitStart) / TRANSIT_MS;
+    if (transitStart >= 0 && progress > 1) {
+      transitStart = -1;
+      armTransit(randomGap());
     }
 
     let maxDelta = 0;
@@ -376,7 +481,9 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       let pullY = 0;
       let gain = 0;
 
-      if (pointer) {
+      // `interactive` as well as `pointer`, so the touch-device guarantee is
+      // checkable here rather than resting on the listener wiring 150 lines down.
+      if (interactive && pointer) {
         // Parallax is a depth offset, not a pull: it applies straight to the
         // target and stays outside the pull cap, bounded separately by
         // PARALLAX_MAX_PX. Capping it alongside the pulls would fight the depth
@@ -387,6 +494,19 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
         pullX += lens.pullX;
         pullY += lens.pullY;
         gain += lens.weight * LENS_ALPHA_GAIN;
+      }
+
+      if (transitStart >= 0) {
+        // Reads `p.tx`/`p.ty`, the settled target, for the same reason the lens
+        // does. The drift it applies is *along* the axis it projects onto, so fed
+        // the animated position each dot would push its own projection after the
+        // front and linger in the band rather than being released behind it.
+        const sweep = transitInfluence(p.tx, p.ty, axisX, axisY, spanLo, span, progress);
+        if (sweep) {
+          pullX += sweep.ux * sweep.weight * TRANSIT_DRIFT_PX;
+          pullY += sweep.uy * sweep.weight * TRANSIT_DRIFT_PX;
+          gain += sweep.weight * TRANSIT_ALPHA_GAIN;
+        }
       }
 
       targetX += clampMagnitude(pullX, COMBINED_PULL_CAP_PX);
@@ -407,7 +527,12 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // cursor means the field has reached its lensed target and further paints
     // are identical, so the next `pointermove` re-arms the loop through
     // `wake()` — `raf` is 0 by then, so that guard cannot swallow it.
-    if (fieldIsSettled(maxDelta)) {
+    //
+    // But not while a transit is in flight. Its opening frames have zero weight
+    // everywhere, because the front starts a full band outside the field, so a
+    // settle test that ignored the transit would end the chain before the front
+    // reached a single dot and the sweep would never render at all.
+    if (fieldIsSettled(maxDelta) && transitStart < 0) {
       // Settled with no cursor is the definition of "home": nothing is left for
       // a gate to resume.
       if (!pointer) returnPending = false;
@@ -417,11 +542,13 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     schedule(interactiveTick);
   };
 
-  // The `raf` test keeps pointer spam from cancelling and re-requesting a frame
-  // that is already queued for the very same work. `!onscreen` is vestigial for
-  // the same reason as in `interactiveTick`: `schedule()` would refuse anyway.
+  // `!interactive` is absent here too: the transit timer wakes the loop on touch
+  // devices, which have no cursor to do it. The `raf` test still keeps pointer
+  // spam from cancelling and re-requesting a frame that is already queued for the
+  // very same work. `!onscreen` is vestigial for the same reason as in
+  // `interactiveTick`: `schedule()` would refuse anyway.
   const wake = () => {
-    if (!interactive || !onscreen || condensing || raf) return;
+    if (!onscreen || condensing || raf) return;
     schedule(interactiveTick);
   };
 
@@ -433,6 +560,10 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       p.y = p.ty;
     }
     draw();
+    // The play-once registry sends a repeat visit straight to a settled frame, so
+    // this is the only place its schedule can be armed: `tick`'s terminal branch
+    // never runs for it.
+    armTransit(TRANSIT_FIRST_DELAY_MS);
   }
 
   // Listeners go on the host, not the canvas: the canvas stays
@@ -475,14 +606,21 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       onscreen = visible;
       if (!onscreen) {
         cancel();
+        disarmTransit();
         return;
       }
       if (condensing) {
         schedule(tick);
-      } else if (pointer || returnPending) {
-        // A return interrupted by scrolling away still has to finish, or the
-        // field holds a part-lensed frame until the next hover.
-        wake();
+      } else {
+        // A fresh gap, never the remainder: otherwise scrolling back fires a
+        // transit instantly, and so does a tab left open all afternoon.
+        armTransit(randomGap());
+        if (pointer || returnPending) {
+          // A return interrupted by scrolling away still has to finish, or the
+          // field holds a part-lensed frame until the next hover. An abandoned
+          // sweep is one of those returns — `disarmTransit` flagged it above.
+          wake();
+        }
       }
     },
     { rootMargin: "0px" }
@@ -492,6 +630,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   const onVisibility = () => {
     if (document.hidden) {
       cancel();
+      disarmTransit();
       return;
     }
     // `schedule()` cancels before it requests, so this `cancel()` is no longer
@@ -505,9 +644,13 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     cancel();
     if (condensing) {
       schedule(tick);
-    } else if (pointer || returnPending) {
-      // A return interrupted by the tab going away still has to finish.
-      wake();
+    } else {
+      // A fresh gap, for the same reason as the intersection gate above.
+      armTransit(randomGap());
+      if (pointer || returnPending) {
+        // A return interrupted by the tab going away still has to finish.
+        wake();
+      }
     }
   };
   document.addEventListener("visibilitychange", onVisibility);
@@ -562,7 +705,12 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     // path exists to fix. Drop it; the next pointermove re-establishes it in the
     // new space. Particles are rebuilt at rest, so nothing is outstanding.
     pointer = null;
+    disarmTransit();
+    // The rebuilt field is snapped to base, so unlike the offscreen case there is
+    // nothing left to walk home — `disarmTransit`'s `returnPending` only matters
+    // when particles were left displaced.
     returnPending = false;
+    armTransit(randomGap());
     // Resizing the bitmap cleared it, so this repaint is what keeps the hero from
     // sitting blank: with nothing outstanding, no gate would schedule a frame.
     // Unconditional, and any queued frame is dropped first. Deferring to a frame
@@ -588,6 +736,7 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     returnPending = false;
     resizePending = false;
     cancel();
+    disarmTransit();
     if (host) {
       host.removeEventListener("pointermove", onPointerMove);
       host.removeEventListener("pointerleave", onPointerLeave);
