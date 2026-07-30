@@ -176,6 +176,25 @@ a {
 }
 
 /*
+ * Breaks a block out of `.site-canvas` to the full viewport width, for the hero
+ * so its particle field has somewhere to be.
+ *
+ * Measured at 1728: the container caps at 72rem and its padding leaves a 1029px
+ * content box, while the headline alone occupies 912px of it — so the field was
+ * boxed into the one region already full of type, with ~350px of empty page
+ * gutter sitting unused on each side. Reaching the viewport gives it that gutter.
+ *
+ * No `width` declaration: a block fills its containing block minus its margins,
+ * so the negative margins alone widen this to exactly 100vw. Stating both invites
+ * them to disagree. The ancestor carries `overflow-x: clip` because `100vw`
+ * counts a classic scrollbar's width, which would otherwise add a horizontal
+ * scrollbar on platforms that reserve layout space for one.
+ */
+.hero-bleed {
+  margin-inline: calc(50% - 50vw);
+}
+
+/*
  * The resume ledger: one mono label track and one content track. At full width
  * the content track measures 43rem — the same reading measure the post page
  * uses — so resume bullets wrap like article body text.

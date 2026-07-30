@@ -865,20 +865,21 @@ describe("HeroField", () => {
       // once `Math.min` clips a dot to the ceiling both the correct and the
       // inflated gain report the same ratio, so a capped dot proves nothing.
       //
-      // Which is also why the cursor goes to (460, 80) rather than the usual
-      // POINTER_X/POINTER_Y. Inside the dense right-hand mass the dots are bright
+      // Which is also why the cursor goes to (724, 50) rather than the usual
+      // POINTER_X/POINTER_Y. Where the mask is at full strength the dots are bright
       // — base alpha up to the 0.66 ceiling `buildFieldTargets` imposes — and a
       // dot needs base alpha below 0.548 for an inflated gain to stay under 0.85
       // and therefore stay visible. At (640, 200) every dot near enough to carry
-      // real weight clips first, and the inflated version passes. At (460, 80),
-      // near the mask's falloff, 85 dots break the bound; the worst sits at base
-      // alpha 0.41 with weight 1.0, giving 0.55 correct against 1.00 inflated.
+      // real weight clips first, and the inflated version passes. At (724, 50),
+      // up where the vertical term thins the field out, 67 dots break the bound;
+      // the worst sits at base alpha 0.392 with weight 0.991, giving 0.545 correct
+      // against 0.991 inflated.
       const harness = createFieldHarness({ width: 800, height: 400 });
       const stop = startField(harness.canvas, "alpha gain");
       harness.flush(ENTRANCE_BUDGET);
       const settled = harness.lastFrame().dots.map((dot) => dot.alpha);
 
-      harness.movePointer(460, 80);
+      harness.movePointer(724, 50);
       harness.flush(200);
       const after = harness.lastFrame().dots;
 
@@ -1047,14 +1048,14 @@ describe("HeroField", () => {
       // allow for. x is left in the dense right-hand mass, where there are bright
       // dots within lens range above and below the cursor.
       //
-      // How narrow that midline requirement is, measured: `worstY` comes out
-      // 7.5056 at y = 200, 7.7730 at 205, and 8.1026 at 210 — which would
-      // false-fail the upper bound on correct code, because vertical parallax is
-      // no longer zero and adds to the capped pull this test is trying to isolate.
-      // So the whole window in which both assertions below discriminate is roughly
-      // ±0.5px of cursor travel on an 8px quantity, about 6%. Moving this cursor
-      // spends that tolerance.
-      harness.movePointer(600, 200);
+      // How much room that midline requirement leaves, measured by moving the
+      // cursor down and re-running: 200, 202, 205 and 210 all pass, and 215
+      // false-fails the upper bound on correct code at 8.1637, because vertical
+      // parallax is no longer zero there and adds to the capped pull this test is
+      // trying to isolate. So there is about 14px of slack, not the sub-pixel
+      // margin this fixture had before the field moved into the page gutter — but
+      // it is still finite, and moving this cursor spends it.
+      harness.movePointer(700, 200);
       harness.flush(120);
       harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
 

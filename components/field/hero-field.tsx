@@ -109,10 +109,22 @@ function buildFieldTargets(
       const nx = gx / width; // 0 (left) .. 1 (right)
       const ny = gy / height; // 0 (top) .. 1 (bottom)
 
-      // Weight density to the right third, clear of where the headline begins,
-      // reaching full strength before the canvas edge so it reads as a body of
-      // field rather than a thinning fringe.
-      const horizontal = smoothstep(0.30, 0.82, nx);
+      // Start past the headline's right edge, reaching full strength before the
+      // canvas edge so it reads as a body of field rather than a thinning fringe.
+      //
+      // 0.78 is measured, not chosen: the canvas now spans the viewport
+      // (`.hero-bleed`), the container caps at 72rem, and `max-w-[16ch]` at the
+      // font's 5.5rem ceiling makes the headline 912px wide — so its right edge
+      // lands between nx 0.66 and 0.76 across 1152px to 1728px, peaking at 0.757
+      // around 1440px. The previous 0.30 was inherited from when the canvas was
+      // only as wide as the text column, and it put roughly 600px of field behind
+      // the headline at every desktop width, which is what the comment above it
+      // claimed it avoided.
+      // The band is only ~0.22 of the canvas wide once it clears the headline, so
+      // full strength arrives at 0.86 rather than near the edge. Ramping across the
+      // whole band instead left it reading as a faint stripe rather than a body of
+      // field — there is not enough width here to spend most of it fading in.
+      const horizontal = smoothstep(0.78, 0.86, nx);
       // Float the band away from the top and bottom edges.
       const vertical = 0.32 + 0.68 * Math.sin(Math.PI * ny);
       // Bias the mass toward the upper-right for an asymmetric, drifting feel.

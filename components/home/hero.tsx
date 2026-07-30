@@ -15,8 +15,16 @@ type HeroProps = {
 
 export default async function Hero({ featured, isLatest }: HeroProps) {
   return (
-    <section aria-labelledby="hero-title" className="relative min-h-[70svh] overflow-hidden">
-      <div className="relative z-10 flex min-h-[70svh] flex-col justify-center">
+    /* `hero-bleed` widens the section to the viewport so the field is not confined
+       to the text column; `site-canvas` on the inner block re-applies the exact
+       container the section just escaped, so the copy stays aligned with every
+       other section on the page. Reusing the class rather than restating its width
+       and padding is what keeps the two from drifting apart. */
+    <section
+      aria-labelledby="hero-title"
+      className="hero-bleed relative min-h-[70svh] overflow-hidden"
+    >
+      <div className="site-canvas relative z-10 flex min-h-[70svh] flex-col justify-center">
         <p className="kicker">Meet Tilavat</p>
         <p className="kicker mt-2 text-accent">{isLatest ? "Latest" : "Featured"}</p>
         <p className="mt-4 max-w-[52ch] text-[clamp(1.05rem,1.5vw,1.25rem)] leading-relaxed text-foreground/75">
