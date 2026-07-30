@@ -80,6 +80,14 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
+/**
+ * Bounds `value` to ±`cap`, preserving sign.
+ *
+ * `cap` must be non-negative. A negative one collapses this to the constant
+ * `cap` for every input — a sign-flipped constant, silently — but both call
+ * sites pass a positive module constant, so this is a note for the next caller
+ * rather than a case worth guarding at runtime.
+ */
 export function clampMagnitude(value: number, cap: number): number {
   return Math.min(cap, Math.max(-cap, value));
 }

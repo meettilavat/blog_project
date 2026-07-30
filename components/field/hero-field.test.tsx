@@ -10,7 +10,7 @@ import HeroField, {
   __playedSlugs,
   __resetPlayedSlugs
 } from "@/components/field/hero-field";
-import { LENS_ALPHA_CAP, LENS_RADIUS_PX } from "@/lib/field/field-motion";
+import { LENS_ALPHA_CAP, LENS_ALPHA_GAIN, LENS_RADIUS_PX } from "@/lib/field/field-motion";
 import { createFieldHarness, maxDrift } from "@/tests/support/field-harness";
 
 const source = readFileSync(resolve(process.cwd(), "components/field/hero-field.tsx"), "utf8");
@@ -479,9 +479,17 @@ describe("HeroField", () => {
   //    base" both catch. Changing only the lens's base arguments is bounded by
   //    the 6px pull cap and so has no observable effect, but it is one edit away
   //    from the collapsing form, so the intended call is pinned here.
+  // 3. Arity, which became a hazard when `lensInfluence` lost its `alpha`
+  //    parameter and `radius` moved into the 5th slot. Both are `number`, so a
+  //    stray `p.a` left in that position typechecks cleanly — verified, exit 0 —
+  //    and is read as a 0.66px lens radius. Only behaviour catches it, and what
+  //    fails is three geometry tests whose names point at coordinate space rather
+  //    than at the call. Pinning the closing paren is what makes the failure name
+  //    the real culprit, so the literal must stay whole rather than stopping at a
+  //    comma.
   it("uses the shared motion math rather than inlining the arithmetic", () => {
     expect(source).toContain('from "@/lib/field/field-motion"');
-    expect(source).toContain("lensInfluence(p.tx, p.ty,");
+    expect(source).toContain("lensInfluence(p.tx, p.ty, pointer.x, pointer.y)");
   });
 
   // Nested inside `HeroField` for the same reason as the block below: the
@@ -811,9 +819,17 @@ describe("HeroField", () => {
       harness.flush(400);
       const settled = harness.lastFrame().dots.map((dot) => dot.alpha);
 
+      const paintedAtRest = harness.paintCount();
       harness.movePointer(10, 10); // far corner, clear of most of the field
       harness.flush(60);
       const after = harness.lastFrame().dots;
+
+      // Without this the test cannot fail if the cursor never took effect at all:
+      // `after` would be the very frame `settled` was read from and every equality
+      // below would hold trivially. Neutering `wake()` is enough to reach that.
+      // Paint count is the right probe rather than "some dot brightened" — at
+      // (10, 10) the density mask is zero, so by design nothing here brightens.
+      expect(harness.paintCount()).toBeGreaterThan(paintedAtRest);
 
       // Dots beyond the lens radius of the pointer are untouched to the bit.
       const untouched = after.filter(
@@ -824,6 +840,47 @@ describe("HeroField", () => {
         const index = after.indexOf(dot);
         expect(dot.alpha).toBe(settled[index]);
       }
+      stop();
+    });
+
+    it("brightens by no more than the lens gain allows", () => {
+      // LENS_ALPHA_GAIN moved out of `lensInfluence` and into the frame loop in
+      // this refactor, which left it pinned by nothing: every other brightening
+      // assertion is either an inequality or a `<= LENS_ALPHA_CAP` bound that the
+      // ceiling's own `Math.min` absorbs. Dropping the constant — brightening by
+      // the full weight instead of 55% of it — kept all 78 tests green.
+      //
+      // A proportional bound is what catches it, and it has to skip capped dots:
+      // once `Math.min` clips a dot to the ceiling both the correct and the
+      // inflated gain report the same ratio, so a capped dot proves nothing.
+      //
+      // Which is also why the cursor goes to (460, 80) rather than the usual
+      // POINTER_X/POINTER_Y. Inside the dense right-hand mass the dots are bright
+      // — base alpha up to the 0.66 ceiling `buildFieldTargets` imposes — and a
+      // dot needs base alpha below 0.548 for an inflated gain to stay under 0.85
+      // and therefore stay visible. At (640, 200) every dot near enough to carry
+      // real weight clips first, and the inflated version passes. At (460, 80),
+      // near the mask's falloff, 85 dots break the bound; the worst sits at base
+      // alpha 0.41 with weight 1.0, giving 0.55 correct against 1.00 inflated.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "alpha gain");
+      harness.flush(ENTRANCE_BUDGET);
+      const settled = harness.lastFrame().dots.map((dot) => dot.alpha);
+
+      harness.movePointer(460, 80);
+      harness.flush(200);
+      const after = harness.lastFrame().dots;
+
+      let checked = 0;
+      for (let i = 0; i < after.length; i++) {
+        if (after[i].alpha >= LENS_ALPHA_CAP - 1e-9) continue; // clipped, uninformative
+        const ratio = after[i].alpha / settled[i] - 1;
+        expect(ratio).toBeLessThanOrEqual(LENS_ALPHA_GAIN + 1e-9);
+        if (ratio > 1e-6) checked++;
+      }
+      // Guard against the loop having nothing to say: some uncapped dot must
+      // actually have brightened, or the bound above never ran on a real gain.
+      expect(checked).toBeGreaterThan(0);
       stop();
     });
 

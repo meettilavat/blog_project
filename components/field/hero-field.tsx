@@ -364,8 +364,14 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
     for (const p of particles) {
       let targetX = p.tx;
       let targetY = p.ty;
-      // Accumulated separately from the target so one cap can bound the sum of
-      // every pull acting on this particle. Task 5 adds a second contributor.
+      // Pulls accumulate separately from the target so one cap can bound their
+      // sum; a transit wavefront will add a second contributor to all three.
+      //
+      // `gain` is the odd one out and the split is deliberate, not an oversight:
+      // each influence's gain coefficient is applied here at the call site, while
+      // the ceiling that bounds their total lives in `composeAlpha`. That is the
+      // whole point of the arrangement — an influence returning an
+      // already-ceilinged alpha cannot be combined with another one.
       let pullX = 0;
       let pullY = 0;
       let gain = 0;
