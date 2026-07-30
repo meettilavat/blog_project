@@ -1528,11 +1528,24 @@ describe("HeroField", () => {
     });
   });
 
-  // Nested inside `HeroField` on purpose: the `afterEach` above is what unstubs
-  // the globals each harness installs, and an afterEach only covers its own
-  // describe. As a sibling block these tests would leave `setTimeout` stubbed
-  // for whatever runs next.
-  describe("field harness platform", () => {
+  // These test the TEST HARNESS, not the field. Nothing below asserts anything a
+  // visitor could observe — they pin `tests/support/field-harness.ts` itself, which
+  // stands in for the browser under Vitest's `node` environment.
+  //
+  // If you are changing the harness and these go red, that is them doing their job
+  // rather than a regression in the hero: the guarantees the field's own tests rest
+  // on are all properties of this stub. They exist because the harness shipped a
+  // clock that ran *backwards* — a timer overdue by the time `advanceClock` reached
+  // it ran at its original due time, so a timer it armed could fire inside the same
+  // window — and the entire field suite stayed green through it. Read the failure as
+  // "the platform changed", check whether the property still holds, and only then
+  // change the assertion.
+  //
+  // Nested inside `HeroField` on purpose: the `afterEach` above is what unstubs the
+  // globals each harness installs, and an afterEach only covers its own describe.
+  // As a sibling block these tests would leave `setTimeout` stubbed for whatever
+  // runs next.
+  describe("field harness platform (tests the harness, not the field)", () => {
     // Armed through `window.setTimeout` rather than the bare global, so the
     // `windowStub` timer members stay pinned as well: both paths are reachable
     // from production code and each needs a test that fails without it.
