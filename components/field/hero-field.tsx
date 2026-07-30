@@ -90,8 +90,8 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-// The field is an abstract, jittered dot lattice masked into the hero's right /
-// upper negative space, fading out toward the left where the headline lives. It
+// The field is an abstract, jittered dot lattice spanning the whole hero: barely
+// present at the left, thickening steadily rightward into the page gutter. It
 // never forms letters, never clips at the canvas edge, and stays faint enough to
 // read as a backdrop rather than compete with the SSR'd headline above it.
 // (User-approved evolution of spec §5's typed-title field.)
@@ -109,22 +109,22 @@ function buildFieldTargets(
       const nx = gx / width; // 0 (left) .. 1 (right)
       const ny = gy / height; // 0 (top) .. 1 (bottom)
 
-      // Start past the headline's right edge, reaching full strength before the
-      // canvas edge so it reads as a body of field rather than a thinning fringe.
+      // One gradient across the entire hero: a scattering at the left that
+      // thickens all the way to full strength in the page gutter on the right.
       //
-      // 0.78 is measured, not chosen: the canvas now spans the viewport
-      // (`.hero-bleed`), the container caps at 72rem, and `max-w-[16ch]` at the
-      // font's 5.5rem ceiling makes the headline 912px wide — so its right edge
-      // lands between nx 0.66 and 0.76 across 1152px to 1728px, peaking at 0.757
-      // around 1440px. The previous 0.30 was inherited from when the canvas was
-      // only as wide as the text column, and it put roughly 600px of field behind
-      // the headline at every desktop width, which is what the comment above it
-      // claimed it avoided.
-      // The band is only ~0.22 of the canvas wide once it clears the headline, so
-      // full strength arrives at 0.86 rather than near the edge. Ramping across the
-      // whole band instead left it reading as a faint stripe rather than a body of
-      // field — there is not enough width here to spend most of it fading in.
-      const horizontal = smoothstep(0.78, 0.86, nx);
+      // Spanning the full width rather than starting past the headline is the
+      // owner's call, and it is what makes the field read as composed instead of
+      // placed: dots behind the type are sparse and faint enough to be texture,
+      // and the eye follows the density up to the right. Confining it to the
+      // gutter instead — which the canvas now reaches, since `.hero-bleed` widens
+      // the section past the 72rem text container — left it looking squeezed,
+      // because the container caps while the viewport keeps growing, so the clear
+      // band is a shrinking share of an ever-wider canvas.
+      //
+      // The ramp ends before the canvas edge so the densest part is a body of
+      // field rather than a hard stop, and starts just inside it so the far left
+      // stays clear of the kicker and nav.
+      const horizontal = smoothstep(0.05, 0.90, nx);
       // Float the band away from the top and bottom edges.
       const vertical = 0.32 + 0.68 * Math.sin(Math.PI * ny);
       // Bias the mass toward the upper-right for an asymmetric, drifting feel.
