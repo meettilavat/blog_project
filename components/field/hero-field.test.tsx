@@ -15,6 +15,7 @@ import {
   DAMPING,
   LENS_ALPHA_CAP,
   LENS_ALPHA_GAIN,
+  LENS_PULL_CAP_PX,
   LENS_RADIUS_PX,
   SETTLE_EPSILON_PX,
   TRANSIT_FIRST_DELAY_MS,
@@ -1000,8 +1001,19 @@ describe("HeroField", () => {
       const stop = startField(harness.canvas, "transit relax");
       settle(harness);
       const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+      const settledPeak = harness.maxAlpha();
 
       harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
+
+      // Mid-sweep first. Without a precondition that anything ever moved, every
+      // assertion below holds just as well for a transit that never fired at all —
+      // and it did: making `armTransit` a no-op turned most of this block red and
+      // left this test green, because "the field is at base" is exactly where a
+      // field that never swept also sits. Its sibling, "walks the field home after
+      // a transit is abandoned mid-sweep", has the equivalent precondition.
+      harness.flush(45);
+      expect(harness.maxAlpha()).toBeGreaterThan(settledPeak);
+
       harness.flush(400);
 
       // Alpha comes back exactly: with no influence left, `composeAlpha(a, 0)` is
@@ -1034,6 +1046,14 @@ describe("HeroField", () => {
       // displacement from base *is* its capped vertical pull, with no parallax to
       // allow for. x is left in the dense right-hand mass, where there are bright
       // dots within lens range above and below the cursor.
+      //
+      // How narrow that midline requirement is, measured: `worstY` comes out
+      // 7.5056 at y = 200, 7.7730 at 205, and 8.1026 at 210 — which would
+      // false-fail the upper bound on correct code, because vertical parallax is
+      // no longer zero and adds to the capped pull this test is trying to isolate.
+      // So the whole window in which both assertions below discriminate is roughly
+      // ±0.5px of cursor travel on an 8px quantity, about 6%. Moving this cursor
+      // spends that tolerance.
       harness.movePointer(600, 200);
       harness.flush(120);
       harness.advanceClock(TRANSIT_FIRST_DELAY_MS);
@@ -1044,10 +1064,20 @@ describe("HeroField", () => {
       // lens is at its own 6px cap and the sweep adds 4.45 more.
       //
       // This is the only assertion that pins COMBINED_PULL_CAP_PX at all, so its
-      // margins are worth recording: the worst vertical displacement is 7.51px
+      // margins are worth recording: the worst vertical displacement is 7.5056px
       // with the cap and 8.51px without it. Bounding the Euclidean drift instead
       // would have no teeth — the field's extremes are parallax-dominated, and
       // there both numbers are 12.00px to twelve decimal places.
+      //
+      // Which is why the upper bound is paired with a lower one. Alone, `<= 8`
+      // passed for an accidental reason: delete the two `pullX`/`pullY`
+      // accumulations from the transit branch while keeping `gain`, and `worstY`
+      // falls to 6.00 — LENS_PULL_CAP_PX, the lens's own cap with no transit drift
+      // on top — which satisfies `<= 8` trivially while almost every other transit
+      // test stays green. And with the drift gone, removing both combined clamps
+      // satisfied it too, so the clamp's only guard collapsed with it. The band
+      // between the two bounds is reachable only when a transit really is adding
+      // displacement on top of a lens already at its own cap.
       let worstY = 0;
       for (let step = 0; step < 400; step++) {
         if (harness.flush(1) === 0) break;
@@ -1057,6 +1087,7 @@ describe("HeroField", () => {
         }
         expect(harness.maxAlpha()).toBeLessThanOrEqual(LENS_ALPHA_CAP);
       }
+      expect(worstY).toBeGreaterThan(LENS_PULL_CAP_PX);
       expect(worstY).toBeLessThanOrEqual(COMBINED_PULL_CAP_PX);
       stop();
     });
@@ -1129,6 +1160,108 @@ describe("HeroField", () => {
       harness.setHidden(false);
       harness.emitVisibilityChange();
       expect(harness.pending()).toBe(0);
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("does not fire a transit on scroll-back after a visibility blip while offscreen", () => {
+      // The queued-event guarantee, which the frame budget alone does not give:
+      // a transit coming due while the field is away is *dropped*, not queued.
+      // Neither `onVisibility` nor `applyResize` tests `onscreen`, so before this
+      // was fixed a tab blur/focus over a scrolled-away hero armed a timer that
+      // fired into a `wake()` which refused — leaving `transitPending` raised with
+      // nothing able to lower it, so the next wake for any reason at all ran a
+      // full sweep on the spot.
+      const harness = createFieldHarness();
+      const stop = startField(harness.canvas, "transit offscreen rearm");
+      settle(harness);
+      const settledDots = harness.lastFrame().dots.map((dot) => ({ ...dot }));
+      const settledPeak = harness.maxAlpha();
+
+      // A cursor engages and leaves, and the hero scrolls away mid-return — so
+      // there is genuinely something outstanding for the resume path to pick up,
+      // which is what makes the resume wake a frame without any hover.
+      harness.movePointer(POINTER_X, POINTER_Y);
+      harness.flush(1000);
+      harness.leavePointer();
+      harness.flush(2);
+      harness.setIntersecting(false);
+      expect(harness.pendingTimers()).toBe(0); // the armed gap was disarmed
+
+      // The blip, with the hero still scrolled away. This gate never touches
+      // `onscreen`, so arming here is arming into a field that cannot run.
+      harness.setHidden(true);
+      harness.emitVisibilityChange();
+      harness.setHidden(false);
+      harness.emitVisibilityChange();
+      expect(harness.pendingTimers()).toBe(0);
+
+      // Long enough that any such timer would have come due and fired.
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(0);
+
+      // Scrolling back resumes the outstanding return and nothing else. With a
+      // stale flag raised this is a full transit instead, and the two are far
+      // apart on both axes this measures: 106 frames at peak alpha 0.85, the
+      // LENS_ALPHA_CAP a 0.95 transit gain clips to, against 23 frames at the
+      // 0.66 resting peak for the walk home.
+      harness.setIntersecting(true);
+      expect(harness.pending()).toBe(1);
+
+      let ran = 0;
+      let peak = 0;
+      for (let step = 0; step < 400; step++) {
+        if (harness.flush(1) === 0) break;
+        ran++;
+        peak = Math.max(peak, harness.maxAlpha());
+      }
+      expect(ran).toBeLessThan(40);
+      expect(peak).toBeLessThanOrEqual(settledPeak);
+
+      // Home, rather than parked somewhere mid-sweep: the bound is the settle
+      // epsilon's residual, as in "returns the field to base alpha" above.
+      const residual = SETTLE_EPSILON_PX / DAMPING;
+      const after = harness.lastFrame().dots;
+      for (let i = 0; i < after.length; i++) {
+        expect(Math.abs(after[i].x - settledDots[i].x)).toBeLessThan(residual);
+        expect(Math.abs(after[i].y - settledDots[i].y)).toBeLessThan(residual);
+      }
+
+      // And the returning visitor is not left without transits at all: the resume
+      // armed a fresh gap, which comes due in the ordinary way.
+      expect(harness.pendingTimers()).toBe(1);
+      harness.advanceClock(TRANSIT_MAX_GAP_MS);
+      expect(harness.pending()).toBe(1);
+      stop();
+    });
+
+    it("arms no transit from a resize that lands while the hero is offscreen", () => {
+      // The other call site that arms without testing `onscreen`. A ResizeObserver
+      // notification is delivered regardless of intersection, so the rebuild still
+      // has to happen — but the arm at the end of it must not, or the field is
+      // back to holding a timer it cannot run.
+      const harness = createFieldHarness({ width: 800, height: 400 });
+      const stop = startField(harness.canvas, "transit offscreen resize");
+      settle(harness);
+      harness.setIntersecting(false);
+      expect(harness.pendingTimers()).toBe(0);
+
+      harness.setSize(600, 300);
+      harness.triggerResize();
+      expect(harness.pendingTimers()).toBe(1); // the resize debounce, not a transit
+      harness.advanceClock(RESIZE_DEBOUNCE_MS);
+
+      expect(harness.canvas.width).toBe(1200); // it did rebuild
+      expect(harness.pendingTimers()).toBe(0); // and armed nothing
+
+      // However long the hero stays away.
+      harness.advanceClock(TRANSIT_MAX_GAP_MS * 2);
+      expect(harness.pending()).toBe(0);
+
+      // The schedule restarts when it comes back, from the resume path.
+      harness.setIntersecting(true);
+      expect(harness.pendingTimers()).toBe(1);
       harness.advanceClock(TRANSIT_MAX_GAP_MS);
       expect(harness.pending()).toBe(1);
       stop();

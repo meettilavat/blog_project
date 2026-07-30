@@ -201,9 +201,32 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
 
   // `wake` is declared further down but only *called* here, from a timer
   // callback, so its `const` is long since initialised by the time this runs —
-  // the same arrangement `tick` already uses.
+  // the same arrangement `tick` already uses. `onscreen` is read in the body
+  // rather than a callback, which is a tighter constraint, but still satisfied:
+  // the earliest call to this function is the settled-mount path below, well
+  // after `onscreen` is declared, and every other call site is a frame, an
+  // observer callback, or a timer.
   const armTransit = (delayMs: number) => {
     if (transitTimer) clearTimeout(transitTimer);
+    transitTimer = 0;
+    // Arming never inherits a raised flag, so this function's postcondition —
+    // after it returns, a transit is scheduled or dropped, never pending — holds
+    // on its own terms rather than depending on `disarmTransit` having run first.
+    // Vestigial in the same sense as the `!onscreen` tests in `tick` and
+    // `interactiveTick`: with the guard below in place no reachable sequence
+    // strands the flag, because the only canceller that does not disarm is
+    // `onVisibility`'s resume, which a browser reaches only from the hidden
+    // branch that disarmed already. Deleting this line leaves the suite green —
+    // it is here so that relaxing the guard below cannot silently reintroduce a
+    // queued transit, not because anything today depends on it.
+    transitPending = false;
+    // The guard that actually carries it: no timer exists at all while offscreen,
+    // rather than one whose callback `wake()` will refuse and whose raised flag
+    // nothing would then lower. `applyResize` and the visibility gate both reach
+    // here while the hero is scrolled away, and for them this early return *is*
+    // the drop the spec asks for. Both gates assign `onscreen` before they arm,
+    // so a hero scrolling back into view still gets a fresh gap.
+    if (!onscreen) return;
     transitTimer = window.setTimeout(() => {
       transitTimer = 0;
       transitPending = true;
@@ -497,10 +520,16 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
       }
 
       if (transitStart >= 0) {
-        // Reads `p.tx`/`p.ty`, the settled target, for the same reason the lens
-        // does. The drift it applies is *along* the axis it projects onto, so fed
-        // the animated position each dot would push its own projection after the
-        // front and linger in the band rather than being released behind it.
+        // Reads `p.tx`/`p.ty`, the settled target, because that is the space the
+        // front is positioned in. `measure()` derives `spanLo` and `span` from
+        // `p.tx * axisX + p.ty * axisY`, and `transitInfluence` places the front
+        // by mapping `progress` onto exactly that extent — so the projection it
+        // compares the front against has to be measured in the same space, which
+        // is its documented contract. Projecting `p.x`/`p.y` instead would offset
+        // every dot by whatever parallax and drift it happens to be carrying, and
+        // the front and the dots would be positions in two different coordinate
+        // systems: the same dot would then meet the front at a different
+        // `progress` on a hovered field than on an untouched one.
         const sweep = transitInfluence(p.tx, p.ty, axisX, axisY, spanLo, span, progress);
         if (sweep) {
           pullX += sweep.ux * sweep.weight * TRANSIT_DRIFT_PX;
@@ -733,10 +762,13 @@ export function startField(canvas: HTMLCanvasElement, title: string): () => void
   return () => {
     condensing = false;
     pointer = null;
-    returnPending = false;
     resizePending = false;
     cancel();
     disarmTransit();
+    // After `disarmTransit`, not before: it raises `returnPending` whenever a
+    // transit was in flight, so the other order states this and then has it
+    // undone by the next line. `applyResize` sequences the pair the same way.
+    returnPending = false;
     if (host) {
       host.removeEventListener("pointermove", onPointerMove);
       host.removeEventListener("pointerleave", onPointerLeave);
