@@ -6,7 +6,7 @@ vi.mock("@/lib/posts/repository/public-posts-repository", () => ({
 }));
 vi.mock("@/lib/site-url", () => ({ getConfiguredSiteUrl: () => "https://www.meettilavat.com" }));
 
-import { GET } from "./route";
+import { GET, revalidate } from "./route";
 
 const POST = {
   id: "1", slug: "tree-census", title: "Tree <Census> & Co", excerpt: "A & B <i>dek</i>",
@@ -39,6 +39,13 @@ describe("feed.xml route", () => {
     getPublishedPostsMock.mockResolvedValue({ ok: true, data: [{ ...POST, excerpt: null }] });
     const xml = await (await GET()).text();
     expect(xml).toContain("Read the latest post from Meet Tilavat.");
+  });
+
+  it("stays CDN-cacheable, and no staler than the data it reads", () => {
+    // Dropping this export makes the handler dynamic: the CDN then misses on every
+    // request, which measured a 1.33s cold TTFB against ~110ms elsewhere. The value
+    // tracks `getPublishedPosts`, so the feed never lags behind its own source.
+    expect(revalidate).toBe(3600);
   });
 
   it("returns 503 plain text when the repository fails", async () => {

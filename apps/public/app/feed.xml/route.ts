@@ -7,6 +7,12 @@ import {
   buildPublicPageUrl
 } from "@/lib/seo/public-site";
 
+// Without this the handler is treated as dynamic and the CDN never caches the
+// response — measured `x-vercel-cache: MISS` and a 1.33s cold TTFB against ~110ms
+// for every other route. Matches the `revalidate: 3600` on `getPublishedPosts`, so
+// the feed goes no staler than the data it reads.
+export const revalidate = 3600;
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
